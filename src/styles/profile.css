@@ -1,0 +1,1051 @@
+/* ==========================================================================
+   FindWorker — Unique Editorial Freelancer Profile Stylesheet
+   Focus: Freelance Work Platforms, Flagship Projects, Skills & Side Reviews
+   ========================================================================== */
+
+/* Page Base */
+.profile-page-body {
+  background-color: var(--color-background, #F4F4F4);
+  color: var(--color-secondary, #0F0F0F);
+  font-family: var(--font-sans, 'Poppins', sans-serif);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-main-layout {
+  flex: 1 0 auto;
+  padding-top: 88px;
+  padding-bottom: 72px;
+}
+
+/* State Screens */
+.profile-state-screen {
+  min-height: 55vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.state-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(214, 68, 30, 0.15);
+  border-top-color: var(--color-primary, #504CFF);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 18px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.state-text {
+  font-size: 1rem;
+  color: var(--color-secondary-muted, #575757);
+  font-weight: 500;
+}
+
+.error-emblem {
+  font-size: 2.8rem;
+  color: var(--color-primary, #504CFF);
+  margin-bottom: 12px;
+}
+
+.error-heading {
+  font-family: var(--font-display, 'Poppins', sans-serif);
+  font-size: 1.85rem;
+  font-weight: 600;
+  color: var(--color-secondary, #0F0F0F);
+  margin: 0 0 8px 0;
+}
+
+.error-desc {
+  color: var(--color-secondary-muted, #575757);
+  max-width: 440px;
+  margin: 0 auto;
+  line-height: 1.55;
+  font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   Return & Breadcrumb Navigation Strip
+   ========================================================================== */
+.profile-nav-strip {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-border-light, rgba(27, 26, 23, 0.07));
+  background: rgba(244, 239, 230, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.profile-nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.profile-back-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-secondary, #0F0F0F);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--color-border, rgba(27, 26, 23, 0.1));
+  box-shadow: 0 1px 3px rgba(27, 26, 23, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.profile-back-badge:hover {
+  color: var(--color-primary, #504CFF);
+  border-color: var(--color-primary-border, rgba(214, 68, 30, 0.3));
+  transform: translateX(-2px);
+  box-shadow: 0 3px 8px rgba(214, 68, 30, 0.12);
+}
+
+.profile-breadcrumbs {
+  font-size: 0.82rem;
+  color: var(--color-secondary-muted, #575757);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-breadcrumbs .sep {
+  opacity: 0.35;
+}
+
+.profile-breadcrumbs strong {
+  color: var(--color-secondary, #0F0F0F);
+}
+
+/* ==========================================================================
+   UNIQUE EDITORIAL PROFILE HERO
+   ========================================================================== */
+.profile-editorial-hero {
+  padding: 28px 0 20px;
+}
+
+.editorial-hero-card {
+  background: var(--color-background-card, #FAF7F2);
+  border: 1px solid var(--color-border, rgba(27, 26, 23, 0.1));
+  border-radius: 20px;
+  padding: 36px 40px;
+  box-shadow: var(--shadow-sm, 0 4px 20px rgba(27, 26, 23, 0.04));
+  position: relative;
+  overflow: hidden;
+}
+
+.editorial-hero-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--color-primary, #504CFF);
+}
+
+.editorial-hero-grid {
+  display: flex;
+  align-items: flex-start;
+  gap: 36px;
+  flex-wrap: wrap;
+}
+
+.editorial-avatar-column {
+  flex-shrink: 0;
+}
+
+.editorial-avatar-frame {
+  position: relative;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  padding: 4px;
+  background: #fff;
+  border: 2px solid var(--color-primary-border, rgba(214, 68, 30, 0.35));
+  box-shadow: 0 6px 24px rgba(27, 26, 23, 0.1);
+}
+
+.editorial-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.editorial-presence-dot {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #10B981;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.5);
+}
+
+.editorial-identity-column {
+  flex: 1 1 420px;
+}
+
+.editorial-meta-pills {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.editorial-pill {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(27, 26, 23, 0.05);
+  color: var(--color-secondary-muted, #575757);
+}
+
+.editorial-pill-live {
+  background: rgba(16, 185, 129, 0.12);
+  color: #065F46;
+}
+
+.editorial-freelancer-name {
+  font-family: var(--font-display, 'Poppins', sans-serif);
+  font-size: clamp(2rem, 3.8vw, 2.75rem);
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--color-secondary, #0F0F0F);
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+.editorial-craft-title {
+  font-size: 1.12rem;
+  color: var(--color-secondary-muted, #575757);
+  margin: 0 0 16px 0;
+  font-weight: 500;
+}
+
+.editorial-summary-bio {
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: #2F2D28;
+  margin: 0 0 22px 0;
+  max-width: 780px;
+}
+
+/* Metrics Ribbon */
+.editorial-metrics-ribbon {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 18px;
+  background: #fff;
+  border: 1px solid var(--color-border, rgba(27, 26, 23, 0.09));
+  border-radius: var(--radius-md, 12px);
+  box-shadow: 0 1px 4px rgba(27, 26, 23, 0.03);
+  flex-wrap: wrap;
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metric-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-secondary-muted, #575757);
+  font-weight: 600;
+}
+
+.metric-val {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-secondary, #0F0F0F);
+}
+
+.metric-val.text-primary {
+  color: var(--color-primary, #504CFF);
+}
+
+.metric-val.text-green {
+  color: #10B981;
+}
+
+.metric-rating-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.metric-sub {
+  font-size: 0.8rem;
+  color: var(--color-secondary-muted, #575757);
+  font-weight: 500;
+}
+
+.metric-sep {
+  width: 1px;
+  height: 26px;
+  background: var(--color-border, rgba(27, 26, 23, 0.1));
+}
+
+/* ==========================================================================
+   2-COLUMN WORKSPACE GRID (Left 68% Focus + Right 32% Side Reviews)
+   ========================================================================== */
+.profile-workspace-container {
+  margin-top: 14px;
+}
+
+.profile-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+/* General Module Card */
+.profile-module-card {
+  background: var(--color-background-card, #FAF7F2);
+  border: 1px solid var(--color-border, rgba(27, 26, 23, 0.1));
+  border-radius: 16px;
+  padding: 28px 30px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(27, 26, 23, 0.03);
+}
+
+.module-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border-light, rgba(27, 26, 23, 0.07));
+}
+
+.module-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.module-icon-emblem {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--color-border, rgba(27, 26, 23, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.module-title {
+  font-family: var(--font-display, 'Poppins', sans-serif);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--color-secondary, #0F0F0F);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.module-subtitle {
+  font-size: 0.84rem;
+  color: var(--color-secondary-muted, #575757);
+  margin: 2px 0 0 0;
+}
+
+/* ==========================================================================
+   HIGHLIGHT SECTION: "WHERE I WORK" FREELANCE PLATFORMS
+   ========================================================================== */
+.module-platforms-highlight {
+  border: 1.5px solid rgba(214, 68, 30, 0.22);
+  background: #FFFFFF;
+  box-shadow: 0 4px 18px rgba(214, 68, 30, 0.06);
+}
+
+.verified-hub-pill {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #065F46;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+
+.highlight-platforms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 16px;
+}
+
+.unique-platform-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid var(--color-border, rgba(27, 26, 23, 0.1));
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--color-secondary, #0F0F0F);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.unique-platform-card:hover {
+  border-color: var(--color-primary, #504CFF);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(27, 26, 23, 0.08);
+}
+
+.platform-logo-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: rgba(27, 26, 23, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.unique-platform-card:hover .platform-logo-box {
+  transform: scale(1.08);
+}
+
+.platform-logo-box svg {
+  width: 24px;
+  height: 24px;
+}
+
+.platform-text-block {
+  flex: 1;
+  min-width: 0;
+}
+
+.platform-brand-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-secondary, #0F0F0F);
+  line-height: 1.2;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.platform-badge-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #10B981;
+  display: block;
+}
+
+.platform-action-arrow {
+  color: var(--color-secondary-muted, #575757);
+  font-size: 1.15rem;
+  font-weight: 600;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.unique-platform-card:hover .platform-action-arrow {
+  color: var(--color-primary, #504CFF);
+  transform: translate(2px, -2px);
+}
+
+/* ==========================================================================
+   PROJECTS & PORTFOLIO SHOWCASE
+   ========================================================================== */
+.unique-projects-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 22px;
+}
+
+.unique-project-card {
+  background: #fff;
+  border: 1px solid var(--color-border, rgba(27, 26, 23, 0.1));
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.25s ease;
+}
+
+.unique-project-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(27, 26, 23, 0.08);
+  border-color: rgba(27, 26, 23, 0.2);
+}
+
+.project-visual-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: #EDE6D8;
+  overflow: hidden;
+}
+
+.project-cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.unique-project-card:hover .project-cover-image {
+  transform: scale(1.05);
+}
+
+.project-year-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 3px 8px;
+  background: rgba(27, 26, 23, 0.85);
+  color: #fff;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  backdrop-filter: blur(4px);
+}
+
+.project-info-stage {
+  padding: 18px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.project-discipline-tag {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-primary, #504CFF);
+  margin-bottom: 6px;
+}
+
+.project-headline-title {
+  font-family: var(--font-display, 'Poppins', sans-serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--color-secondary, #0F0F0F);
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+}
+
+.project-narrative-desc {
+  font-size: 0.88rem;
+  color: var(--color-secondary-muted, #575757);
+  line-height: 1.55;
+  margin: 0 0 16px 0;
+  flex: 1;
+}
+
+.project-tech-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tech-pill {
+  font-size: 0.74rem;
+  padding: 3px 8px;
+  background: rgba(27, 26, 23, 0.05);
+  border-radius: 4px;
+  color: #3B3833;
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   SKILLS & TECHNICAL MASTERY
+   ========================================================================== */
+.unique-skills-mosaic {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.skill-tag-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: #fff;
+  border: 1px solid var(--color-border, rgba(27, 26, 23, 0.12));
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-secondary, #0F0F0F);
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.skill-tag-badge:hover {
+  background: rgba(214, 68, 30, 0.07);
+  border-color: var(--color-primary-border, rgba(214, 68, 30, 0.3));
+  color: var(--color-primary, #504CFF);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   WORK EXPERIENCE TIMELINE
+   ========================================================================== */
+.unique-experience-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  padding-left: 24px;
+}
+
+.unique-experience-flow::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 6px;
+  width: 2px;
+  background: var(--color-border, rgba(27, 26, 23, 0.12));
+}
+
+.experience-flow-card {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--color-border, rgba(27, 26, 23, 0.1));
+  border-radius: 12px;
+  padding: 18px 22px;
+}
+
+.experience-flow-node {
+  position: absolute;
+  left: -24px;
+  top: 22px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-primary, #504CFF);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px var(--color-primary, #504CFF);
+}
+
+.experience-flow-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.experience-role-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-secondary, #0F0F0F);
+}
+
+.experience-period-label {
+  font-size: 0.78rem;
+  color: var(--color-secondary-muted, #575757);
+  font-weight: 600;
+  background: rgba(27, 26, 23, 0.04);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.experience-org-name {
+  font-size: 0.88rem;
+  color: var(--color-primary, #504CFF);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.experience-narrative {
+  font-size: 0.88rem;
+  color: var(--color-secondary-muted, #575757);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ==========================================================================
+   RIGHT SIDEBAR: Dossier & Compact Reviews
+   ========================================================================== */
+.profile-side-column {
+  position: sticky;
+  top: 104px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.side-panel-card {
+  background: var(--color-background-card, #FAF7F2);
+  border: 1px solid var(--color-border, rgba(27, 26, 23, 0.1));
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 2px 6px rgba(27, 26, 23, 0.03);
+}
+
+.side-panel-title {
+  font-family: var(--font-display, 'Poppins', sans-serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--color-secondary, #0F0F0F);
+  margin: 0 0 14px 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border-light, rgba(27, 26, 23, 0.07));
+}
+
+.side-dossier-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.side-dossier-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.86rem;
+}
+
+.dossier-k {
+  color: var(--color-secondary-muted, #575757);
+  font-weight: 500;
+}
+
+.dossier-v {
+  color: var(--color-secondary, #0F0F0F);
+  font-weight: 600;
+}
+
+.side-share-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px;
+  font-size: 0.85rem;
+}
+
+/* ==========================================================================
+   COMPACT SIDE REVIEWS & SIMPLIFIED CLIENT FORM
+   ========================================================================== */
+.side-reviews-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border-light, rgba(27, 26, 23, 0.07));
+}
+
+.side-reviews-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.side-reviews-count-badge {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  background: rgba(27, 26, 23, 0.06);
+  border-radius: 999px;
+  color: var(--color-secondary-muted, #575757);
+}
+
+.side-rating-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  background: rgba(217, 119, 6, 0.1);
+  border-radius: 6px;
+}
+
+.side-score-bold {
+  color: #B45309;
+}
+
+/* Compact Feed List */
+.side-reviews-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-bottom: 20px;
+}
+
+.side-review-item {
+  background: #fff;
+  border: 1px solid var(--color-border, rgba(27, 26, 23, 0.08));
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.side-review-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.side-review-author {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-secondary, #0F0F0F);
+}
+
+.side-review-stars {
+  color: #D97706;
+  font-size: 0.88rem;
+  letter-spacing: 1px;
+}
+
+.side-review-msg {
+  font-size: 0.84rem;
+  color: #38352F;
+  line-height: 1.5;
+  margin: 0 0 6px 0;
+}
+
+.side-review-date {
+  font-size: 0.72rem;
+  color: var(--color-secondary-muted, #575757);
+}
+
+/* Simplified Compact Form */
+.compact-review-form-box {
+  background: #fff;
+  border: 1px solid var(--color-border, rgba(27, 26, 23, 0.12));
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 2px 8px rgba(27, 26, 23, 0.03);
+}
+
+.compact-form-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.compact-form-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-secondary, #0F0F0F);
+}
+
+.compact-device-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  background: rgba(18, 58, 44, 0.08);
+  color: var(--color-foreground, #0F0F0F);
+  border-radius: 4px;
+}
+
+.compact-form-group {
+  margin-bottom: 12px;
+}
+
+.compact-form-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-secondary-muted, #575757);
+  margin-bottom: 5px;
+}
+
+/* Compact Star Picker */
+.compact-star-picker {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.compact-star-btn {
+  background: none;
+  border: none;
+  font-size: 1.45rem;
+  line-height: 1;
+  color: rgba(27, 26, 23, 0.2);
+  cursor: pointer;
+  padding: 1px 2px;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.compact-star-btn:hover,
+.compact-star-btn.hover,
+.compact-star-btn.active {
+  color: #D97706;
+  transform: scale(1.18);
+}
+
+.compact-star-text {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #D97706;
+  margin-left: 8px;
+}
+
+.compact-form-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border, rgba(27, 26, 23, 0.12));
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: #FAF7F2;
+  box-sizing: border-box;
+}
+
+.compact-form-input:focus,
+.compact-form-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary, #504CFF);
+  background: #fff;
+}
+
+.compact-form-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border, rgba(27, 26, 23, 0.12));
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: #FAF7F2;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.compact-review-error {
+  padding: 8px 10px;
+  background: rgba(214, 68, 30, 0.1);
+  border: 1px solid rgba(214, 68, 30, 0.25);
+  border-radius: 6px;
+  color: var(--color-primary, #504CFF);
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.compact-submit-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+}
+
+/* Already Reviewed Compact State */
+.compact-already-reviewed-box {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.compact-reviewed-badge {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #065F46;
+  margin-bottom: 4px;
+}
+
+.compact-reviewed-note {
+  font-size: 0.76rem;
+  color: #047857;
+  line-height: 1.45;
+  margin: 0 0 10px 0;
+}
+
+.compact-submitted-review {
+  background: #fff;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .profile-workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-side-column {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .editorial-hero-card {
+    padding: 24px 20px;
+  }
+
+  .editorial-hero-grid {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+  }
+
+  .editorial-meta-pills {
+    justify-content: center;
+  }
+
+  .editorial-metrics-ribbon {
+    justify-content: center;
+  }
+
+  .profile-module-card {
+    padding: 20px 18px;
+  }
+
+  .highlight-platforms-grid {
+    grid-template-columns: 1fr;
+  }
+}

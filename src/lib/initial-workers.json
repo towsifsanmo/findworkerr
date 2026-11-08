@@ -1,0 +1,1328 @@
+[
+  {
+    "id": "worker-1",
+    "name": "Julian Vance",
+    "trade": "Carpentry",
+    "craftTitle": "Master Joiner & Architectural Woodcraft",
+    "image": "assets/images/hero_craftsman.jpg",
+    "badge": "PRO",
+    "badgeLabel": "Pro Craftsman",
+    "rating": 4.98,
+    "reviewsCount": 312,
+    "hourlyRate": 75,
+    "location": "Central & North District",
+    "experienceYears": 16,
+    "availability": "Available Today",
+    "instantBooking": true,
+    "language": "English",
+    "email": "julian.vance@craftguild.org",
+    "phone": "+1 (555) 382-9104",
+    "website": "julianvancewoodcraft.com",
+    "bio": "Specializing in traditional mortise-and-tenon joinery, custom architectural cabinetry, walnut credenzas, and heritage wood preservation.",
+    "about": "With 16 years of guild-certified woodworking experience, Julian creates heirloom-quality architectural millwork and custom furniture for residential and boutique commercial spaces. Every piece is constructed using traditional joinery, sustainably harvested hardwoods, and natural hand-rubbed oil finishes.",
+    "skills": [
+      "Custom Cabinetry",
+      "Dovetail Joinery",
+      "Heritage Wood",
+      "Timber Framing",
+      "Acoustic Paneling",
+      "Architectural Millwork",
+      "Fine Furniture",
+      "CNC Milling"
+    ],
+    "certifications": [
+      "Guild Master Joiner (Level 4)",
+      "Historic Preservation Specialist",
+      "Zero-VOC Finishes Certified"
+    ],
+    "guarantee": "5-Year Craft Guarantee • Guild Insured ($2M)",
+    "platforms": [
+      {
+        "name": "Upwork",
+        "url": "https://www.upwork.com/freelancers/~01julianvance",
+        "icon": "upwork",
+        "badge": "Top Rated Plus"
+      },
+      {
+        "name": "LinkedIn",
+        "url": "https://www.linkedin.com/in/julian-vance-woodcraft",
+        "icon": "linkedin",
+        "badge": "Verified Pro"
+      },
+      {
+        "name": "Behance",
+        "url": "https://www.behance.net/julianvance",
+        "icon": "behance",
+        "badge": "Featured Guild"
+      },
+      {
+        "name": "Personal Website",
+        "url": "https://julianvancewoodcraft.com",
+        "icon": "web",
+        "badge": "Direct Atelier"
+      }
+    ],
+    "experience": [
+      {
+        "role": "Principal Artisan & Founder",
+        "company": "Vance Woodcraft Atelier",
+        "period": "2016 — Present (9 yrs)",
+        "description": "Design and fabrication of bespoke architectural joinery, walnut credenzas, library walls, and luxury retail installations across the metro region."
+      },
+      {
+        "role": "Senior Architectural Joiner",
+        "company": "Guild Heritage Craftsmen",
+        "period": "2011 — 2016 (5 yrs)",
+        "description": "Led historic millwork restoration teams on landmarked brownstones and luxury residential estates. Specialized in hand-cut dovetails and French polishing."
+      },
+      {
+        "role": "Apprentice Joiner",
+        "company": "Northern Timber Studios",
+        "period": "2008 — 2011 (3 yrs)",
+        "description": "Completed rigorous 3-year European guild apprenticeship in solid timber framing, wood drying, shaper tooling, and compound joinery."
+      }
+    ],
+    "services": [
+      {
+        "title": "Bespoke Custom Furniture Commissions",
+        "price": "From $1,800",
+        "description": "Complete design and hand-fabrication of solid hardwood tables, credenzas, and consoles built with heirloom joinery."
+      },
+      {
+        "title": "Architectural Millwork & Built-In Libraries",
+        "price": "$75 / hour + materials",
+        "description": "Floor-to-ceiling custom bookcases, wall paneling, fluted column details, and concealed soft-close cabinetry."
+      },
+      {
+        "title": "Historic Wood & Doorway Restoration",
+        "price": "$90 / hour",
+        "description": "Stabilization, consolidation, and faithful moulding replication for heritage Victorian and brownstone woodwork."
+      }
+    ],
+    "portfolio": [
+      {
+        "title": "Bespoke American Walnut Media Credenza",
+        "category": "Custom Furniture",
+        "year": "2025",
+        "image": "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?auto=format&fit=crop&w=800&q=80",
+        "description": "Solid American black walnut with hand-cut through-dovetails, bookmatched door fronts, concealed soft-close Blum hardware, and integrated wire channels.",
+        "tags": [
+          "Black Walnut",
+          "Dovetails",
+          "Hand Rubbed Wax"
+        ]
+      },
+      {
+        "title": "Floor-to-Ceiling White Oak Library Wall",
+        "category": "Architectural Millwork",
+        "year": "2024",
+        "image": "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
+        "description": "Modular quarter-sawn white oak library system featuring integrated warm 2700K linear LED channels, fluted column details, and custom brass rolling ladder.",
+        "tags": [
+          "White Oak",
+          "Integrated LED",
+          "Rolling Ladder"
+        ]
+      },
+      {
+        "title": "Heritage Victorian Entryway Restoration",
+        "category": "Historic Preservation",
+        "year": "2024",
+        "image": "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=800&q=80",
+        "description": "Complete stabilization and restoration of an 1890s chestnut double door, including custom moulding profiles run on vintage shapers and solid bronze weatherstripping.",
+        "tags": [
+          "Historic Chestnut",
+          "Moulding Replication",
+          "Bronze Stripping"
+        ]
+      }
+    ],
+    "reviews": [
+      {
+        "id": "rev-w1-1",
+        "author": "Eleanor Sterling",
+        "rating": 5,
+        "date": "2026-08-14",
+        "title": "Museum-grade craftsmanship on our library wall",
+        "comment": "Julian designed and built a floor-to-ceiling white oak library for our townhouse. His attention to grain selection, joinery precision, and clean installation is completely peerless. 100% recommended."
+      },
+      {
+        "id": "rev-w1-2",
+        "author": "David Vance-Cole",
+        "rating": 5,
+        "date": "2026-06-22",
+        "title": "A true master craftsman",
+        "comment": "The walnut credenza Julian delivered is the centerpiece of our home. Every single dovetail is surgical, and the hand-rubbed oil finish feels like silk. Direct communication was seamless."
+      },
+      {
+        "id": "rev-w1-3",
+        "author": "Karin Lindqvist",
+        "rating": 5,
+        "date": "2026-04-10",
+        "title": "Heritage restoration done right",
+        "comment": "Restored our historic Victorian double doors with unmatched reverence for original materials. Punctual, transparent, and exceptionally tidy."
+      }
+    ]
+  },
+  {
+    "id": "worker-2",
+    "name": "Elena Ramos",
+    "trade": "Electrical",
+    "craftTitle": "Licensed Master Electrician & Solar/EV",
+    "image": "assets/images/worker_electrician.jpg",
+    "badge": "PRO",
+    "badgeLabel": "Pro Craftsman",
+    "rating": 4.96,
+    "reviewsCount": 248,
+    "hourlyRate": 85,
+    "location": "Metro Area & West End",
+    "experienceYears": 12,
+    "availability": "Available Today",
+    "instantBooking": true,
+    "language": "English",
+    "email": "elena.ramos@voltpro.tech",
+    "phone": "+1 (555) 492-7218",
+    "website": "ramos-electrical.com",
+    "bio": "Certified master electrician handling architectural lighting design, 200A panel conversions, EV wallboxes, and residential smart automation.",
+    "about": "Elena holds dual Master Electrician licensing with over a decade of high-end residential experience. She specializes in future-proofing electrical infrastructure with clean conduit work, high-output EV charging stations, and invisible smart home lighting architecture.",
+    "skills": [
+      "Panel Upgrades",
+      "EV Wallboxes",
+      "Architectural Lighting",
+      "Fault Diagnostics",
+      "Lutron Automation",
+      "Clean Energy Backup",
+      "Code Compliance"
+    ],
+    "certifications": [
+      "State Master Electrician #ME-84920",
+      "Tesla Certified Installer",
+      "NABCEP Solar PV Associate"
+    ],
+    "guarantee": "Licensed & $2M Insured • Full Code Compliance",
+    "platforms": [
+      {
+        "name": "Upwork",
+        "url": "https://www.upwork.com/freelancers/~01elenaramos",
+        "icon": "upwork",
+        "badge": "Top Rated Plus"
+      },
+      {
+        "name": "LinkedIn",
+        "url": "https://www.linkedin.com/in/elena-ramos-electrical",
+        "icon": "linkedin",
+        "badge": "Verified Master"
+      },
+      {
+        "name": "Personal Website",
+        "url": "https://ramos-electrical.com",
+        "icon": "web",
+        "badge": "Direct Practice"
+      }
+    ],
+    "experience": [
+      {
+        "role": "Master Electrician & Principal",
+        "company": "VoltPro Electrical Engineering",
+        "period": "2018 — Present (7 yrs)",
+        "description": "Specializing in residential 200A upgrades, dual EV wallbox infrastructure, whole-home battery backup, and Lutron lighting design."
+      },
+      {
+        "role": "Lead Commercial Electrician",
+        "company": "Apex Metro Grid Solutions",
+        "period": "2013 — 2018 (5 yrs)",
+        "description": "Supervised architectural low-voltage track lighting, subpanel load balancing, and municipal inspection approvals for premier boutique commercial spaces."
+      }
+    ],
+    "services": [
+      {
+        "title": "200A Smart Main Service Panel Upgrade",
+        "price": "From $2,400",
+        "description": "Complete service entrance replacement with smart breaker monitoring, whole-home surge protection, and municipal permits."
+      },
+      {
+        "title": "Dual EV Charging Station Installation",
+        "price": "$750 + equipment",
+        "description": "Dedicated 60A circuit run with sleek exposed or concealed conduit, load shedder configuration, and warranty signoff."
+      },
+      {
+        "title": "Architectural Lutron Lighting Automation",
+        "price": "$85 / hour",
+        "description": "Museum-grade 95+ CRI warm dimming, magnetic low-voltage tracks, and 5-zone scene automation."
+      }
+    ],
+    "portfolio": [
+      {
+        "title": "Residential 200A Smart Panel & Tesla Wallbox",
+        "category": "EV & Infrastructure",
+        "year": "2025",
+        "image": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80",
+        "description": "Complete 200A service upgrade featuring square-D smart breakers, whole-home surge suppression, and dual 48A hardwired EV charging stations with neat conduit architecture.",
+        "tags": [
+          "200A Service",
+          "Tesla Wallbox",
+          "Surge Protection"
+        ]
+      },
+      {
+        "title": "Architectural Minimalist Loft Lighting",
+        "category": "Lighting Design",
+        "year": "2024",
+        "image": "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80",
+        "description": "Recessed magnetic low-voltage track lighting system with 5-zone Lutron Caséta automation and museum-grade 95+ CRI warm dimming fixtures.",
+        "tags": [
+          "Magnetic Track",
+          "Lutron Caséta",
+          "95+ CRI"
+        ]
+      }
+    ],
+    "reviews": [
+      {
+        "id": "rev-w2-1",
+        "author": "Patrick O'Shea",
+        "rating": 5,
+        "date": "2026-07-29",
+        "title": "Conduit work that looks like modern art",
+        "comment": "Elena upgraded our 100A service to a 200A smart panel and installed dual Level 2 EV chargers. Her conduit bends are mathematically perfect, passed city inspection in 5 minutes."
+      },
+      {
+        "id": "rev-w2-2",
+        "author": "Sophia Chen",
+        "rating": 5,
+        "date": "2026-05-18",
+        "title": "Fast, knowledgeable, and honest",
+        "comment": "Diagnosed a multi-circuit grounding fault that two other electricians could not locate. Fixed within 2 hours. Elena is now our go-to professional."
+      }
+    ]
+  },
+  {
+    "id": "worker-3",
+    "name": "Arthur Berits",
+    "trade": "Plumbing",
+    "craftTitle": "Precision Copper & Radiant Hydronic Specialist",
+    "image": "assets/images/worker_plumber.jpg",
+    "badge": "L3",
+    "badgeLabel": "Level 3 Guild Master",
+    "rating": 4.94,
+    "reviewsCount": 189,
+    "hourlyRate": 80,
+    "location": "Southside & Downtown",
+    "experienceYears": 19,
+    "availability": "Available Tomorrow",
+    "instantBooking": false,
+    "language": "German & English",
+    "email": "arthur.berits@beritshydronic.de",
+    "phone": "+1 (555) 601-3829",
+    "website": "berits-copperworks.com",
+    "bio": "Expert in European copper pipework, brass fittings, luxury bathroom rough-ins, tankless water heating systems, and hydronic radiant floors.",
+    "about": "Trained under European master guild standards, Arthur brings 19 years of precision mechanical craftsmanship to copper soldering, radiant hydronic floor manifolds, and acoustic isolation plumbing for luxury architectural renovations.",
+    "skills": [
+      "Copper Pipework",
+      "Hydronic Radiant",
+      "Luxury Fixtures",
+      "Gas Lines",
+      "Acoustic Drainage",
+      "Tankless Water Heating",
+      "Pressure Testing"
+    ],
+    "certifications": [
+      "Master Plumber License #MP-4109",
+      "Rinnai & Navien Elite Specialist",
+      "Radiant Panel Association Fellow"
+    ],
+    "guarantee": "Master Guild Certified • Leak-Free Seal Guarantee",
+    "platforms": [
+      {
+        "name": "Upwork",
+        "url": "https://www.upwork.com/freelancers/~01arthurberits",
+        "icon": "upwork",
+        "badge": "Top Rated"
+      },
+      {
+        "name": "LinkedIn",
+        "url": "https://www.linkedin.com/in/arthur-berits-hydronic",
+        "icon": "linkedin",
+        "badge": "Guild Member"
+      },
+      {
+        "name": "Personal Website",
+        "url": "https://berits-copperworks.com",
+        "icon": "web",
+        "badge": "Direct Studio"
+      }
+    ],
+    "experience": [
+      {
+        "role": "Master Hydronics Engineer",
+        "company": "Berits Radiant Mechanical",
+        "period": "2010 — Present (15 yrs)",
+        "description": "Specializing in residential multi-zone hydronic heating systems, acoustic cast iron drainage, and exposed decorative brass bathroom plumbing."
+      },
+      {
+        "role": "Journeyman Plumber",
+        "company": "Munich Guild Mechanicals",
+        "period": "2005 — 2010 (5 yrs)",
+        "description": "High-precision German copper and stainless pipefitting, hot-water recirculating loops, and luxury bathroom architecture."
+      }
+    ],
+    "services": [
+      {
+        "title": "Hydronic Floor Heating System Installation",
+        "price": "From $4,500",
+        "description": "Stainless steel distribution manifold, oxygen-barrier PEX/copper runs, and digital zone temperature balancing."
+      },
+      {
+        "title": "High-Efficiency Dual Tankless Water Heater Array",
+        "price": "$2,800 + equipment",
+        "description": "Continuous on-demand hot water plumbed with rigid copper headers, smart recirculating pump, and descaler."
+      }
+    ],
+    "portfolio": [
+      {
+        "title": "Custom Hydronic Floor Heating Installation",
+        "category": "Radiant Systems",
+        "year": "2025",
+        "image": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80",
+        "description": "6-zone whole-home hydronic floor heating installation with stainless steel distribution manifolds, oxygen-barrier tubing, and smart digital thermostats.",
+        "tags": [
+          "Hydronic Radiant",
+          "Stainless Manifold",
+          "Smart Zoning"
+        ]
+      }
+    ],
+    "reviews": [
+      {
+        "id": "rev-w3-1",
+        "author": "Hans Richter",
+        "rating": 5,
+        "date": "2026-08-01",
+        "title": "European standard mechanical perfection",
+        "comment": "Arthur installed a 6-zone radiant floor heating system. His copper work is immaculate. Silent operation, perfectly balanced, and finished ahead of schedule."
+      }
+    ]
+  },
+  {
+    "id": "worker-9",
+    "name": "Kieran Vance",
+    "trade": "AI Development",
+    "craftTitle": "Principal AI Architect & LLM Engineer",
+    "image": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=600&q=85",
+    "badge": "PRO",
+    "badgeLabel": "Top 1% Pro",
+    "rating": 4.99,
+    "reviewsCount": 284,
+    "hourlyRate": 110,
+    "location": "San Francisco, CA & Remote",
+    "experienceYears": 11,
+    "availability": "Available Next Week",
+    "instantBooking": true,
+    "language": "English",
+    "email": "kieran@vance-ai.io",
+    "phone": "+1 (555) 714-9921",
+    "website": "vance-ai.io",
+    "bio": "Enterprise agentic workflows, fine-tuned domain models, and high-throughput LLM architectures.",
+    "about": "Kieran designs resilient AI infrastructure and autonomous agentic pipelines for high-growth tech companies and research labs. He focuses on production RAG, deterministic evaluation suites, and cost-optimized inference.",
+    "skills": [
+      "PyTorch",
+      "LLM Fine-Tuning",
+      "LangChain",
+      "RAG Architecture",
+      "Vector Databases",
+      "Python",
+      "FastAPI",
+      "Agentic Workflows"
+    ],
+    "certifications": [
+      "DeepLearning.AI Fellow",
+      "AWS Certified Machine Learning Specialty",
+      "NVIDIA DLI Ambassador"
+    ],
+    "guarantee": "Deterministic Evaluation • High-Throughput SLA",
+    "platforms": [
+      {
+        "name": "Upwork",
+        "url": "https://www.upwork.com/freelancers/~01kieranvance",
+        "icon": "upwork",
+        "badge": "Top Rated Plus"
+      },
+      {
+        "name": "GitHub",
+        "url": "https://github.com/kieranvance",
+        "icon": "github",
+        "badge": "1.4k Stars"
+      },
+      {
+        "name": "LinkedIn",
+        "url": "https://www.linkedin.com/in/kieranvance-ai",
+        "icon": "linkedin",
+        "badge": "Verified"
+      },
+      {
+        "name": "Personal Website",
+        "url": "https://vance-ai.io",
+        "icon": "web",
+        "badge": "Direct Practice"
+      }
+    ],
+    "experience": [
+      {
+        "role": "Principal AI Consultant",
+        "company": "Vance AI Research",
+        "period": "2021 — Present (4 yrs)",
+        "description": "Advising Series A-C AI startups on multi-agent architectures, fine-tuning Llama-3/Mistral on proprietary datasets, and latency reduction."
+      },
+      {
+        "role": "Senior Machine Learning Engineer",
+        "company": "Cognitive Matrix Labs",
+        "period": "2017 — 2021 (4 yrs)",
+        "description": "Engineered embedding pipelines, search vector indexes, and transformer model deployment servicing 40M API calls/day."
+      }
+    ],
+    "services": [
+      {
+        "title": "Enterprise Multi-Agent Pipeline Architecture",
+        "price": "From $4,500",
+        "description": "Production-ready LangGraph/AutoGPT system with deterministic tool verification, fallback strategies, and tracing."
+      },
+      {
+        "title": "Fine-Tuning & Quantized Deployment",
+        "price": "$110 / hour",
+        "description": "QLoRA fine-tuning on custom domain corpora, vLLM acceleration, and sub-15ms time-to-first-token optimization."
+      }
+    ],
+    "portfolio": [
+      {
+        "title": "Autonomous Multi-Agent Enterprise Pipeline",
+        "category": "AI Architecture",
+        "year": "2025",
+        "image": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=900&q=85",
+        "description": "Distributed multi-agent pipeline processing 2M financial documents daily with RAG verification and zero hallucination risk.",
+        "tags": [
+          "RAG",
+          "LangChain",
+          "Python"
+        ]
+      }
+    ],
+    "reviews": [
+      {
+        "id": "rev-w9-1",
+        "author": "Dr. Gregory Hall",
+        "rating": 5,
+        "date": "2026-08-20",
+        "title": "Turned a research prototype into enterprise reality",
+        "comment": "Kieran built our agentic document validation system from scratch. His understanding of vector similarity, hallucination guardrails, and model quantization is second to none."
+      },
+      {
+        "id": "rev-w9-2",
+        "author": "Melissa Wu",
+        "rating": 5,
+        "date": "2026-07-04",
+        "title": "Reduced inference costs by 68%",
+        "comment": "Kieran audited our OpenAI API usage and re-architected the pipeline with open-source fine-tuned models on vLLM. Saved us thousands per month."
+      }
+    ]
+  },
+  {
+    "id": "worker-10",
+    "name": "Aria Lindqvist",
+    "trade": "3D & WebGL",
+    "craftTitle": "Creative Technologist & Interactive 3D Director",
+    "image": "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=85",
+    "badge": "PRO",
+    "badgeLabel": "Top 1% Pro",
+    "rating": 4.97,
+    "reviewsCount": 196,
+    "hourlyRate": 95,
+    "location": "Stockholm, SE & Remote",
+    "experienceYears": 9,
+    "availability": "Available Today",
+    "instantBooking": true,
+    "language": "Swedish & English",
+    "email": "aria@lindqvist-spatial.studio",
+    "phone": "+46 (8) 492-810",
+    "website": "lindqvist-spatial.studio",
+    "bio": "Crafting performant WebGL visual experiences, kinetic spatial worlds, and custom GLSL shaders.",
+    "about": "Aria blends cinematic 3D direction with browser performance engineering to create visceral web experiences for luxury fashion, automotive, and digital architecture brands.",
+    "skills": [
+      "Three.js",
+      "WebGL",
+      "GLSL Shaders",
+      "Blender",
+      "WebGPU",
+      "Creative Coding",
+      "GSAP",
+      "React Three Fiber"
+    ],
+    "certifications": [
+      "Awwwards Site of the Year Winner",
+      "FWA of the Day Judge",
+      "Three.js Journey Fellow"
+    ],
+    "guarantee": "60fps GPU Performance • Cross-Device Support",
+    "platforms": [
+      {
+        "name": "Upwork",
+        "url": "https://www.upwork.com/freelancers/~01arialindqvist",
+        "icon": "upwork",
+        "badge": "Top Rated Plus"
+      },
+      {
+        "name": "GitHub",
+        "url": "https://github.com/arialindqvist",
+        "icon": "github",
+        "badge": "WebGPU Core"
+      },
+      {
+        "name": "Behance",
+        "url": "https://www.behance.net/arialindqvist",
+        "icon": "behance",
+        "badge": "Curated 3D"
+      },
+      {
+        "name": "LinkedIn",
+        "url": "https://www.linkedin.com/in/aria-lindqvist-spatial",
+        "icon": "linkedin",
+        "badge": "Verified"
+      }
+    ],
+    "experience": [
+      {
+        "role": "Independent Creative Director",
+        "company": "Spatial Web Studio Stockholm",
+        "period": "2020 — Present (5 yrs)",
+        "description": "Delivering bespoke WebGL microsites and virtual showrooms for high-profile Scandinavian brands."
+      }
+    ],
+    "services": [
+      {
+        "title": "Custom WebGL Interactive Experience",
+        "price": "From $3,800",
+        "description": "Full Three.js/WebGPU interactive 3D scene with custom shader effects, responsive mobile fallback, and 60fps optimization."
+      }
+    ],
+    "portfolio": [
+      {
+        "title": "Kinetic Spatial Exhibition",
+        "category": "Interactive 3D",
+        "year": "2025",
+        "image": "https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&w=900&q=85",
+        "description": "Browser-based 3D digital museum environment optimized for desktop and mobile Safari.",
+        "tags": [
+          "Three.js",
+          "GLSL",
+          "Blender"
+        ]
+      }
+    ],
+    "reviews": [
+      {
+        "id": "rev-w10-1",
+        "author": "Lars Nyström",
+        "rating": 5,
+        "date": "2026-08-11",
+        "title": "Flawless 60fps on mobile",
+        "comment": "Aria delivered a Three.js interactive product customizer that loads instantly and runs butter-smooth even on low-end iPhones. Outstanding artistry."
+      }
+    ]
+  },
+  {
+    "id": "worker-11",
+    "name": "Marcus Sterling",
+    "trade": "Fractional Leadership",
+    "craftTitle": "Fractional Chief Technology Officer (CTO)",
+    "image": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=600&q=85",
+    "badge": "L3",
+    "badgeLabel": "Executive Advisor",
+    "rating": 4.98,
+    "reviewsCount": 162,
+    "hourlyRate": 130,
+    "location": "London, UK & Remote",
+    "experienceYears": 18,
+    "availability": "Available This Month",
+    "instantBooking": false,
+    "language": "English",
+    "email": "marcus@sterlingadvisory.co.uk",
+    "phone": "+44 20 7946 0912",
+    "website": "sterlingadvisory.co.uk",
+    "bio": "Guiding Series A-C founders on architecture, technical roadmap, security audits, and team scaling.",
+    "about": "Former Tier-1 VP of Engineering helping funded startups avoid tech debt, scale infrastructure, and pass enterprise SOC-2 audits without full-time C-suite overhead.",
+    "skills": [
+      "Cloud Architecture",
+      "SOC-2 Compliance",
+      "DevOps Scaling",
+      "Engineering Leadership",
+      "Security",
+      "Kubernetes",
+      "Hiring Frameworks"
+    ],
+    "certifications": [
+      "AWS Solutions Architect Professional",
+      "CISSP Security Professional",
+      "Google Cloud Fellow"
+    ],
+    "guarantee": "Executive Roadmap Delivery • Direct Founder Advisory",
+    "platforms": [
+      {
+        "name": "Upwork",
+        "url": "https://www.upwork.com/freelancers/~01marcussterling",
+        "icon": "upwork",
+        "badge": "Top Rated Plus"
+      },
+      {
+        "name": "LinkedIn",
+        "url": "https://www.linkedin.com/in/marcus-sterling-cto",
+        "icon": "linkedin",
+        "badge": "Thought Leader"
+      },
+      {
+        "name": "Personal Website",
+        "url": "https://sterlingadvisory.co.uk",
+        "icon": "web",
+        "badge": "Advisory Office"
+      }
+    ],
+    "experience": [
+      {
+        "role": "Fractional CTO & Strategic Advisor",
+        "company": "Sterling Advisory Partners",
+        "period": "2019 — Present (6 yrs)",
+        "description": "Guided 14 fintech and healthtech startups through Series A and B technical diligence, saving over $3M in premature cloud overhead."
+      }
+    ],
+    "services": [
+      {
+        "title": "Fractional CTO Retainer (10 hrs/month)",
+        "price": "$2,200 / month",
+        "description": "Weekly architecture syncs, vendor negotiation, technical roadmap audit, and key engineering hiring interviews."
+      }
+    ],
+    "portfolio": [
+      {
+        "title": "Global Banking Core Cloud Migration",
+        "category": "Systems Architecture",
+        "year": "2025",
+        "image": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=85",
+        "description": "Zero-downtime microservices re-architecture servicing 14M daily transactions.",
+        "tags": [
+          "Kubernetes",
+          "Cloud",
+          "Fintech"
+        ]
+      }
+    ],
+    "reviews": [
+      {
+        "id": "rev-w11-1",
+        "author": "Charlotte Briggs",
+        "rating": 5,
+        "date": "2026-07-15",
+        "title": "Invaluable technical guidance for our Series A",
+        "comment": "Marcus identified 3 critical security bottlenecks before our audit and restructured our cloud bills, saving us 40%. A true executive mentor."
+      }
+    ]
+  },
+  {
+    "id": "worker-12",
+    "name": "Zahra Morales",
+    "trade": "Brand Strategy",
+    "craftTitle": "Luxury Creative Director & Identity Strategist",
+    "image": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=85",
+    "badge": "PRO",
+    "badgeLabel": "Top 1% Pro",
+    "rating": 4.96,
+    "reviewsCount": 215,
+    "hourlyRate": 105,
+    "location": "Zurich, CH & Milan",
+    "experienceYears": 14,
+    "availability": "Available Tomorrow",
+    "instantBooking": true,
+    "language": "English & Italian",
+    "email": "zahra@moralesatelier.ch",
+    "phone": "+41 44 219 8830",
+    "website": "moralesatelier.ch",
+    "bio": "Bespoke identity systems, editorial typography, and creative direction for high-craft luxury brands.",
+    "about": "Zahra brings Swiss typographic rigor and Italian aesthetic warmth to architectural and luxury branding.",
+    "skills": [
+      "Brand Identity",
+      "Art Direction",
+      "Typography",
+      "Luxury Packaging",
+      "Campaigns",
+      "Print Production",
+      "Figma"
+    ],
+    "certifications": [
+      "D&AD Yellow Pencil Winner",
+      "Art Directors Club Gold",
+      "Swiss Design Award Fellow"
+    ],
+    "guarantee": "Comprehensive Brand Architecture & Production Handoff",
+    "platforms": [
+      {
+        "name": "Behance",
+        "url": "https://www.behance.net/zahramorales",
+        "icon": "behance",
+        "badge": "Editorial Select"
+      },
+      {
+        "name": "Dribbble",
+        "url": "https://dribbble.com/zahramorales",
+        "icon": "dribbble",
+        "badge": "Pro Creative"
+      },
+      {
+        "name": "LinkedIn",
+        "url": "https://www.linkedin.com/in/zahramorales",
+        "icon": "linkedin",
+        "badge": "Verified"
+      },
+      {
+        "name": "Personal Website",
+        "url": "https://moralesatelier.ch",
+        "icon": "web",
+        "badge": "Studio"
+      }
+    ],
+    "experience": [
+      {
+        "role": "Creative Director",
+        "company": "Morales Atelier Zurich",
+        "period": "2016 — Present (9 yrs)",
+        "description": "Comprehensive brand creation for luxury hospitality, watchmakers, and boutique architectural firms."
+      }
+    ],
+    "services": [
+      {
+        "title": "Complete Luxury Brand Identity Suite",
+        "price": "From $4,200",
+        "description": "Brand positioning, custom logomark, typographic hierarchy, stationery suite, and comprehensive brand guidelines manual."
+      }
+    ],
+    "portfolio": [
+      {
+        "title": "Haute Horlogerie Heritage Identity",
+        "category": "Luxury Identity",
+        "year": "2025",
+        "image": "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=900&q=85",
+        "description": "Complete brand positioning, bespoke typeface, and tactile packaging for an independent Swiss watchmaker.",
+        "tags": [
+          "Identity",
+          "Typography",
+          "Luxury"
+        ]
+      }
+    ],
+    "reviews": [
+      {
+        "id": "rev-w12-1",
+        "author": "Matteo Bellini",
+        "rating": 5,
+        "date": "2026-06-30",
+        "title": "Exquisite aesthetic sensitivity",
+        "comment": "Zahra transformed our boutique hotel identity into something deeply memorable and sophisticated. Her typographic craft is second to none."
+      }
+    ]
+  },
+  {
+    "id": "worker-13",
+    "name": "Liam O'Connor",
+    "trade": "Web Development",
+    "craftTitle": "Fullstack Rust & Next.js Performance Architect",
+    "image": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=600&q=85",
+    "badge": "PRO",
+    "badgeLabel": "Top 1% Pro",
+    "rating": 4.95,
+    "reviewsCount": 188,
+    "hourlyRate": 90,
+    "location": "Dublin, IE & Remote",
+    "experienceYears": 8,
+    "availability": "Available Today",
+    "instantBooking": true,
+    "language": "English",
+    "email": "liam@oconnorengineering.dev",
+    "phone": "+353 1 496 0234",
+    "website": "oconnorengineering.dev",
+    "bio": "High-throughput web applications with sub-millisecond API response times and flawless TypeScript safety.",
+    "about": "Liam specializes in web performance engineering, compiling Rust to WebAssembly for heavy client-side computations and architecting high-scale Next.js platforms.",
+    "skills": [
+      "Rust",
+      "TypeScript",
+      "Next.js",
+      "WebAssembly",
+      "PostgreSQL",
+      "Tailwind",
+      "Docker",
+      "GraphQL"
+    ],
+    "certifications": [
+      "Rust Foundation Certified Developer",
+      "Vercel Certified Partner",
+      "Performance Web Guild Fellow"
+    ],
+    "guarantee": "100 Core Web Vitals • Zero-Leak Memory Safety",
+    "platforms": [
+      {
+        "name": "GitHub",
+        "url": "https://github.com/liamoconnor",
+        "icon": "github",
+        "badge": "Top Contributor"
+      },
+      {
+        "name": "Upwork",
+        "url": "https://www.upwork.com/freelancers/~01liamoconnor",
+        "icon": "upwork",
+        "badge": "Top Rated Plus"
+      },
+      {
+        "name": "LinkedIn",
+        "url": "https://www.linkedin.com/in/liam-oconnor-dev",
+        "icon": "linkedin",
+        "badge": "Verified"
+      },
+      {
+        "name": "Personal Website",
+        "url": "https://oconnorengineering.dev",
+        "icon": "web",
+        "badge": "Direct Practice"
+      }
+    ],
+    "experience": [
+      {
+        "role": "Lead Performance Architect",
+        "company": "O'Connor Systems",
+        "period": "2020 — Present (5 yrs)",
+        "description": "Consulting for fintech and SaaS platforms requiring high-frequency calculations and ultra-low latency browser applications."
+      }
+    ],
+    "services": [
+      {
+        "title": "Fullstack Next.js + Wasm Platform Build",
+        "price": "From $3,500",
+        "description": "End-to-end web app with perfect 100 Core Web Vitals, SSR caching, and type-safe database integration."
+      }
+    ],
+    "portfolio": [
+      {
+        "title": "Sub-Millisecond Financial Execution Terminal",
+        "category": "Web Performance",
+        "year": "2025",
+        "image": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=900&q=85",
+        "description": "Next.js 15 interface coupled with WebAssembly Rust engine rendering 100k data points at 60fps.",
+        "tags": [
+          "Rust",
+          "Next.js",
+          "Wasm"
+        ]
+      }
+    ],
+    "reviews": [
+      {
+        "id": "rev-w13-1",
+        "author": "Conor Kelly",
+        "rating": 5,
+        "date": "2026-08-05",
+        "title": "Lightning speed and clean TypeScript",
+        "comment": "Liam rebuilt our customer dashboard. Loading times went from 4.2 seconds down to 310ms. Code quality is immaculate."
+      }
+    ]
+  },
+  {
+    "id": "worker-14",
+    "name": "Camille Dupont",
+    "trade": "UI/UX Design",
+    "craftTitle": "Design Systems Architect & Principal Interaction Designer",
+    "image": "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=600&q=85",
+    "badge": "PRO",
+    "badgeLabel": "Top 1% Pro",
+    "rating": 4.98,
+    "reviewsCount": 240,
+    "hourlyRate": 95,
+    "location": "Paris, FR & Remote",
+    "experienceYears": 10,
+    "availability": "Available Today",
+    "instantBooking": true,
+    "language": "French & English",
+    "email": "camille@dupontsystems.fr",
+    "phone": "+33 1 42 68 55 10",
+    "website": "dupontsystems.fr",
+    "bio": "Scalable multi-brand Figma tokens, accessible components, and micro-interaction specifications.",
+    "about": "Camille has built design systems powering products used by over 40 million global users with strict WCAG AAA compliance and seamless developer handoff.",
+    "skills": [
+      "Figma Variables",
+      "Design Tokens",
+      "Micro-Interactions",
+      "WCAG AAA",
+      "User Testing",
+      "Prototyping",
+      "Design Ops"
+    ],
+    "certifications": [
+      "Certified Design Systems Leader",
+      "NN/g Master UX Certification",
+      "W3C Accessibility Specialist"
+    ],
+    "guarantee": "Production-Ready Figma Variables & Token JSON Sync",
+    "platforms": [
+      {
+        "name": "Figma Community",
+        "url": "https://www.figma.com/@camilledupont",
+        "icon": "figma",
+        "badge": "15k Duplicates"
+      },
+      {
+        "name": "Dribbble",
+        "url": "https://dribbble.com/camilledupont",
+        "icon": "dribbble",
+        "badge": "Pro"
+      },
+      {
+        "name": "LinkedIn",
+        "url": "https://www.linkedin.com/in/camille-dupont-ux",
+        "icon": "linkedin",
+        "badge": "Verified"
+      },
+      {
+        "name": "Personal Website",
+        "url": "https://dupontsystems.fr",
+        "icon": "web",
+        "badge": "Direct Studio"
+      }
+    ],
+    "experience": [
+      {
+        "role": "Principal Design System Consultant",
+        "company": "Dupont Systems Paris",
+        "period": "2019 — Present (6 yrs)",
+        "description": "Building multi-brand token frameworks and component architecture for European enterprise scale."
+      }
+    ],
+    "services": [
+      {
+        "title": "Comprehensive Figma Design System Sprint",
+        "price": "From $3,200",
+        "description": "Custom token architecture (colors, typography, spacing, elevations), accessible atomic components, and code token export."
+      }
+    ],
+    "portfolio": [
+      {
+        "title": "Enterprise Global Design System",
+        "category": "Design Systems",
+        "year": "2025",
+        "image": "https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?auto=format&fit=crop&w=900&q=85",
+        "description": "Unified component library with semantic color modes, automatic dark mode, and React code sync.",
+        "tags": [
+          "Design Tokens",
+          "Figma",
+          "System"
+        ]
+      }
+    ],
+    "reviews": [
+      {
+        "id": "rev-w14-1",
+        "author": "Antoine Laurent",
+        "rating": 5,
+        "date": "2026-07-19",
+        "title": "Transformed our engineering and design velocity",
+        "comment": "Camille unified 4 fragmented product teams under a single tokenized system. Our sprint cycle times dropped by 35% within 2 months."
+      }
+    ]
+  },
+  {
+    "id": "worker-15",
+    "name": "Devon Brooks",
+    "trade": "Cybersecurity",
+    "craftTitle": "Smart Contract Security Auditor & Web3 Engineer",
+    "image": "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&w=600&q=85",
+    "badge": "PRO",
+    "badgeLabel": "Top 1% Pro",
+    "rating": 4.99,
+    "reviewsCount": 147,
+    "hourlyRate": 120,
+    "location": "Austin, TX & Remote",
+    "experienceYears": 12,
+    "availability": "Available Next Week",
+    "instantBooking": false,
+    "language": "English",
+    "email": "devon@brooks-security.io",
+    "phone": "+1 (555) 839-2041",
+    "website": "brooks-security.io",
+    "bio": "Protocol security audits, invariant fuzzing, EVM formal verification, and penetration testing.",
+    "about": "Devon has audited over $800M in on-chain assets with zero post-audit security incidents.",
+    "skills": [
+      "Solidity",
+      "Foundry",
+      "Fuzz Testing",
+      "Security Audits",
+      "EVM Mechanics",
+      "Zero-Knowledge",
+      "Python"
+    ],
+    "certifications": [
+      "Certified Smart Contract Auditor",
+      "OSCP Penetration Tester",
+      "Stanford Cryptography Alum"
+    ],
+    "guarantee": "Comprehensive Vulnerability Report & Mitigation Signoff",
+    "platforms": [
+      {
+        "name": "GitHub",
+        "url": "https://github.com/devonbrooks",
+        "icon": "github",
+        "badge": "Top Auditor"
+      },
+      {
+        "name": "Upwork",
+        "url": "https://www.upwork.com/freelancers/~01devonbrooks",
+        "icon": "upwork",
+        "badge": "Top Rated Plus"
+      },
+      {
+        "name": "LinkedIn",
+        "url": "https://www.linkedin.com/in/devon-brooks-security",
+        "icon": "linkedin",
+        "badge": "Verified"
+      }
+    ],
+    "experience": [
+      {
+        "role": "Lead Security Auditor",
+        "company": "Brooks Security Audits",
+        "period": "2019 — Present (6 yrs)",
+        "description": "Conducting comprehensive threat modeling and bytecode-level audits for DeFi protocols."
+      }
+    ],
+    "services": [
+      {
+        "title": "Smart Contract Full Security Audit",
+        "price": "From $4,000",
+        "description": "Line-by-line manual audit, Echidna/Foundry fuzzing suite, and executive mitigation report."
+      }
+    ],
+    "portfolio": [
+      {
+        "title": "Decentralized Lending Protocol Security Audit",
+        "category": "Security & Web3",
+        "year": "2025",
+        "image": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=900&q=85",
+        "description": "End-to-end formal verification and fuzzing suite identifying 4 critical economic reentrancy vectors.",
+        "tags": [
+          "Solidity",
+          "Foundry",
+          "Audit"
+        ]
+      }
+    ],
+    "reviews": [
+      {
+        "id": "rev-w15-1",
+        "author": "Siddharth Patel",
+        "rating": 5,
+        "date": "2026-08-02",
+        "title": "Caught a critical logic flaw before mainnet",
+        "comment": "Devon spent 8 days auditing our staking logic and discovered a subtle reentrancy vector that would have cost us millions. Worth every single penny."
+      }
+    ]
+  },
+  {
+    "id": "worker-16",
+    "name": "Hina Takahashi",
+    "trade": "Motion Design",
+    "craftTitle": "Sound & Sonic Brand Architect",
+    "image": "https://images.unsplash.com/photo-1525130413817-d45c1d127c42?auto=format&fit=crop&w=600&q=85",
+    "badge": "PRO",
+    "badgeLabel": "Top 1% Pro",
+    "rating": 4.94,
+    "reviewsCount": 172,
+    "hourlyRate": 85,
+    "location": "Tokyo, JP & Remote",
+    "experienceYears": 7,
+    "availability": "Available Tomorrow",
+    "instantBooking": true,
+    "language": "Japanese & English",
+    "email": "hina@takahashi-sound.jp",
+    "phone": "+81 3 5555 0142",
+    "website": "takahashi-sound.jp",
+    "bio": "Bespoke product sound design, interface earcons, spatial audio identity, and audio branding.",
+    "about": "Hina creates emotional sound identities that make digital interactions satisfying, intuitive, and unforgettable for apps, operating systems, and automotive cockpits.",
+    "skills": [
+      "Spatial Audio",
+      "Dolby Atmos",
+      "Sonic Branding",
+      "Interface UI Sounds",
+      "Logic Pro",
+      "FMOD",
+      "Synthesizers"
+    ],
+    "certifications": [
+      "AES Professional Member",
+      "Berklee Sound Design Specialist",
+      "Tokyo Audio Guild Fellow"
+    ],
+    "guarantee": "Universal Format Audio Suite & Spatial Stems",
+    "platforms": [
+      {
+        "name": "Behance",
+        "url": "https://www.behance.net/hinatakahashi",
+        "icon": "behance",
+        "badge": "Audio Featured"
+      },
+      {
+        "name": "LinkedIn",
+        "url": "https://www.linkedin.com/in/hina-takahashi-sound",
+        "icon": "linkedin",
+        "badge": "Verified"
+      },
+      {
+        "name": "Personal Website",
+        "url": "https://takahashi-sound.jp",
+        "icon": "web",
+        "badge": "Studio"
+      }
+    ],
+    "experience": [
+      {
+        "role": "Founder & Sonic Director",
+        "company": "Takahashi Sound Lab Tokyo",
+        "period": "2020 — Present (5 yrs)",
+        "description": "Producing interface audio suites and brand audio logos for international consumer tech clients."
+      }
+    ],
+    "services": [
+      {
+        "title": "Digital Product UI Sound Package",
+        "price": "From $1,900",
+        "description": "Set of 12 bespoke haptic-aligned interaction earcons (taps, confirms, alerts, toggles) provided in lossless audio stems."
+      }
+    ],
+    "portfolio": [
+      {
+        "title": "Autonomous EV Cockpit Sonic Architecture",
+        "category": "Sonic Identity",
+        "year": "2025",
+        "image": "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=900&q=85",
+        "description": "Complete auditory suite for electric vehicle HMI, including subtle feedback earcons and drive chimes.",
+        "tags": [
+          "Sonic Brand",
+          "Spatial",
+          "Audio"
+        ]
+      }
+    ],
+    "reviews": [
+      {
+        "id": "rev-w16-1",
+        "author": "Kenji Sato",
+        "rating": 5,
+        "date": "2026-07-22",
+        "title": "Made our mobile app feel premium and organic",
+        "comment": "Hina designed 14 custom interaction sounds for our fintech app. Users regularly tweet praise about how satisfying the app feels to use."
+      }
+    ]
+  },
+  {
+    "id": "worker-17",
+    "name": "Soren Lindemann",
+    "trade": "Industrial Design",
+    "craftTitle": "Hardware & Ergonomic Product Designer",
+    "image": "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=600&q=85",
+    "badge": "PRO",
+    "badgeLabel": "Top 1% Pro",
+    "rating": 4.96,
+    "reviewsCount": 153,
+    "hourlyRate": 100,
+    "location": "Copenhagen, DK & Remote",
+    "experienceYears": 13,
+    "availability": "Available Next Week",
+    "instantBooking": true,
+    "language": "Danish & English",
+    "email": "soren@lindemann-id.dk",
+    "phone": "+45 33 12 49 80",
+    "website": "lindemann-id.dk",
+    "bio": "Consumer electronics enclosure design, DFM optimization, precision CAD surfacing, and ergonomic modeling.",
+    "about": "Soren bridges functional Scandinavian minimalism with strict Design For Manufacturing (DFM) reality for consumer electronics and medical devices.",
+    "skills": [
+      "SolidWorks",
+      "Rhino 3D",
+      "Keyshot",
+      "DFM / Tooling",
+      "Ergonomics",
+      "Rapid Prototyping",
+      "CMF Specification"
+    ],
+    "certifications": [
+      "Red Dot Best of the Best Winner",
+      "iF Design Award Gold",
+      "Danish Design Council Fellow"
+    ],
+    "guarantee": "Tooling-Ready STEP Files & Complete CMF Documentation",
+    "platforms": [
+      {
+        "name": "Behance",
+        "url": "https://www.behance.net/sorenlindemann",
+        "icon": "behance",
+        "badge": "Red Dot Winner"
+      },
+      {
+        "name": "Upwork",
+        "url": "https://www.upwork.com/freelancers/~01sorenlindemann",
+        "icon": "upwork",
+        "badge": "Top Rated Plus"
+      },
+      {
+        "name": "LinkedIn",
+        "url": "https://www.linkedin.com/in/soren-lindemann-id",
+        "icon": "linkedin",
+        "badge": "Verified"
+      },
+      {
+        "name": "Personal Website",
+        "url": "https://lindemann-id.dk",
+        "icon": "web",
+        "badge": "Direct Studio"
+      }
+    ],
+    "experience": [
+      {
+        "role": "Principal Industrial Designer",
+        "company": "Lindemann Design Studio",
+        "period": "2016 — Present (9 yrs)",
+        "description": "Directing industrial design and CMF specification for consumer hardware companies across Europe and North America."
+      }
+    ],
+    "services": [
+      {
+        "title": "Hardware Concept to Tooling-Ready CAD",
+        "price": "From $4,800",
+        "description": "Ergonomic study, concept sketches, high-resolution Keyshot renders, and production-ready STEP CAD files."
+      }
+    ],
+    "portfolio": [
+      {
+        "title": "Precision Mechanical Wristwatch & Titanium Case",
+        "category": "Consumer Hardware",
+        "year": "2025",
+        "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=85",
+        "description": "Grade 5 titanium ergonomic case with 100m water resistance rating and custom silicone strap clasp.",
+        "tags": [
+          "SolidWorks",
+          "Titanium",
+          "Hardware"
+        ]
+      }
+    ],
+    "reviews": [
+      {
+        "id": "rev-w17-1",
+        "author": "Mads Møller",
+        "rating": 5,
+        "date": "2026-08-18",
+        "title": "World-class industrial design with zero tooling delays",
+        "comment": "Soren designed our smart home sensor enclosure. The factory in Shenzhen commended the STEP files for having flawless draft angles and zero tooling issues."
+      }
+    ]
+  }
+]
