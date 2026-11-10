@@ -4,7 +4,8 @@ import { apiGetArticles, apiGetArticleById, apiIncrementClap } from './api-clien
 
 export const BLOG_ARTICLES: BlogArticle[] = initialArticlesData as BlogArticle[];
 
-let cachedArticles: BlogArticle[] = [...BLOG_ARTICLES];
+// In-memory cache for fast access (starts empty, always populated from database)
+let cachedArticles: BlogArticle[] = [];
 
 export function getAllArticles(): BlogArticle[] {
   return cachedArticles;
@@ -12,16 +13,16 @@ export function getAllArticles(): BlogArticle[] {
 
 export async function fetchArticlesFromDb(): Promise<BlogArticle[]> {
   const articles = await apiGetArticles();
-  if (articles && articles.length > 0) {
+  if (articles) {
     cachedArticles = articles;
   }
   return cachedArticles;
 }
 
-export function getArticleById(id: string): BlogArticle {
-  if (!id) return cachedArticles[0];
+export function getArticleById(id: string): BlogArticle | null {
+  if (!id) return cachedArticles[0] || null;
   const match = cachedArticles.find((a) => a.id === id);
-  return match || cachedArticles[0];
+  return match || cachedArticles[0] || null;
 }
 
 export async function fetchArticleByIdFromDb(id: string): Promise<BlogArticle | null> {

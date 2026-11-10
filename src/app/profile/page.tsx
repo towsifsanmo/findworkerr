@@ -22,6 +22,7 @@ function ProfileContent() {
   const { showToast } = useToast();
 
   const [worker, setWorker] = useState<Worker | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [deviceId, setDeviceId] = useState<string>('');
   const [existingReview, setExistingReview] = useState<Review | null>(null);
@@ -42,37 +43,84 @@ function ProfileContent() {
     }
     setDeviceId(token);
 
-    const w = getWorkerById(workerId);
-    setWorker(w);
-
-    if (w) {
-      getWorkerReviews(w.id).then((revs) => setReviews(revs));
-      getDeviceReviewForWorker(w.id, token).then((devRev) => setExistingReview(devRev));
-    }
-
-    // Refresh from PostgreSQL
-    fetchWorkerByIdFromDb(workerId).then((fresh) => {
-      if (fresh) {
-        setWorker(fresh);
-        getWorkerReviews(fresh.id).then((revs) => setReviews(revs));
-        getDeviceReviewForWorker(fresh.id, token).then((devRev) => setExistingReview(devRev));
-      }
-    });
+    setIsLoading(true);
+    // Fetch directly from database
+    fetchWorkerByIdFromDb(workerId)
+      .then((fresh) => {
+        if (fresh) {
+          setWorker(fresh);
+          getWorkerReviews(fresh.id).then((revs) => setReviews(revs));
+          getDeviceReviewForWorker(fresh.id, token).then((devRev) => setExistingReview(devRev));
+        } else {
+          setWorker(null);
+        }
+      })
+      .catch(() => setWorker(null))
+      .finally(() => setIsLoading(false));
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [workerId]);
+
+  if (isLoading) {
+    return (
+      <>
+        <Header />
+        <main className="profile-main-layout" style={{ padding: '40px 0 80px' }}>
+          <div className="container" style={{ maxWidth: '1000px', margin: '0 auto' }}>
+            {/* Profile Hero Skeleton */}
+            <div style={{ background: '#FFFFFF', borderRadius: '24px', padding: '32px', marginBottom: '32px', border: '1px solid var(--color-border)' }}>
+              <div style={{ display: 'flex', gap: '24px', alignItems: 'center', marginBottom: '24px' }}>
+                <div className="fw-skeleton-bone" style={{ width: '84px', height: '84px', borderRadius: '50%', flexShrink: 0 }}></div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div className="fw-skeleton-bone" style={{ width: '180px', height: '24px' }}></div>
+                  <div className="fw-skeleton-bone" style={{ width: '260px', height: '16px' }}></div>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                    <div className="fw-skeleton-bone" style={{ width: '70px', height: '22px', borderRadius: '9999px' }}></div>
+                    <div className="fw-skeleton-bone" style={{ width: '90px', height: '22px', borderRadius: '9999px' }}></div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', paddingTop: '20px', borderTop: '1px solid var(--color-border)' }}>
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="fw-skeleton-bone" style={{ height: '48px', borderRadius: '12px' }}></div>
+                ))}
+              </div>
+            </div>
+
+            {/* Profile Portfolio Grid Skeleton */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
+              {[...Array(4)].map((_, i) => (
+                <div key={i} style={{ background: '#FFFFFF', borderRadius: '16px', padding: '16px', border: '1px solid var(--color-border)' }}>
+                  <div className="fw-skeleton-bone" style={{ width: '100%', height: '180px', borderRadius: '12px', marginBottom: '14px' }}></div>
+                  <div className="fw-skeleton-bone" style={{ width: '60%', height: '18px', marginBottom: '8px' }}></div>
+                  <div className="fw-skeleton-bone" style={{ width: '90%', height: '14px' }}></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   if (!worker) {
     return (
       <>
         <Header />
-        <main className="profile-main-layout">
-          <div className="profile-state-screen">
-            <div className="error-emblem">✦</div>
-            <h2 className="error-heading">Specialist Profile Not Found</h2>
-            <p className="error-desc">The requested freelancer profile does not exist or may have been updated.</p>
-            <Link href="/#freelancers" className="btn btn-primary" style={{ marginTop: '16px' }}>
-              <span>Return to Freelancers Directory →</span>
+        <main className="profile-main-layout" style={{ minHeight: '65vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+          <div className="data-not-found-state" style={{ maxWidth: '480px' }}>
+            <div className="not-found-icon-wrap">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <h4 className="not-found-title">Data not found</h4>
+            <p className="not-found-desc">The requested independent specialist profile does not exist in the database or could not be loaded.</p>
+            <Link href="/#freelancers" className="btn btn-primary not-found-retry-btn" style={{ marginTop: '12px' }}>
+              <span>← Return to Freelancers Directory</span>
             </Link>
           </div>
         </main>

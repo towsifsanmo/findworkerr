@@ -14,7 +14,6 @@ import {
   getWorkerReviews,
   fetchWorkerByIdFromDb,
   fetchCategoriesFromDb,
-  INITIAL_WORKERS,
   DEFAULT_CATEGORIES,
 } from '@/lib/workers-data';
 import { changePassword } from '@/lib/auth';
@@ -275,9 +274,6 @@ export default function DashboardPage() {
 
       if (workerId) {
         loadedWorker = await fetchWorkerByIdFromDb(workerId);
-        if (!loadedWorker) {
-          loadedWorker = getWorkerById(workerId);
-        }
       }
 
       if (!loadedWorker) {
@@ -769,15 +765,14 @@ export default function DashboardPage() {
     }
   };
 
-  // Reset demo profile
-  const handleResetProfile = () => {
+  // Reset profile to database state
+  const handleResetProfile = async () => {
     if (!worker) return;
-    if (confirm('Reset your profile data to the original master baseline?')) {
-      const initial = INITIAL_WORKERS.find((w) => w.id === worker.id);
-      if (initial) {
-        const fresh = JSON.parse(JSON.stringify(initial));
-        handleSaveWorker(fresh);
-        showToast('Profile reset to original template.');
+    if (confirm('Reload your profile data from the database?')) {
+      const fresh = await fetchWorkerByIdFromDb(worker.id);
+      if (fresh) {
+        setWorker(fresh);
+        showToast('Profile refreshed from database.');
       }
     }
   };

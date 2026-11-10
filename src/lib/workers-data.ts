@@ -28,9 +28,9 @@ export const DEFAULT_CATEGORIES: string[] = (initialCategoriesData as any[]).map
   typeof c === 'string' ? c : c.name
 );
 
-// In-memory cache for fast synchronous access
-let cachedWorkers: Worker[] = [...INITIAL_WORKERS];
-let cachedCategories: string[] = [...DEFAULT_CATEGORIES];
+// In-memory cache for fast synchronous access (starts empty, always populated from database)
+let cachedWorkers: Worker[] = [];
+let cachedCategories: string[] = [];
 
 export function getAllWorkers(options: { includeDrafts?: boolean } = {}): Worker[] {
   if (options.includeDrafts) {
@@ -40,7 +40,7 @@ export function getAllWorkers(options: { includeDrafts?: boolean } = {}): Worker
 }
 
 export function setCachedWorkers(workers: Worker[]) {
-  if (Array.isArray(workers) && workers.length > 0) {
+  if (Array.isArray(workers)) {
     cachedWorkers = workers;
   }
 }
@@ -51,15 +51,15 @@ export async function fetchWorkersFromDb(options: { includeDrafts?: boolean; sea
     search: options.search,
     categories: options.categories,
   });
-  if (res.workers && res.workers.length > 0) {
+  if (res.workers) {
     cachedWorkers = res.workers;
   }
-  return res.workers;
+  return res.workers || [];
 }
 
 export function getWorkerById(workerId: string): Worker | null {
   if (!workerId) return null;
-  return cachedWorkers.find((w) => w.id === workerId) || INITIAL_WORKERS.find((w) => w.id === workerId) || null;
+  return cachedWorkers.find((w) => w.id === workerId) || null;
 }
 
 export async function fetchWorkerByIdFromDb(workerId: string): Promise<Worker | null> {
@@ -151,15 +151,18 @@ export function getAllCategories(): string[] {
 
 export async function fetchCategoriesFromDb(): Promise<string[]> {
   const cats = await apiGetCategories();
-  if (cats && cats.length > 0) {
-    cachedCategories = Array.from(new Set([...DEFAULT_CATEGORIES, ...cats]));
+  if (cats && Array.isArray(cats)) {
+    cachedCategories = cats;
   }
   return cachedCategories;
 }
 
 export async function fetchCategoriesDetailedFromDb(): Promise<CategoryItem[]> {
   const cats = await apiGetCategoriesDetailed();
-  return cats;
+  if (cats && Array.isArray(cats)) {
+    cachedCategories = cats.map((c) => c.name);
+  }
+  return cats || [];
 }
 
 export async function addCategory(categoryName: string): Promise<boolean> {

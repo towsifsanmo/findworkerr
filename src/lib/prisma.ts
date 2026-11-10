@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 
 const connectionString =
   process.env.DATABASE_URL ||
-  'postgresql://findworker_user:indworker%40123@localhost:5432/findworker?schema=public';
+  'postgresql://findworker_user:Findworker%40123@localhost:5432/findworker?schema=public';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;

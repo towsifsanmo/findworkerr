@@ -8,7 +8,6 @@ import { Footer } from '@/components/Footer';
 import { WorkerModal } from '@/components/WorkerModal';
 import { getAllWorkers, fetchWorkersFromDb, fetchCategoriesDetailedFromDb } from '@/lib/workers-data';
 import { getAllArticles, fetchArticlesFromDb } from '@/lib/blog-data';
-import initialCategoriesData from '@/lib/initial-categories.json';
 import { login, signupFreelancer } from '@/lib/auth';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/context/toast-context';
@@ -21,7 +20,8 @@ export default function HomePage() {
 
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [articles, setArticles] = useState<BlogArticle[]>([]);
-  const [categories, setCategories] = useState<CategoryItem[]>(initialCategoriesData as CategoryItem[]);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
   const [currentView, setCurrentView] = useState<'home' | 'freelancers' | 'signin' | 'signup'>('home');
 
   // Carousel offsets
@@ -59,22 +59,26 @@ export default function HomePage() {
   const [signupError, setSignupError] = useState('');
   const [signupLoading, setSignupLoading] = useState(false);
 
-  // Load Initial Data & Sync
+  // Load Initial Data & Sync Exclusively From Database
+  const loadData = async () => {
+    setIsLoadingData(true);
+    try {
+      const [dbWorkers, dbArticles, dbCategories] = await Promise.all([
+        fetchWorkersFromDb(),
+        fetchArticlesFromDb(),
+        fetchCategoriesDetailedFromDb(),
+      ]);
+      setWorkers(dbWorkers || []);
+      setArticles(dbArticles || []);
+      setCategories(dbCategories || []);
+    } catch (e) {
+      console.error('Database sync error:', e);
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      setWorkers(getAllWorkers());
-      setArticles(getAllArticles());
-      try {
-        const [dbWorkers, dbArticles, dbCategories] = await Promise.all([
-          fetchWorkersFromDb(),
-          fetchArticlesFromDb(),
-          fetchCategoriesDetailedFromDb(),
-        ]);
-        if (dbWorkers && dbWorkers.length > 0) setWorkers(dbWorkers);
-        if (dbArticles && dbArticles.length > 0) setArticles(dbArticles);
-        if (dbCategories && dbCategories.length > 0) setCategories(dbCategories);
-      } catch (e) {}
-    };
     loadData();
 
     window.addEventListener('findworker:data-updated', loadData);
@@ -609,58 +613,83 @@ export default function HomePage() {
               </div>
 
               <div className="categories-8col-grid">
-                {categories.slice(0, 8).map((cat) => {
-                  const displayTitle =
-                    cat.name === 'UI/UX Design'
-                      ? 'Product & UX'
-                      : cat.name === 'Content Writing'
-                      ? 'Writing & Content'
-                      : cat.name;
-
-                  const cleanInner = cat.icon ? cat.icon.replace(/^<svg[^>]*>|<\/svg>$/gi, '') : '';
-
-                  return (
-                    <div
-                      key={cat.id || cat.slug || cat.name}
-                      className="role-category-box"
-                      data-trade={cat.name}
-                      onClick={() => handleCategoryClick(cat.name)}
-                    >
-                      <div className="role-icon-circle">
-                        {cleanInner ? (
-                          <svg
-                            width="22"
-                            height="22"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            dangerouslySetInnerHTML={{ __html: cleanInner }}
-                          />
-                        ) : (
-                          <svg
-                            width="22"
-                            height="22"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <circle cx="12" cy="12" r="10" />
-                            <line x1="12" y1="8" x2="12" y2="12" />
-                            <line x1="12" y1="16" x2="12.01" y2="16" />
-                          </svg>
-                        )}
-                      </div>
-                      <div className="role-title">{displayTitle}</div>
-                      <div className="role-count-pill">{cat.description || '★ 4.98 • Direct Hire'}</div>
+                {isLoadingData && categories.length === 0 ? (
+                  [...Array(8)].map((_, i) => (
+                    <div key={i} className="role-category-box is-skeleton">
+                      <div className="role-icon-skeleton fw-skeleton-bone"></div>
+                      <div className="role-title-skeleton fw-skeleton-bone"></div>
+                      <div className="role-pill-skeleton fw-skeleton-bone"></div>
                     </div>
-                  );
-                })}
+                  ))
+                ) : categories.length === 0 ? (
+                  <div className="data-not-found-state">
+                    <div className="not-found-icon-wrap">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                      </svg>
+                    </div>
+                    <h4 className="not-found-title">Data not found</h4>
+                    <p className="not-found-desc">Unable to load categories from the database. Please check your connection or retry.</p>
+                    <button type="button" className="btn btn-outline btn-sm not-found-retry-btn" onClick={loadData}>
+                      ↻ Try Again
+                    </button>
+                  </div>
+                ) : (
+                  categories.slice(0, 8).map((cat) => {
+                    const displayTitle =
+                      cat.name === 'UI/UX Design'
+                        ? 'Product & UX'
+                        : cat.name === 'Content Writing'
+                        ? 'Writing & Content'
+                        : cat.name;
+
+                    const cleanInner = cat.icon ? cat.icon.replace(/^<svg[^>]*>|<\/svg>$/gi, '') : '';
+
+                    return (
+                      <div
+                        key={cat.id || cat.slug || cat.name}
+                        className="role-category-box"
+                        data-trade={cat.name}
+                        onClick={() => handleCategoryClick(cat.name)}
+                      >
+                        <div className="role-icon-circle">
+                          {cleanInner ? (
+                            <svg
+                              width="22"
+                              height="22"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              dangerouslySetInnerHTML={{ __html: cleanInner }}
+                            />
+                          ) : (
+                            <svg
+                              width="22"
+                              height="22"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <circle cx="12" cy="12" r="10" />
+                              <line x1="12" y1="8" x2="12" y2="12" />
+                              <line x1="12" y1="16" x2="12.01" y2="16" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="role-title">{displayTitle}</div>
+                        <div className="role-count-pill">{cat.description || '★ 4.98 • Direct Hire'}</div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           </section>
@@ -708,7 +737,49 @@ export default function HomePage() {
               </div>
 
               <div className="vip-independents-grid" id="top-freelancers-container">
-                {topCarouselWorkers.map((w) => {
+                {isLoadingData && topCarouselWorkers.length === 0 ? (
+                  [...Array(4)].map((_, i) => (
+                    <article key={i} className="vip-independents-card is-skeleton">
+                      <div className="vip-card-media-stage" style={{ background: 'transparent' }}>
+                        <div className="vip-media-skeleton fw-skeleton-bone"></div>
+                      </div>
+                      <div className="vip-card-profile-deck">
+                        <div className="vip-avatar-skeleton fw-skeleton-bone"></div>
+                        <div className="vip-card-identity-block" style={{ flex: 1, minWidth: 0 }}>
+                          <div className="vip-name-skeleton fw-skeleton-bone"></div>
+                          <div className="vip-role-skeleton fw-skeleton-bone"></div>
+                        </div>
+                        <div className="vip-rating-skeleton fw-skeleton-bone"></div>
+                      </div>
+                      <div className="vip-card-spec-highlight">
+                        <div className="vip-card-skills-row">
+                          <div className="vip-skill-skeleton fw-skeleton-bone"></div>
+                          <div className="vip-skill-skeleton fw-skeleton-bone"></div>
+                        </div>
+                      </div>
+                      <div className="vip-card-bottom-dock">
+                        <div className="vip-loc-skeleton fw-skeleton-bone"></div>
+                        <div className="vip-btn-skeleton fw-skeleton-bone"></div>
+                      </div>
+                    </article>
+                  ))
+                ) : topCarouselWorkers.length === 0 ? (
+                  <div className="data-not-found-state">
+                    <div className="not-found-icon-wrap">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                      </svg>
+                    </div>
+                    <h4 className="not-found-title">Data not found</h4>
+                    <p className="not-found-desc">No independent specialists found in the database. Please try refreshing.</p>
+                    <button type="button" className="btn btn-outline btn-sm not-found-retry-btn" onClick={loadData}>
+                      ↻ Try Again
+                    </button>
+                  </div>
+                ) : (
+                  topCarouselWorkers.map((w) => {
                   const featuredProject =
                     w.portfolio && w.portfolio[0]
                       ? w.portfolio[0]
@@ -801,7 +872,8 @@ export default function HomePage() {
                       </div>
                     </article>
                   );
-                })}
+                })
+                )}
               </div>
             </div>
           </section>
@@ -972,7 +1044,49 @@ export default function HomePage() {
               </div>
 
               <div className="vip-independents-grid" id="specializations-container">
-                {specCarouselWorkers.map((w) => {
+                {isLoadingData && specCarouselWorkers.length === 0 ? (
+                  [...Array(4)].map((_, i) => (
+                    <article key={i} className="vip-independents-card is-skeleton">
+                      <div className="vip-card-media-stage" style={{ background: 'transparent' }}>
+                        <div className="vip-media-skeleton fw-skeleton-bone"></div>
+                      </div>
+                      <div className="vip-card-profile-deck">
+                        <div className="vip-avatar-skeleton fw-skeleton-bone"></div>
+                        <div className="vip-card-identity-block" style={{ flex: 1, minWidth: 0 }}>
+                          <div className="vip-name-skeleton fw-skeleton-bone"></div>
+                          <div className="vip-role-skeleton fw-skeleton-bone"></div>
+                        </div>
+                        <div className="vip-rating-skeleton fw-skeleton-bone"></div>
+                      </div>
+                      <div className="vip-card-spec-highlight">
+                        <div className="vip-card-skills-row">
+                          <div className="vip-skill-skeleton fw-skeleton-bone"></div>
+                          <div className="vip-skill-skeleton fw-skeleton-bone"></div>
+                        </div>
+                      </div>
+                      <div className="vip-card-bottom-dock">
+                        <div className="vip-loc-skeleton fw-skeleton-bone"></div>
+                        <div className="vip-btn-skeleton fw-skeleton-bone"></div>
+                      </div>
+                    </article>
+                  ))
+                ) : specCarouselWorkers.length === 0 ? (
+                  <div className="data-not-found-state">
+                    <div className="not-found-icon-wrap">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                      </svg>
+                    </div>
+                    <h4 className="not-found-title">Data not found</h4>
+                    <p className="not-found-desc">No curated portfolio case studies found in the database. Please try refreshing.</p>
+                    <button type="button" className="btn btn-outline btn-sm not-found-retry-btn" onClick={loadData}>
+                      ↻ Try Again
+                    </button>
+                  </div>
+                ) : (
+                  specCarouselWorkers.map((w) => {
                   const featuredProject =
                     w.portfolio && w.portfolio[0]
                       ? w.portfolio[0]
@@ -1061,7 +1175,8 @@ export default function HomePage() {
                       </div>
                     </article>
                   );
-                })}
+                })
+                )}
               </div>
             </div>
           </section>
@@ -1262,35 +1377,70 @@ export default function HomePage() {
               </div>
 
               <div className="blog-grid">
-                {articles.slice(0, 3).map((art) => (
-                  <Link
-                    key={art.id}
-                    href={`/blog?id=${art.id}`}
-                    className="blog-card"
-                    data-article-id={art.id}
-                    aria-label={`Read story: ${art.title}`}
-                  >
-                    <div className="blog-img-box">
-                      <img src={art.heroImage} alt={art.title} loading="lazy" />
-                      <span className="blog-img-overlay-badge">Read Story ↗</span>
-                    </div>
-                    <div className="blog-body">
-                      <div className="blog-meta-line">
-                        <span className="badge badge-primary" style={{ fontSize: '0.7rem', padding: '2px 8px' }}>
-                          {art.category.split('&')[0].trim()}
-                        </span>
-                        <span>• {art.readTime}</span>
+                {isLoadingData && articles.length === 0 ? (
+                  [...Array(3)].map((_, i) => (
+                    <div key={i} className="blog-card is-skeleton">
+                      <div className="blog-img-box" style={{ background: 'transparent' }}>
+                        <div className="blog-img-skeleton fw-skeleton-bone"></div>
                       </div>
-                      <h3 className="blog-title">{art.title}</h3>
-                      <p className="blog-snippet">{art.standfirst}</p>
-                      <div className="blog-card-footer">
-                        <span className="blog-card-read-link">
-                          Read Story <span className="card-arrow">→</span>
-                        </span>
+                      <div className="blog-body">
+                        <div className="blog-meta-line" style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                          <div className="blog-badge-skeleton fw-skeleton-bone"></div>
+                          <div className="blog-time-skeleton fw-skeleton-bone"></div>
+                        </div>
+                        <div className="blog-title-skeleton fw-skeleton-bone"></div>
+                        <div className="blog-title-skeleton-sub fw-skeleton-bone"></div>
+                        <div className="blog-desc-skeleton fw-skeleton-bone"></div>
+                        <div className="blog-desc-skeleton-sub fw-skeleton-bone"></div>
                       </div>
                     </div>
-                  </Link>
-                ))}
+                  ))
+                ) : articles.length === 0 ? (
+                  <div className="data-not-found-state">
+                    <div className="not-found-icon-wrap">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                      </svg>
+                    </div>
+                    <h4 className="not-found-title">Data not found</h4>
+                    <p className="not-found-desc">No field notes or editorial articles found in the database. Please try refreshing.</p>
+                    <button type="button" className="btn btn-outline btn-sm not-found-retry-btn" onClick={loadData}>
+                      ↻ Try Again
+                    </button>
+                  </div>
+                ) : (
+                  articles.slice(0, 3).map((art) => (
+                    <Link
+                      key={art.id}
+                      href={`/blog?id=${art.id}`}
+                      className="blog-card"
+                      data-article-id={art.id}
+                      aria-label={`Read story: ${art.title}`}
+                    >
+                      <div className="blog-img-box">
+                        <img src={art.heroImage} alt={art.title} loading="lazy" />
+                        <span className="blog-img-overlay-badge">Read Story ↗</span>
+                      </div>
+                      <div className="blog-body">
+                        <div className="blog-meta-line">
+                          <span className="badge badge-primary" style={{ fontSize: '0.7rem', padding: '2px 8px' }}>
+                            {art.category.split('&')[0].trim()}
+                          </span>
+                          <span>• {art.readTime}</span>
+                        </div>
+                        <h3 className="blog-title">{art.title}</h3>
+                        <p className="blog-snippet">{art.standfirst}</p>
+                        <div className="blog-card-footer">
+                          <span className="blog-card-read-link">
+                            Read Story <span className="card-arrow">→</span>
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))
+                )}
               </div>
             </div>
           </section>
@@ -1597,7 +1747,25 @@ export default function HomePage() {
                 </div>
 
                 <div className="directory-cards-list" id="directory-cards-list">
-                  {paginatedWorkers.length > 0 ? (
+                  {isLoadingData && paginatedWorkers.length === 0 ? (
+                    [...Array(4)].map((_, i) => (
+                      <article key={i} className="freelancer-row-card is-skeleton" style={{ padding: '20px', display: 'flex', gap: '20px', alignItems: 'center' }}>
+                        <div className="fw-skeleton-bone" style={{ width: '64px', height: '64px', borderRadius: '50%', flexShrink: 0 }}></div>
+                        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div className="fw-skeleton-bone" style={{ width: '140px', height: '18px' }}></div>
+                          <div className="fw-skeleton-bone" style={{ width: '200px', height: '14px' }}></div>
+                          <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                            <div className="fw-skeleton-bone" style={{ width: '60px', height: '20px', borderRadius: '9999px' }}></div>
+                            <div className="fw-skeleton-bone" style={{ width: '70px', height: '20px', borderRadius: '9999px' }}></div>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
+                          <div className="fw-skeleton-bone" style={{ width: '80px', height: '24px', borderRadius: '9999px' }}></div>
+                          <div className="fw-skeleton-bone" style={{ width: '100px', height: '36px', borderRadius: '9999px' }}></div>
+                        </div>
+                      </article>
+                    ))
+                  ) : paginatedWorkers.length > 0 ? (
                     paginatedWorkers.map((w) => {
                       const featuredProject =
                         w.portfolio && w.portfolio[0]
@@ -1733,14 +1901,29 @@ export default function HomePage() {
                       );
                     })
                   ) : (
-                    <div style={{ padding: '60px 20px', textAlign: 'center', background: '#FFFFFF', borderRadius: '16px' }}>
-                      <h4 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>No specialists match your criteria</h4>
-                      <p style={{ color: 'var(--color-secondary-muted)', marginBottom: '16px' }}>
-                        Try clearing some filters or searching with different keywords.
+                    <div className="data-not-found-state">
+                      <div className="not-found-icon-wrap">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <line x1="12" y1="8" x2="12" y2="12"></line>
+                          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                      </div>
+                      <h4 className="not-found-title">Data not found</h4>
+                      <p className="not-found-desc">
+                        {searchQuery || activeFiltersCount > 0
+                          ? 'No specialists match your active filters or keyword search.'
+                          : 'No specialist records found in the database.'}
                       </p>
-                      <button type="button" className="btn btn-outline btn-sm" onClick={handleResetFilters}>
-                        Reset All Filters
-                      </button>
+                      {activeFiltersCount > 0 || searchQuery ? (
+                        <button type="button" className="btn btn-outline btn-sm not-found-retry-btn" onClick={handleResetFilters}>
+                          Reset All Filters
+                        </button>
+                      ) : (
+                        <button type="button" className="btn btn-outline btn-sm not-found-retry-btn" onClick={loadData}>
+                          ↻ Try Again
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

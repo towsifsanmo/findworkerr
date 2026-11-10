@@ -22,23 +22,29 @@ function BlogContent() {
   const articleId = searchParams.get('id') || 'article-1';
   const { showToast } = useToast();
 
-  const [article, setArticle] = useState<BlogArticle>(getArticleById(articleId));
+  const [article, setArticle] = useState<BlogArticle | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [claps, setClaps] = useState<number>(140);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [activeTocId, setActiveTocId] = useState<string>('');
 
   useEffect(() => {
-    const current = getArticleById(articleId);
-    setArticle(current);
-    setClaps(getClapCount(current.id));
-
-    // Refresh from PostgreSQL database
-    fetchArticleByIdFromDb(articleId).then((fresh) => {
-      if (fresh) {
-        setArticle(fresh);
-        setClaps(fresh.claps);
-      }
-    });
+    setIsLoading(true);
+    fetchArticleByIdFromDb(articleId)
+      .then((fresh) => {
+        if (fresh) {
+          setArticle(fresh);
+          setClaps(fresh.claps);
+        } else {
+          setArticle(null);
+        }
+      })
+      .catch(() => {
+        setArticle(null);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [articleId]);
@@ -82,6 +88,72 @@ function BlogContent() {
     navigator.clipboard.writeText(window.location.href);
     showToast('Article URL copied to clipboard!');
   };
+
+  if (isLoading) {
+    return (
+      <div className="blog-detail-page">
+        <Header />
+        <main className="editorial-article-page" style={{ padding: '40px 0 80px' }}>
+          <div className="container" style={{ maxWidth: '820px', margin: '0 auto' }}>
+            <div className="fw-skeleton-bone" style={{ width: '90px', height: '24px', borderRadius: '4px', marginBottom: '18px' }}></div>
+            <div className="fw-skeleton-bone" style={{ width: '85%', height: '40px', marginBottom: '12px' }}></div>
+            <div className="fw-skeleton-bone" style={{ width: '65%', height: '40px', marginBottom: '24px' }}></div>
+            <div className="fw-skeleton-bone" style={{ width: '100%', height: '22px', marginBottom: '8px' }}></div>
+            <div className="fw-skeleton-bone" style={{ width: '80%', height: '22px', marginBottom: '32px' }}></div>
+
+            {/* Byline skeleton */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '36px', paddingBottom: '24px', borderBottom: '1px solid var(--color-border)' }}>
+              <div className="fw-skeleton-bone" style={{ width: '48px', height: '48px', borderRadius: '50%' }}></div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div className="fw-skeleton-bone" style={{ width: '130px', height: '16px' }}></div>
+                <div className="fw-skeleton-bone" style={{ width: '180px', height: '13px' }}></div>
+              </div>
+            </div>
+
+            {/* Media hero skeleton */}
+            <div className="fw-skeleton-bone" style={{ width: '100%', height: '380px', borderRadius: '16px', marginBottom: '36px' }}></div>
+
+            {/* Prose text lines skeleton */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div className="fw-skeleton-bone" style={{ width: '100%', height: '16px' }}></div>
+              <div className="fw-skeleton-bone" style={{ width: '96%', height: '16px' }}></div>
+              <div className="fw-skeleton-bone" style={{ width: '92%', height: '16px' }}></div>
+              <div className="fw-skeleton-bone" style={{ width: '60%', height: '16px', marginBottom: '16px' }}></div>
+              <div className="fw-skeleton-bone" style={{ width: '40%', height: '28px', marginBottom: '10px' }}></div>
+              <div className="fw-skeleton-bone" style={{ width: '98%', height: '16px' }}></div>
+              <div className="fw-skeleton-bone" style={{ width: '95%', height: '16px' }}></div>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!article) {
+    return (
+      <div className="blog-detail-page">
+        <Header />
+        <div style={{ minHeight: '65vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+          <div className="data-not-found-state" style={{ maxWidth: '480px' }}>
+            <div className="not-found-icon-wrap">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <h4 className="not-found-title">Data not found</h4>
+            <p className="not-found-desc">The requested editorial field note could not be found in the database.</p>
+            <Link href="/#blog" className="btn btn-outline btn-sm not-found-retry-btn">
+              ← Back to Field Notes
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   const { prev, next } = getNextAndPrevArticles(article.id);
   const related = getRelatedArticles(article.id, 3);

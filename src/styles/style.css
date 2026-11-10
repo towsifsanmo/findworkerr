@@ -13012,3 +13012,190 @@ textarea:focus-visible {
   background: #10B981;
   box-shadow: 0 0 6px #10B981;
 }
+
+/* ==========================================================================
+   FindWorker — Data-Wise Skeleton & Not Found Styles
+   ========================================================================== */
+@keyframes fwSkeletonShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.fw-skeleton-bone {
+  background: linear-gradient(
+    90deg,
+    rgba(225, 225, 230, 0.5) 25%,
+    rgba(240, 240, 245, 0.9) 37%,
+    rgba(225, 225, 230, 0.5) 63%
+  );
+  background-size: 400% 100%;
+  animation: fwSkeletonShimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+  display: block;
+}
+
+/* 1. Category Skeleton */
+.role-category-box.is-skeleton {
+  pointer-events: none;
+  cursor: default;
+}
+.role-category-box.is-skeleton .role-icon-skeleton {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+}
+.role-category-box.is-skeleton .role-title-skeleton {
+  width: 100px;
+  height: 18px;
+  border-radius: 4px;
+}
+.role-category-box.is-skeleton .role-pill-skeleton {
+  width: 110px;
+  height: 22px;
+  border-radius: 9999px;
+}
+
+/* 2. VIP Independents Card Skeleton (Meet the Independents & Curated Spotlight) */
+.vip-independents-card.is-skeleton {
+  pointer-events: none;
+  cursor: default;
+}
+.vip-independents-card.is-skeleton .vip-media-skeleton {
+  width: 100%;
+  height: 200px;
+  border-radius: 14px;
+}
+.vip-independents-card.is-skeleton .vip-avatar-skeleton {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+.vip-independents-card.is-skeleton .vip-name-skeleton {
+  width: 110px;
+  height: 16px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+.vip-independents-card.is-skeleton .vip-role-skeleton {
+  width: 140px;
+  height: 13px;
+  border-radius: 4px;
+}
+.vip-independents-card.is-skeleton .vip-rating-skeleton {
+  width: 50px;
+  height: 24px;
+  border-radius: 9999px;
+}
+.vip-independents-card.is-skeleton .vip-skill-skeleton {
+  width: 68px;
+  height: 24px;
+  border-radius: 9999px;
+}
+.vip-independents-card.is-skeleton .vip-loc-skeleton {
+  width: 80px;
+  height: 24px;
+  border-radius: 9999px;
+}
+.vip-independents-card.is-skeleton .vip-btn-skeleton {
+  width: 95px;
+  height: 36px;
+  border-radius: 9999px;
+}
+
+/* 3. Blog Card Skeleton */
+.blog-card.is-skeleton {
+  pointer-events: none;
+  cursor: default;
+}
+.blog-card.is-skeleton .blog-img-skeleton {
+  width: 100%;
+  height: 220px;
+}
+.blog-card.is-skeleton .blog-badge-skeleton {
+  width: 60px;
+  height: 18px;
+  border-radius: 4px;
+}
+.blog-card.is-skeleton .blog-time-skeleton {
+  width: 70px;
+  height: 14px;
+  border-radius: 4px;
+}
+.blog-card.is-skeleton .blog-title-skeleton {
+  width: 90%;
+  height: 20px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+.blog-card.is-skeleton .blog-title-skeleton-sub {
+  width: 65%;
+  height: 20px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+.blog-card.is-skeleton .blog-desc-skeleton {
+  width: 100%;
+  height: 14px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+.blog-card.is-skeleton .blog-desc-skeleton-sub {
+  width: 80%;
+  height: 14px;
+  border-radius: 4px;
+}
+
+/* 4. Directory Row Card Skeleton */
+.freelancer-row-card.is-skeleton {
+  pointer-events: none;
+  cursor: default;
+}
+
+/* 5. Data Not Found State Component */
+.data-not-found-state {
+  grid-column: 1 / -1;
+  width: 100%;
+  padding: 56px 24px;
+  text-align: center;
+  background: var(--color-background-pure);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  box-shadow: var(--shadow-xs);
+}
+.not-found-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--color-background-soft);
+  color: var(--color-secondary-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+.not-found-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin: 0;
+}
+.not-found-desc {
+  font-size: 0.92rem;
+  color: var(--color-secondary-muted);
+  max-width: 440px;
+  margin: 0;
+  line-height: 1.5;
+}
+.not-found-retry-btn {
+  margin-top: 6px;
+  cursor: pointer;
+}
