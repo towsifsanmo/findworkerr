@@ -2,16 +2,16 @@
   "name": "findworker",
   "version": "1.0.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-      "start": "next start -H 0.0.0.0 -p $PORT",
-    "lint": "tsc --noEmit",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:seed": "tsx prisma/seed.ts"
-  },
+ "scripts": {
+  "dev": "next dev",
+  "build": "npm run db:generate && next build",
+  "start": "next start -H 0.0.0.0 -p ${PORT:-10000}",
+  "lint": "tsc --noEmit",
+  "db:generate": "prisma generate",
+  "db:push": "prisma db push",
+  "db:migrate": "prisma migrate dev",
+  "db:seed": "tsx prisma/seed.ts"
+},
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
