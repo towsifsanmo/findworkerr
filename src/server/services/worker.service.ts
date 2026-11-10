@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma';
 import logger from '@/lib/logger';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 
 export interface GetWorkersParams {
   search?: string;
