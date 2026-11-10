@@ -29,7 +29,7 @@ export const auth = betterAuth({
   plugins: [
     admin(),
   ],
-  secret: process.env.BETTER_AUTH_SECRET || 'rp1MPtUhg0A/Oxb9ZYIhoL72g/KhDBdGtrhZpiMCSDk=',
+  secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
   trustedOrigins: [
     process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',

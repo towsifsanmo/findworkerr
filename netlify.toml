@@ -1,0 +1,2 @@
+[build.environment]
+    SECRET_SCAN_OMIT_KEY = "NODE_ENV"
