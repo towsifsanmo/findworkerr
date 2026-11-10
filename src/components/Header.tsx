@@ -117,12 +117,10 @@ export const Header: React.FC = () => {
             {/* 3. Right: Clean High-Conversion Auth Trigger */}
             <div className="header-actions">
               {!user ? (
-                <button
-                  type="button"
-                  onClick={openSignIn}
+                <Link
+                  href="/signin"
                   className="primary-btn no-min-width go-to-directory-link"
                   id="header-login-btn"
-                  style={{ border: 'none', cursor: 'pointer' }}
                 >
                   <div className="btn-text">Sign In</div>
                   <div className="btn-dot"></div>
@@ -132,12 +130,12 @@ export const Header: React.FC = () => {
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    stroke-width="2.5"
+                    strokeWidth="2.5"
                   >
                     <line x1="7" y1="17" x2="17" y2="7"></line>
                     <polyline points="7 7 17 7 17 17"></polyline>
                   </svg>
-                </button>
+                </Link>
               ) : user.role === 'admin' ? (
                 <Link
                   href="/admin"
@@ -247,28 +245,22 @@ export const Header: React.FC = () => {
           <div className="mobile-nav-actions" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
             {!user ? (
               <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileOpen(false);
-                    openSignIn();
-                  }}
+                <Link
+                  href="/signin"
                   className="btn btn-outline"
-                  style={{ width: '100%', textAlign: 'center' }}
+                  style={{ width: '100%', textAlign: 'center', textDecoration: 'none' }}
+                  onClick={() => setIsMobileOpen(false)}
                 >
                   Sign In
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileOpen(false);
-                    window.location.hash = '#signup';
-                  }}
+                </Link>
+                <Link
+                  href="/signup"
                   className="btn btn-primary"
-                  style={{ width: '100%', textAlign: 'center' }}
+                  style={{ width: '100%', textAlign: 'center', textDecoration: 'none' }}
+                  onClick={() => setIsMobileOpen(false)}
                 >
                   Sign Up as Freelancer ↗
-                </button>
+                </Link>
               </>
             ) : user.role === 'admin' ? (
               <>

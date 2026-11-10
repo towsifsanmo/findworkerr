@@ -6,12 +6,13 @@ import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { WorkerModal } from '@/components/WorkerModal';
-import { getAllWorkers } from '@/lib/workers-data';
-import { getAllArticles } from '@/lib/blog-data';
+import { getAllWorkers, fetchWorkersFromDb, fetchCategoriesDetailedFromDb } from '@/lib/workers-data';
+import { getAllArticles, fetchArticlesFromDb } from '@/lib/blog-data';
+import initialCategoriesData from '@/lib/initial-categories.json';
 import { login, signupFreelancer } from '@/lib/auth';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/context/toast-context';
-import { Worker, BlogArticle } from '@/types';
+import { Worker, BlogArticle, CategoryItem } from '@/types';
 
 export default function HomePage() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function HomePage() {
 
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [articles, setArticles] = useState<BlogArticle[]>([]);
+  const [categories, setCategories] = useState<CategoryItem[]>(initialCategoriesData as CategoryItem[]);
   const [currentView, setCurrentView] = useState<'home' | 'freelancers' | 'signin' | 'signup'>('home');
 
   // Carousel offsets
@@ -59,9 +61,19 @@ export default function HomePage() {
 
   // Load Initial Data & Sync
   useEffect(() => {
-    const loadData = () => {
+    const loadData = async () => {
       setWorkers(getAllWorkers());
       setArticles(getAllArticles());
+      try {
+        const [dbWorkers, dbArticles, dbCategories] = await Promise.all([
+          fetchWorkersFromDb(),
+          fetchArticlesFromDb(),
+          fetchCategoriesDetailedFromDb(),
+        ]);
+        if (dbWorkers && dbWorkers.length > 0) setWorkers(dbWorkers);
+        if (dbArticles && dbArticles.length > 0) setArticles(dbArticles);
+        if (dbCategories && dbCategories.length > 0) setCategories(dbCategories);
+      } catch (e) {}
     };
     loadData();
 
@@ -74,11 +86,9 @@ export default function HomePage() {
     const handleHash = () => {
       const hash = window.location.hash;
       if (hash === '#signin' || hash.startsWith('#signin')) {
-        setCurrentView('signin');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        router.push('/signin');
       } else if (hash === '#signup' || hash.startsWith('#signup')) {
-        setCurrentView('signup');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        router.push('/signup');
       } else if (hash === '#freelancers' || hash.startsWith('#freelancers')) {
         setCurrentView('freelancers');
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -245,42 +255,51 @@ export default function HomePage() {
     return list;
   }, [topTierWorkers, topCarouselOffset]);
 
-  // Specialization Spotlight Workers
+  // Specialization Spotlight Workers (Curated Talent Spotlight from DB)
+  const spotlightWorkersList = useMemo(() => {
+    const featured = workers.filter((w) => w.featured);
+    return featured.length >= 4 ? featured : workers;
+  }, [workers]);
+
   const specCarouselWorkers = useMemo(() => {
-    if (workers.length === 0) return [];
+    if (spotlightWorkersList.length === 0) return [];
     const list: Worker[] = [];
     for (let i = 0; i < 4; i++) {
-      list.push(workers[(specCarouselOffset + i) % workers.length]);
+      list.push(spotlightWorkersList[(specCarouselOffset + i) % spotlightWorkersList.length]);
     }
     return list;
-  }, [workers, specCarouselOffset]);
+  }, [spotlightWorkersList, specCarouselOffset]);
 
   // Quick Demo Login Handler
-  const handleQuickDemoLogin = (role: 'freelancer' | 'admin') => {
+  const handleQuickDemoLogin = async (role: 'freelancer' | 'admin') => {
     if (role === 'freelancer') {
-      const res = login('julian@findworker.io', 'freelancer123');
+      const res = await login('julian@findworker.io', 'freelancer123');
       if (res.success) {
         refreshUser();
         showToast('Signed in successfully as Julian Vance');
         router.push('/dashboard');
+      } else {
+        showToast(res.message || 'Login failed.');
       }
     } else {
-      const res = login('admin@findworker.io', 'admin123');
+      const res = await login('admin@findworker.io', 'admin123');
       if (res.success) {
         refreshUser();
         showToast('Signed in successfully as Platform Administrator');
         router.push('/admin');
+      } else {
+        showToast(res.message || 'Login failed.');
       }
     }
   };
 
   // Signin View Submit
-  const handleSigninSubmit = (e: React.FormEvent) => {
+  const handleSigninSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSigninError('');
     setSigninLoading(true);
 
-    const res = login(signinEmail, signinPassword);
+    const res = await login(signinEmail, signinPassword);
     setSigninLoading(false);
 
     if (!res.success) {
@@ -298,7 +317,7 @@ export default function HomePage() {
   };
 
   // Signup View Submit
-  const handleSignupSubmit = (e: React.FormEvent) => {
+  const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSignupError('');
 
@@ -308,7 +327,7 @@ export default function HomePage() {
     }
 
     setSignupLoading(true);
-    const res = signupFreelancer({
+    const res = await signupFreelancer({
       name: signupName,
       email: signupEmail,
       password: signupPassword,
@@ -590,128 +609,58 @@ export default function HomePage() {
               </div>
 
               <div className="categories-8col-grid">
-                <div
-                  className="role-category-box"
-                  data-trade="Web Development"
-                  onClick={() => handleCategoryClick('Web Development')}
-                >
-                  <div className="role-icon-circle">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="16 18 22 12 16 6"></polyline>
-                      <polyline points="8 6 2 12 8 18"></polyline>
-                    </svg>
-                  </div>
-                  <div className="role-title">Web Development</div>
-                  <div className="role-count-pill">★ 4.98 • Direct Hire</div>
-                </div>
+                {categories.slice(0, 8).map((cat) => {
+                  const displayTitle =
+                    cat.name === 'UI/UX Design'
+                      ? 'Product & UX'
+                      : cat.name === 'Content Writing'
+                      ? 'Writing & Content'
+                      : cat.name;
 
-                <div
-                  className="role-category-box"
-                  data-trade="UI/UX Design"
-                  onClick={() => handleCategoryClick('UI/UX Design')}
-                >
-                  <div className="role-icon-circle">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                      <line x1="3" y1="9" x2="21" y2="9"></line>
-                      <line x1="9" y1="21" x2="9" y2="9"></line>
-                    </svg>
-                  </div>
-                  <div className="role-title">Product &amp; UX</div>
-                  <div className="role-count-pill">★ 4.97 • Direct Hire</div>
-                </div>
+                  const cleanInner = cat.icon ? cat.icon.replace(/^<svg[^>]*>|<\/svg>$/gi, '') : '';
 
-                <div
-                  className="role-category-box"
-                  data-trade="Graphic Design"
-                  onClick={() => handleCategoryClick('Graphic Design')}
-                >
-                  <div className="role-icon-circle">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <polygon points="12 2 15 8.5 22 9.3 17 14.1 18.2 21 12 17.5 5.8 21 7 14.1 2 9.3 9 8.5 12 2"></polygon>
-                    </svg>
-                  </div>
-                  <div className="role-title">Graphic Design</div>
-                  <div className="role-count-pill">★ 4.95 • Direct Hire</div>
-                </div>
-
-                <div
-                  className="role-category-box"
-                  data-trade="Digital Marketing"
-                  onClick={() => handleCategoryClick('Digital Marketing')}
-                >
-                  <div className="role-icon-circle">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="18" y1="20" x2="18" y2="10"></line>
-                      <line x1="12" y1="20" x2="12" y2="4"></line>
-                      <line x1="6" y1="20" x2="6" y2="14"></line>
-                    </svg>
-                  </div>
-                  <div className="role-title">Digital Marketing</div>
-                  <div className="role-count-pill">★ 4.96 • Direct Hire</div>
-                </div>
-
-                <div
-                  className="role-category-box"
-                  data-trade="Content Writing"
-                  onClick={() => handleCategoryClick('Content Writing')}
-                >
-                  <div className="role-icon-circle">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
-                      <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
-                      <path d="M2 2l7.586 7.586"></path>
-                      <circle cx="11" cy="11" r="2"></circle>
-                    </svg>
-                  </div>
-                  <div className="role-title">Writing &amp; Content</div>
-                  <div className="role-count-pill">★ 4.94 • Direct Hire</div>
-                </div>
-
-                <div
-                  className="role-category-box"
-                  data-trade="Motion Design"
-                  onClick={() => handleCategoryClick('Motion Design')}
-                >
-                  <div className="role-icon-circle">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                    </svg>
-                  </div>
-                  <div className="role-title">Motion Design</div>
-                  <div className="role-count-pill">★ 4.95 • Direct Hire</div>
-                </div>
-
-                <div
-                  className="role-category-box"
-                  data-trade="Brand Strategy"
-                  onClick={() => handleCategoryClick('Brand Strategy')}
-                >
-                  <div className="role-icon-circle">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
-                    </svg>
-                  </div>
-                  <div className="role-title">Brand Strategy</div>
-                  <div className="role-count-pill">★ 4.98 • Direct Hire</div>
-                </div>
-
-                <div
-                  className="role-category-box"
-                  data-trade="Photography"
-                  onClick={() => handleCategoryClick('Photography')}
-                >
-                  <div className="role-icon-circle">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                      <circle cx="12" cy="13" r="4"></circle>
-                    </svg>
-                  </div>
-                  <div className="role-title">Photography</div>
-                  <div className="role-count-pill">★ 4.92 • Direct Hire</div>
-                </div>
+                  return (
+                    <div
+                      key={cat.id || cat.slug || cat.name}
+                      className="role-category-box"
+                      data-trade={cat.name}
+                      onClick={() => handleCategoryClick(cat.name)}
+                    >
+                      <div className="role-icon-circle">
+                        {cleanInner ? (
+                          <svg
+                            width="22"
+                            height="22"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            dangerouslySetInnerHTML={{ __html: cleanInner }}
+                          />
+                        ) : (
+                          <svg
+                            width="22"
+                            height="22"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="role-title">{displayTitle}</div>
+                      <div className="role-count-pill">{cat.description || '★ 4.98 • Direct Hire'}</div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </section>
@@ -991,7 +940,7 @@ export default function HomePage() {
                       aria-label="Previous talent cohort"
                       onClick={() =>
                         setSpecCarouselOffset(
-                          (specCarouselOffset - 4 + workers.length) % workers.length
+                          (specCarouselOffset - 4 + spotlightWorkersList.length) % spotlightWorkersList.length
                         )
                       }
                     >
@@ -1003,7 +952,7 @@ export default function HomePage() {
                       id="spec-carousel-next"
                       aria-label="Next talent cohort"
                       onClick={() =>
-                        setSpecCarouselOffset((specCarouselOffset + 4) % workers.length)
+                        setSpecCarouselOffset((specCarouselOffset + 4) % spotlightWorkersList.length)
                       }
                     >
                       →
@@ -1481,27 +1430,19 @@ export default function HomePage() {
                     <span>Discipline</span>
                   </div>
                   <div className="filter-options-list">
-                    {[
-                      { name: 'Web Development', label: 'Web development' },
-                      { name: 'UI/UX Design', label: 'Product & UX' },
-                      { name: 'Graphic Design', label: 'Graphic design' },
-                      { name: 'Digital Marketing', label: 'Digital marketing' },
-                      { name: 'Content Writing', label: 'Writing & content' },
-                      { name: 'Motion Design', label: 'Motion design' },
-                      { name: 'Photography', label: 'Photography' },
-                      { name: 'Brand Strategy', label: 'Brand strategy' },
-                      { name: 'AI Development', label: 'AI Development' },
-                      { name: '3D & WebGL', label: '3D & WebGL' },
-                      { name: 'Carpentry', label: 'Carpentry' },
-                      { name: 'Electrical', label: 'Electrical' },
-                      { name: 'Plumbing', label: 'Plumbing' },
-                    ].map((cat, idx) => {
+                    {categories.map((cat, idx) => {
                       const count = workers.filter((w) => w.trade.toLowerCase() === cat.name.toLowerCase()).length;
                       if (count === 0 && !['Web Development', 'UI/UX Design', 'Carpentry'].includes(cat.name)) return null;
                       const isChecked = selectedCategories.includes(cat.name);
+                      const displayLabel =
+                        cat.name === 'UI/UX Design'
+                          ? 'Product & UX'
+                          : cat.name === 'Content Writing'
+                          ? 'Writing & content'
+                          : cat.name;
 
                       return (
-                        <label key={idx} className="checkbox-label">
+                        <label key={cat.id || idx} className="checkbox-label">
                           <div className="checkbox-left">
                             <input
                               type="checkbox"
@@ -1516,7 +1457,7 @@ export default function HomePage() {
                                 setCurrentPage(1);
                               }}
                             />
-                            <span>{cat.label}</span>
+                            <span>{displayLabel}</span>
                           </div>
                           <span className="filter-count-badge">{String(count).padStart(2, '0')}</span>
                         </label>

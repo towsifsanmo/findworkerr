@@ -12,10 +12,22 @@ import {
   getAllCategories,
   getPlatformClicks,
   getWorkerReviews,
+  fetchWorkerByIdFromDb,
+  fetchCategoriesFromDb,
   INITIAL_WORKERS,
   DEFAULT_CATEGORIES,
 } from '@/lib/workers-data';
 import { changePassword } from '@/lib/auth';
+import {
+  apiUploadFile,
+  apiSaveWorkerPlatform,
+  apiDeleteWorkerPlatform,
+  apiSaveWorkerPortfolio,
+  apiDeleteWorkerPortfolio,
+  apiSaveWorkerExperience,
+  apiDeleteWorkerExperience,
+  apiGetCurrentUser,
+} from '@/lib/api-client';
 import type { Worker, PlatformLink, PortfolioItem, ExperienceItem, Review } from '@/types';
 
 // Platform configuration matching dashboard.js
@@ -160,16 +172,15 @@ const SUGGESTED_SKILLS = [
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, logout: authLogout } = useAuth();
+  const { user, isLoading: authLoading, logout: authLogout } = useAuth();
   const { showToast } = useToast();
 
   const [activeTab, setActiveTab] = useState('overview');
-  const [worker, setWorker] = useState<Worker | null>(() => {
-    return INITIAL_WORKERS.find((w) => w.id === 'worker-1') || INITIAL_WORKERS[0] || null;
-  });
+  const [worker, setWorker] = useState<Worker | null>(null);
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isDataLoading, setIsDataLoading] = useState(true);
 
   // Modals state
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
@@ -209,32 +220,91 @@ export default function DashboardPage() {
   // Password change state
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   // Copy feedback state
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedPlatformUrl, setCopiedPlatformUrl] = useState<string | null>(null);
+
+  // Metrics & Reviews state
+  const [clicksCount, setClicksCount] = useState<number>(0);
+  const [reviewsList, setReviewsList] = useState<Review[]>([]);
 
   // File input refs
   const avatarFileInputRef = useRef<HTMLInputElement>(null);
   const projectFileInputRef = useRef<HTMLInputElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Load worker and categories on mount
+  // Reload worker profile from PostgreSQL database
+  const reloadWorker = async () => {
+    if (!user) return;
+    const workerId = worker?.id || user.workerId;
+    if (workerId) {
+      const live = await fetchWorkerByIdFromDb(workerId);
+      if (live) {
+        setWorker(live);
+        return;
+      }
+    }
+    const fresh = await apiGetCurrentUser();
+    if (fresh?.workerId) {
+      const live = await fetchWorkerByIdFromDb(fresh.workerId);
+      if (live) setWorker(live);
+    }
+  };
+
+  // High-Security Route Guard & Dynamic Profile Loading
   useEffect(() => {
-    // If user is admin, redirect to admin
-    if (user && user.role === 'admin') {
+    if (authLoading) return;
+
+    if (!user) {
+      router.push('/signin?redirect=/dashboard');
+      return;
+    }
+
+    if (user.role === 'admin') {
       router.push('/admin');
       return;
     }
 
-    const workerId = user?.workerId || 'worker-1';
-    let loadedWorker = getWorkerById(workerId);
-    if (!loadedWorker) {
-      const all = getAllWorkers({ includeDrafts: true });
-      loadedWorker = all[0] || null;
-    }
-    setWorker(loadedWorker);
-    setCategories(getAllCategories());
+    const loadData = async () => {
+      setIsDataLoading(true);
+      const workerId = user.workerId;
+      let loadedWorker: Worker | null = null;
+
+      if (workerId) {
+        loadedWorker = await fetchWorkerByIdFromDb(workerId);
+        if (!loadedWorker) {
+          loadedWorker = getWorkerById(workerId);
+        }
+      }
+
+      if (!loadedWorker) {
+        const me = await apiGetCurrentUser();
+        if (me?.workerId) {
+          loadedWorker = await fetchWorkerByIdFromDb(me.workerId);
+        }
+      }
+
+      setWorker(loadedWorker);
+      setIsDataLoading(false);
+
+      if (loadedWorker?.id) {
+        getPlatformClicks(loadedWorker.id).then((c) => {
+          if (typeof c === 'number') setClicksCount(c);
+        });
+        getWorkerReviews(loadedWorker.id).then((revs) => {
+          if (Array.isArray(revs)) setReviewsList(revs);
+        });
+      }
+
+      fetchCategoriesFromDb().then((cats) => {
+        if (cats && cats.length > 0) setCategories(cats);
+      });
+    };
+
+    loadData();
 
     // Listen to hash changes
     const hash = window.location.hash.replace('#', '');
@@ -257,7 +327,7 @@ export default function DashboardPage() {
 
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [user, router]);
+  }, [user, authLoading, router]);
 
   // Click outside user menu
   useEffect(() => {
@@ -298,30 +368,35 @@ export default function DashboardPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSaveWorker = (updated: Worker) => {
-    saveWorkerProfile(updated);
+  const handleSaveWorker = async (updated: Worker) => {
     setWorker({ ...updated });
+    const res = await saveWorkerProfile(updated);
+    if (!res) {
+      showToast('⚠️ Could not sync changes to server.');
+    }
   };
 
   // Profile status toggle
-  const handleToggleStatus = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleToggleStatus = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!worker) return;
     const newStatus = e.target.checked ? 'published' : 'draft';
     const updated = { ...worker, status: newStatus as 'published' | 'draft' };
-    handleSaveWorker(updated);
+    setWorker(updated);
+    await handleSaveWorker(updated);
     showToast(newStatus === 'published' ? '✓ Profile published and live!' : '○ Profile switched to draft mode.');
   };
 
-  const handleTogglePublicationBtn = () => {
+  const handleTogglePublicationBtn = async () => {
     if (!worker) return;
     const newStatus = worker.status === 'draft' ? 'published' : 'draft';
     const updated = { ...worker, status: newStatus as 'published' | 'draft' };
-    handleSaveWorker(updated);
+    setWorker(updated);
+    await handleSaveWorker(updated);
     showToast(newStatus === 'published' ? '✓ Profile published!' : '○ Profile unlisted.');
   };
 
   // Avatar upload
-  const handleAvatarFile = (file: File) => {
+  const handleAvatarFile = async (file: File) => {
     if (!worker) return;
     if (!file.type.startsWith('image/')) {
       showToast('Please select a valid image file (PNG, JPG, WebP).');
@@ -332,21 +407,28 @@ export default function DashboardPage() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      const updated = { ...worker, image: dataUrl };
-      handleSaveWorker(updated);
+    const uploadRes = await apiUploadFile(file);
+    if (uploadRes.success && uploadRes.url) {
+      const updated = { ...worker, image: uploadRes.url };
+      await handleSaveWorker(updated);
       showToast('✓ Profile picture uploaded and saved!');
-    };
-    reader.readAsDataURL(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const dataUrl = event.target?.result as string;
+        const updated = { ...worker, image: dataUrl };
+        await handleSaveWorker(updated);
+        showToast('✓ Profile picture saved!');
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  const handleResetAvatar = () => {
+  const handleResetAvatar = async () => {
     if (!worker) return;
     const defaultAvatar = '/assets/images/hero_craftsman.jpg';
     const updated = { ...worker, image: defaultAvatar };
-    handleSaveWorker(updated);
+    await handleSaveWorker(updated);
     showToast('Profile photo reset to default.');
   };
 
@@ -381,7 +463,7 @@ export default function DashboardPage() {
   };
 
   // Personal Info Form Submit
-  const handlePersonalInfoSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handlePersonalInfoSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!worker) return;
     const form = e.currentTarget;
@@ -407,19 +489,20 @@ export default function DashboardPage() {
       guarantee: (formData.get('guarantee') as string).trim() || worker.guarantee,
     };
 
-    handleSaveWorker(updated);
+    await handleSaveWorker(updated);
     showToast('✓ Complete profile details saved successfully!');
   };
 
   // Skills
-  const handleAddSkill = (skillToAdd?: string) => {
+  const handleAddSkill = async (skillToAdd?: string) => {
     if (!worker) return;
     const skill = (skillToAdd || newSkillInput).trim();
     if (!skill) return;
     const currentSkills = worker.skills || [];
     if (!currentSkills.includes(skill)) {
-      const updated = { ...worker, skills: [...currentSkills, skill] };
-      handleSaveWorker(updated);
+      const updatedSkills = [...currentSkills, skill];
+      const updated = { ...worker, skills: updatedSkills };
+      await handleSaveWorker(updated);
       setNewSkillInput('');
       showToast(`Added skill: ${skill}`);
     } else {
@@ -427,12 +510,12 @@ export default function DashboardPage() {
     }
   };
 
-  const handleRemoveSkill = (index: number) => {
+  const handleRemoveSkill = async (index: number) => {
     if (!worker) return;
     const currentSkills = [...(worker.skills || [])];
     currentSkills.splice(index, 1);
     const updated = { ...worker, skills: currentSkills };
-    handleSaveWorker(updated);
+    await handleSaveWorker(updated);
   };
 
   // Project Modal
@@ -464,7 +547,7 @@ export default function DashboardPage() {
     setIsProjectModalOpen(true);
   };
 
-  const handleProjectModalSubmit = (e: React.FormEvent) => {
+  const handleProjectModalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!worker) return;
     const tagsArr = projectForm.tags
@@ -472,7 +555,8 @@ export default function DashboardPage() {
       .map((t) => t.trim())
       .filter(Boolean);
 
-    const newProject: PortfolioItem = {
+    const projectPayload = {
+      id: projectEditIndex >= 0 ? worker.portfolio?.[projectEditIndex]?.id : undefined,
       title: projectForm.title.trim(),
       category: projectForm.category || worker.trade,
       year: projectForm.year.trim() || undefined,
@@ -483,28 +567,32 @@ export default function DashboardPage() {
       tags: tagsArr,
     };
 
-    const portfolio = [...(worker.portfolio || [])];
-    if (projectEditIndex >= 0) {
-      portfolio[projectEditIndex] = newProject;
-      showToast('Project updated successfully.');
+    const ok = await apiSaveWorkerPortfolio(worker.id, projectPayload);
+    if (ok) {
+      showToast(projectEditIndex >= 0 ? '✓ Project updated in portfolio!' : '✓ New project published to portfolio!');
+      setIsProjectModalOpen(false);
+      await reloadWorker();
     } else {
-      portfolio.push(newProject);
-      showToast('New project added to portfolio!');
+      showToast('⚠️ Failed to save project to portfolio.');
     }
-
-    const updated = { ...worker, portfolio };
-    handleSaveWorker(updated);
-    setIsProjectModalOpen(false);
   };
 
-  const handleDeleteProject = (index: number) => {
-    if (!worker) return;
+  const handleDeleteProject = async (index: number) => {
+    if (!worker || !worker.portfolio || !worker.portfolio[index]) return;
+    const p = worker.portfolio[index];
     if (confirm('Are you sure you want to delete this project?')) {
-      const portfolio = [...(worker.portfolio || [])];
+      if (p.id) {
+        const ok = await apiDeleteWorkerPortfolio(worker.id, p.id);
+        if (ok) {
+          showToast('Project deleted successfully.');
+          await reloadWorker();
+          return;
+        }
+      }
+      const portfolio = [...worker.portfolio];
       portfolio.splice(index, 1);
-      const updated = { ...worker, portfolio };
-      handleSaveWorker(updated);
-      showToast('Project deleted successfully.');
+      await handleSaveWorker({ ...worker, portfolio });
+      showToast('Project removed.');
     }
   };
 
@@ -533,37 +621,42 @@ export default function DashboardPage() {
     setIsExpModalOpen(true);
   };
 
-  const handleExpModalSubmit = (e: React.FormEvent) => {
+  const handleExpModalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!worker) return;
-    const newExp: ExperienceItem = {
+    const newExp = {
+      id: expEditIndex >= 0 ? worker.experience?.[expEditIndex]?.id : undefined,
       role: expForm.role.trim(),
       company: expForm.company.trim(),
       period: expForm.period.trim(),
       description: expForm.description.trim() || undefined,
     };
 
-    const experience = [...(worker.experience || [])];
-    if (expEditIndex >= 0) {
-      experience[expEditIndex] = newExp;
-      showToast('Experience entry updated.');
+    const ok = await apiSaveWorkerExperience(worker.id, newExp);
+    if (ok) {
+      showToast(expEditIndex >= 0 ? '✓ Experience entry updated.' : '✓ Work experience milestone added!');
+      setIsExpModalOpen(false);
+      await reloadWorker();
     } else {
-      experience.push(newExp);
-      showToast('Work experience milestone added!');
+      showToast('⚠️ Failed to save experience record.');
     }
-
-    const updated = { ...worker, experience };
-    handleSaveWorker(updated);
-    setIsExpModalOpen(false);
   };
 
-  const handleDeleteExp = (index: number) => {
-    if (!worker) return;
+  const handleDeleteExp = async (index: number) => {
+    if (!worker || !worker.experience || !worker.experience[index]) return;
+    const exp = worker.experience[index];
     if (confirm('Are you sure you want to delete this experience entry?')) {
-      const experience = [...(worker.experience || [])];
+      if (exp.id) {
+        const ok = await apiDeleteWorkerExperience(worker.id, exp.id);
+        if (ok) {
+          showToast('Experience record removed.');
+          await reloadWorker();
+          return;
+        }
+      }
+      const experience = [...worker.experience];
       experience.splice(index, 1);
-      const updated = { ...worker, experience };
-      handleSaveWorker(updated);
+      await handleSaveWorker({ ...worker, experience });
       showToast('Experience record removed.');
     }
   };
@@ -599,7 +692,7 @@ export default function DashboardPage() {
     setIsPlatformModalOpen(true);
   };
 
-  const handlePlatformModalSubmit = (e: React.FormEvent) => {
+  const handlePlatformModalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!worker) return;
 
@@ -607,49 +700,72 @@ export default function DashboardPage() {
     const cfg = PLATFORMS_CONFIG[iconKey] || PLATFORMS_CONFIG.custom;
     const name = iconKey === 'custom' ? platformForm.customName.trim() || 'External Platform' : cfg.name;
 
-    const newPlatform: PlatformLink = {
+    const platformPayload = {
+      id: platformEditIndex >= 0 ? worker.platforms?.[platformEditIndex]?.id : undefined,
       name,
       url: platformForm.url.trim(),
       icon: iconKey,
       badge: platformForm.badge.trim() || cfg.defaultBadge || 'Verified Profile',
       actionText: platformForm.actionText.trim() || cfg.actionText || 'Visit Profile',
+      active: true,
     };
 
-    const platforms = [...(worker.platforms || [])];
-    if (platformEditIndex >= 0) {
-      platforms[platformEditIndex] = newPlatform;
-      showToast('Platform link updated.');
+    const ok = await apiSaveWorkerPlatform(worker.id, platformPayload);
+    if (ok) {
+      showToast(platformEditIndex >= 0 ? '✓ Platform link updated.' : `✓ Added ${name} to your profile!`);
+      setIsPlatformModalOpen(false);
+      await reloadWorker();
     } else {
-      platforms.push(newPlatform);
-      showToast(`Added ${name} to your profile!`);
+      showToast('⚠️ Failed to save platform link.');
     }
-
-    const updated = { ...worker, platforms };
-    handleSaveWorker(updated);
-    setIsPlatformModalOpen(false);
   };
 
-  const handleDeletePlatform = (index: number) => {
-    if (!worker) return;
+  const handleDeletePlatform = async (index: number) => {
+    if (!worker || !worker.platforms || !worker.platforms[index]) return;
+    const p = worker.platforms[index];
     if (confirm('Are you sure you want to delete this external platform link?')) {
-      const platforms = [...(worker.platforms || [])];
+      if (p.id) {
+        const ok = await apiDeleteWorkerPlatform(worker.id, p.id);
+        if (ok) {
+          showToast('Platform link removed.');
+          await reloadWorker();
+          return;
+        }
+      }
+      const platforms = [...worker.platforms];
       platforms.splice(index, 1);
-      const updated = { ...worker, platforms };
-      handleSaveWorker(updated);
+      await handleSaveWorker({ ...worker, platforms });
       showToast('Platform link removed.');
     }
   };
 
-  // Password change handler
-  const handleChangePasswordSubmit = (e: React.FormEvent) => {
+  // High-Security Password Change Handler
+  const handleChangePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = changePassword(currentPassword, newPassword);
+    if (!currentPassword) {
+      showToast('⚠️ Please enter your current password.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      showToast('⚠️ New password must be at least 6 characters.');
+      return;
+    }
+    if (confirmPassword && newPassword !== confirmPassword) {
+      showToast('⚠️ New passwords do not match.');
+      return;
+    }
+
+    setPasswordLoading(true);
+    const result = await changePassword(currentPassword, newPassword);
+    setPasswordLoading(false);
+
     if (result.success) {
-      showToast(result.message);
+      showToast('✓ Password updated successfully!');
       setCurrentPassword('');
       setNewPassword('');
+      setConfirmPassword('');
     } else {
-      showToast(result.message);
+      showToast(`⚠️ ${result.message || 'Current password is incorrect.'}`);
     }
   };
 
@@ -673,18 +789,58 @@ export default function DashboardPage() {
     }
   };
 
-  if (!worker) {
+  // High-Security Route Guard & Loading Views
+  if (authLoading || !user) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p>Loading studio workspace...</p>
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#0B2319',
+          color: '#FFFFFF',
+          gap: '16px',
+        }}
+      >
+        <div style={{ fontSize: '1.8rem', fontWeight: 700, letterSpacing: '-0.02em' }}>
+          Find<span style={{ color: 'var(--color-primary, #FBBF24)' }}>Worker</span>
+        </div>
+        <div style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.7)' }}>
+          Verifying security session...
+        </div>
+      </div>
+    );
+  }
+
+  if (isDataLoading || !worker) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#0B2319',
+          color: '#FFFFFF',
+          gap: '16px',
+        }}
+      >
+        <div style={{ fontSize: '1.8rem', fontWeight: 700, letterSpacing: '-0.02em' }}>
+          Find<span style={{ color: 'var(--color-primary, #FBBF24)' }}>Worker</span>
+        </div>
+        <div style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.7)' }}>
+          Loading your verified workspace...
+        </div>
       </div>
     );
   }
 
   const isLive = worker.status !== 'draft';
   const avatar = worker.image || '/assets/images/hero_craftsman.jpg';
-  const clicksCount = getPlatformClicks(worker.id) || 384;
-  const reviews = getWorkerReviews(worker.id) || [];
+  const reviews = reviewsList;
   const ratingVal = worker.rating ? worker.rating.toFixed(2) : '5.00';
   const publicProfileUrl = `/profile?id=${encodeURIComponent(worker.id)}`;
 
@@ -1602,14 +1758,14 @@ export default function DashboardPage() {
                   {/* Fieldset 4: Narrative, Biography & Guarantees */}
                   <div className="dash-form-section-title">
                     <h4>Editorial Biography &amp; Professional Philosophy</h4>
-                    <p>Communicate your standard of craft to prospective clients</p>
+                    
                   </div>
 
                   <div className="dash-narrative-group">
                     <div className="dash-form-group full-width">
                       <label className="dash-label" htmlFor="input-short-bio">
                         <span>Short Bio / Headline Introduction</span>
-                        <span className="dash-label-hint">Shown in directory cards &amp; search previews (1-2 sentences)</span>
+                       
                       </label>
                       <textarea
                         name="bio"
@@ -1624,7 +1780,7 @@ export default function DashboardPage() {
                     <div className="dash-form-group full-width">
                       <label className="dash-label" htmlFor="input-about-detailed">
                         <span>Detailed About Me &amp; Professional Narrative</span>
-                        <span className="dash-label-hint">Shown prominently on your public showcase profile</span>
+                        
                       </label>
                       <textarea
                         name="about"
@@ -1639,9 +1795,7 @@ export default function DashboardPage() {
                     <div className="dash-form-group full-width">
                       <label className="dash-label" htmlFor="input-guarantee">
                         <span>Service Standard / Quality Commitment</span>
-                        <span className="dash-label-hint">
-                          e.g. 5-Year Craft Guarantee • Guild Insured ($2M) • Direct Atelier Engagement
-                        </span>
+                       
                       </label>
                       <input
                         type="text"
@@ -2338,8 +2492,13 @@ export default function DashboardPage() {
                         />
                       </div>
                     </div>
-                    <button type="submit" className="dash-btn dash-btn-primary" style={{ marginTop: '10px' }}>
-                      Update Password
+                    <button
+                      type="submit"
+                      className="dash-btn dash-btn-primary"
+                      style={{ marginTop: '10px' }}
+                      disabled={passwordLoading}
+                    >
+                      {passwordLoading ? 'Updating Password...' : 'Update Password'}
                     </button>
                   </form>
                 </div>

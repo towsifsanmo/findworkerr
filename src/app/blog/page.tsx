@@ -12,6 +12,7 @@ import {
   getNextAndPrevArticles,
   getClapCount,
   incrementClap,
+  fetchArticleByIdFromDb,
 } from '@/lib/blog-data';
 import { useToast } from '@/context/toast-context';
 import { BlogArticle } from '@/types';
@@ -30,6 +31,15 @@ function BlogContent() {
     const current = getArticleById(articleId);
     setArticle(current);
     setClaps(getClapCount(current.id));
+
+    // Refresh from PostgreSQL database
+    fetchArticleByIdFromDb(articleId).then((fresh) => {
+      if (fresh) {
+        setArticle(fresh);
+        setClaps(fresh.claps);
+      }
+    });
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [articleId]);
 
@@ -62,8 +72,8 @@ function BlogContent() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [article]);
 
-  const handleClap = () => {
-    const newCount = incrementClap(article.id);
+  const handleClap = async () => {
+    const newCount = await incrementClap(article.id);
     setClaps(newCount);
     showToast(`Applauded! (${newCount} total)`);
   };

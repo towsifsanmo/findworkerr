@@ -18,13 +18,13 @@ export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isDemoFilled, setIsDemoFilled] = useState(false);
 
-  const handleDemoFill = () => {
+  const handleDemoFill = async () => {
     setEmail('admin@findworker.io');
     setPassword('admin123');
     setIsDemoFilled(true);
     setErrorMsg('');
 
-    const res = login('admin@findworker.io', 'admin123');
+    const res = await login('admin@findworker.io', 'admin123');
     if (res.success && res.user?.role === 'admin') {
       refreshUser();
       showToast('Admin credentials verified. Redirecting to Admin Panel...');
@@ -36,7 +36,7 @@ export default function AdminLoginPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
     }
 
     setIsLoading(true);
-    const res = login(email, password);
+    const res = await login(email, password);
     setIsLoading(false);
 
     if (!res.success) {

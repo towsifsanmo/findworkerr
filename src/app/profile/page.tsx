@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import {
   getWorkerById,
+  fetchWorkerByIdFromDb,
   getWorkerReviews,
   getDeviceReviewForWorker,
   addWorkerReview,
@@ -45,12 +46,19 @@ function ProfileContent() {
     setWorker(w);
 
     if (w) {
-      const revs = getWorkerReviews(w.id);
-      setReviews(revs);
-
-      const devRev = getDeviceReviewForWorker(w.id, token);
-      setExistingReview(devRev);
+      getWorkerReviews(w.id).then((revs) => setReviews(revs));
+      getDeviceReviewForWorker(w.id, token).then((devRev) => setExistingReview(devRev));
     }
+
+    // Refresh from PostgreSQL
+    fetchWorkerByIdFromDb(workerId).then((fresh) => {
+      if (fresh) {
+        setWorker(fresh);
+        getWorkerReviews(fresh.id).then((revs) => setReviews(revs));
+        getDeviceReviewForWorker(fresh.id, token).then((devRev) => setExistingReview(devRev));
+      }
+    });
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [workerId]);
 
@@ -82,7 +90,7 @@ function ProfileContent() {
     trackPlatformClick(worker.id, platformName);
   };
 
-  const handleReviewSubmit = (e: React.FormEvent) => {
+  const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setReviewError('');
 
@@ -97,7 +105,7 @@ function ProfileContent() {
     }
 
     setIsSubmittingReview(true);
-    const res = addWorkerReview(
+    const res = await addWorkerReview(
       worker.id,
       {
         author: authorName.trim(),
@@ -117,7 +125,8 @@ function ProfileContent() {
 
     showToast('Review submitted successfully! Thank you for your feedback.');
     setExistingReview(res.review || null);
-    setReviews(getWorkerReviews(worker.id));
+    const updatedReviews = await getWorkerReviews(worker.id);
+    setReviews(updatedReviews);
     setAuthorName('');
     setReviewComment('');
   };

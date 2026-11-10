@@ -60,23 +60,21 @@ export const Footer: React.FC = () => {
               engineers, designers, and strategists.
             </p>
             <div className="footer-action-suite">
-              <button
-                type="button"
+              <Link
+                href="/signup"
                 className="btn btn-primary btn-sm footer-action-primary"
                 id="footer-signup-btn"
-                onClick={openSignUp}
               >
                 <span>Apply as Freelancer</span>
                 <span className="btn-arrow">↗</span>
-              </button>
-              <button
-                type="button"
+              </Link>
+              <Link
+                href="/signin"
                 className="btn btn-outline btn-sm footer-action-secondary"
                 id="footer-login-btn"
-                onClick={openSignIn}
               >
                 <span>Sign In</span>
-              </button>
+              </Link>
             </div>
           </div>
 

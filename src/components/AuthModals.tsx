@@ -32,36 +32,40 @@ export const AuthModals: React.FC = () => {
 
   if (!isAuthModalOpen) return null;
 
-  const handleQuickDemoLogin = (role: 'freelancer' | 'admin') => {
+  const handleQuickDemoLogin = async (role: 'freelancer' | 'admin') => {
     if (role === 'freelancer') {
       setLoginEmail('julian@findworker.io');
       setLoginPassword('freelancer123');
-      const res = login('julian@findworker.io', 'freelancer123');
+      const res = await login('julian@findworker.io', 'freelancer123');
       if (res.success) {
         refreshUser();
         closeAuthModal();
         showToast('Signed in successfully as Julian Vance');
         router.push('/dashboard');
+      } else {
+        showToast(res.message || 'Login failed.');
       }
     } else {
       setLoginEmail('admin@findworker.io');
       setLoginPassword('admin123');
-      const res = login('admin@findworker.io', 'admin123');
+      const res = await login('admin@findworker.io', 'admin123');
       if (res.success) {
         refreshUser();
         closeAuthModal();
         showToast('Signed in successfully as Platform Administrator');
         router.push('/admin');
+      } else {
+        showToast(res.message || 'Login failed.');
       }
     }
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
     setLoginLoading(true);
 
-    const res = login(loginEmail, loginPassword);
+    const res = await login(loginEmail, loginPassword);
     setLoginLoading(false);
 
     if (!res.success) {
@@ -80,12 +84,12 @@ export const AuthModals: React.FC = () => {
     }
   };
 
-  const handleSignupSubmit = (e: React.FormEvent) => {
+  const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSignupError('');
     setSignupLoading(true);
 
-    const res = signupFreelancer({
+    const res = await signupFreelancer({
       name: signupName,
       email: signupEmail,
       password: signupPassword,

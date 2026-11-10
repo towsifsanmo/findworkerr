@@ -162,7 +162,8 @@
         "title": "Heritage restoration done right",
         "comment": "Restored our historic Victorian double doors with unmatched reverence for original materials. Punctual, transparent, and exceptionally tidy."
       }
-    ]
+    ],
+    "featured": true
   },
   {
     "id": "worker-2",
@@ -523,7 +524,8 @@
         "title": "Reduced inference costs by 68%",
         "comment": "Kieran audited our OpenAI API usage and re-architected the pipeline with open-source fine-tuned models on vLLM. Saved us thousands per month."
       }
-    ]
+    ],
+    "featured": true
   },
   {
     "id": "worker-10",
@@ -626,7 +628,8 @@
         "title": "Flawless 60fps on mobile",
         "comment": "Aria delivered a Three.js interactive product customizer that loads instantly and runs butter-smooth even on low-end iPhones. Outstanding artistry."
       }
-    ]
+    ],
+    "featured": true
   },
   {
     "id": "worker-11",
@@ -927,7 +930,8 @@
         "title": "Lightning speed and clean TypeScript",
         "comment": "Liam rebuilt our customer dashboard. Loading times went from 4.2 seconds down to 310ms. Code quality is immaculate."
       }
-    ]
+    ],
+    "featured": true
   },
   {
     "id": "worker-14",
@@ -1029,7 +1033,8 @@
         "title": "Transformed our engineering and design velocity",
         "comment": "Camille unified 4 fragmented product teams under a single tokenized system. Our sprint cycle times dropped by 35% within 2 months."
       }
-    ]
+    ],
+    "featured": true
   },
   {
     "id": "worker-15",
@@ -1125,7 +1130,8 @@
         "title": "Caught a critical logic flaw before mainnet",
         "comment": "Devon spent 8 days auditing our staking logic and discovered a subtle reentrancy vector that would have cost us millions. Worth every single penny."
       }
-    ]
+    ],
+    "featured": true
   },
   {
     "id": "worker-16",

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Worker } from '@/types';
 import { useToast } from '@/context/toast-context';
+import { apiSendInquiry } from '@/lib/api-client';
 
 interface WorkerModalProps {
   worker: Worker | null;
@@ -42,20 +43,35 @@ export const WorkerModal: React.FC<WorkerModalProps> = ({
     showToast(`Copied ${label} to clipboard!`);
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    setTimeout(() => {
+    try {
+      const ok = await apiSendInquiry({
+        workerId: worker.id,
+        clientName: clientName.trim(),
+        clientContact: clientPhone.trim(),
+        targetDate: bookingDate || undefined,
+        hours: bookingHours || '4',
+        description: bookingDetails.trim(),
+      });
+
+      if (ok) {
+        showToast(`Inquiry sent directly to ${worker.name}! They will reach out to you shortly.`);
+        setClientName('');
+        setClientPhone('');
+        setBookingDate('');
+        setBookingDetails('');
+        onClose();
+      } else {
+        showToast('Failed to send inquiry. Please try again.');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Error submitting inquiry');
+    } finally {
       setIsSubmitting(false);
-      showToast(`Inquiry sent directly to ${worker.name}! They will reach out to you shortly.`);
-      // Reset
-      setClientName('');
-      setClientPhone('');
-      setBookingDate('');
-      setBookingDetails('');
-      onClose();
-    }, 600);
+    }
   };
 
   const avatarSrc = worker.image?.startsWith('assets/') ? `/${worker.image}` : (worker.image || '/assets/images/hero_craftsman.jpg');

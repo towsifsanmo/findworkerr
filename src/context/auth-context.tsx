@@ -2,10 +2,11 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '@/types';
-import { getCurrentUser, logout as authLogout, dispatchAuthChange } from '@/lib/auth';
+import { getCurrentUser, logout as authLogout, syncSessionFromBackend } from '@/lib/auth';
 
 interface AuthContextType {
   user: User | null;
+  isLoading: boolean;
   refreshUser: () => void;
   logout: (redirect?: string) => void;
   isAuthModalOpen: boolean;
@@ -18,6 +19,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  isLoading: true,
   refreshUser: () => {},
   logout: () => {},
   isAuthModalOpen: false,
@@ -25,20 +27,40 @@ const AuthContext = createContext<AuthContextType>({
   openSignUp: () => {},
   closeAuthModal: () => {},
   authModalMode: 'signin',
-  setAuthModalMode: () => {}
+  setAuthModalMode: () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
 
   const refreshUser = () => {
-    setUser(getCurrentUser());
+    const cached = getCurrentUser();
+    setUser(cached);
   };
 
   useEffect(() => {
-    refreshUser();
+    // 1. Immediate hydration from cache
+    const cached = getCurrentUser();
+    if (cached) {
+      setUser(cached);
+      setIsLoading(false);
+    }
+
+    // 2. Verify and sync fresh session with PostgreSQL backend
+    syncSessionFromBackend()
+      .then((fresh) => {
+        if (fresh) {
+          setUser(fresh);
+        } else if (!cached) {
+          setUser(null);
+        }
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
 
     const handleAuthChange = () => {
       refreshUser();
@@ -46,7 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     window.addEventListener('findworker:auth-changed', handleAuthChange);
 
-    // Also check hash for #signin or #signup
+    // Hash check for #signin or #signup
     const handleHash = () => {
       const hash = window.location.hash;
       if (hash === '#signin') {
@@ -93,6 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider
       value={{
         user,
+        isLoading,
         refreshUser,
         logout: handleLogout,
         isAuthModalOpen,
@@ -100,7 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         openSignUp,
         closeAuthModal,
         authModalMode,
-        setAuthModalMode
+        setAuthModalMode,
       }}
     >
       {children}
@@ -109,4 +132,3 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 export const useAuth = () => useContext(AuthContext);
-

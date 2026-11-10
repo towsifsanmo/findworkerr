@@ -1,0 +1,270 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ---------------------------------------------------------------------------
+// 1. BETTER AUTH MODELS
+// ---------------------------------------------------------------------------
+
+model User {
+  id               String          @id @default(cuid())
+  name             String
+  email            String          @unique
+  emailVerified    Boolean         @default(false)
+  image            String?
+  role             String          @default("freelancer") // "admin" | "freelancer" | "user"
+  banned           Boolean?        @default(false)
+  banReason        String?
+  banExpires       DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  sessions         Session[]
+  accounts         Account[]
+  workerProfileId  String?         @unique
+  workerProfile    WorkerProfile?  @relation(fields: [workerProfileId], references: [id], onDelete: SetNull)
+  authoredArticles Article[]
+
+  @@map("user")
+}
+
+model Session {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token          String    @unique
+  expiresAt      DateTime
+  ipAddress      String?
+  userAgent      String?
+  impersonatedBy String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ---------------------------------------------------------------------------
+// 2. CORE DOMAIN MODELS
+// ---------------------------------------------------------------------------
+
+model WorkerProfile {
+  id              String           @id
+  name            String
+  trade           String
+  craftTitle      String
+  image           String           @default("/assets/images/hero_craftsman.jpg")
+  badge           String           @default("PRO")
+  badgeLabel      String           @default("Independent Professional")
+  rating          Float            @default(5.0)
+  reviewsCount    Int              @default(0)
+  hourlyRate      Int              @default(80)
+  location        String           @default("Remote Available")
+  experienceYears Int              @default(5)
+  availability    String           @default("Available Today")
+  instantBooking  Boolean          @default(true)
+  workPreference  String?          @default("Remote First")
+  responseTime    String?          @default("Within 24 hours")
+  language        String           @default("English")
+  email           String?
+  phone           String?
+  website         String?
+  bio             String           @db.Text
+  about           String?          @db.Text
+  skills          String[]
+  certifications  String[]
+  guarantee       String?          @default("Direct contact, 0% platform intermediary commission.")
+  status          String           @default("published") // "published" | "draft"
+  featured        Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  user            User?
+  platforms       PlatformLink[]
+  experience      ExperienceItem[]
+  portfolio       PortfolioItem[]
+  reviews         Review[]
+  articles        Article[]
+  inquiries       Inquiry[]
+
+  @@index([status])
+  @@index([trade])
+  @@index([rating])
+  @@index([featured])
+  @@map("worker_profile")
+}
+
+model PlatformLink {
+  id         String        @id @default(cuid())
+  workerId   String
+  worker     WorkerProfile @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  name       String
+  url        String
+  icon       String
+  badge      String?
+  actionText String?
+  active     Boolean       @default(true)
+  clicks     Int           @default(0)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([workerId])
+  @@map("platform_link")
+}
+
+model PortfolioItem {
+  id          String        @id @default(cuid())
+  workerId    String
+  worker      WorkerProfile @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  title       String
+  category    String
+  year        String?
+  image       String
+  description String?       @db.Text
+  tags        String[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([workerId])
+  @@map("portfolio_item")
+}
+
+model ExperienceItem {
+  id          String        @id @default(cuid())
+  workerId    String
+  worker      WorkerProfile @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  role        String
+  company     String
+  period      String
+  description String?       @db.Text
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([workerId])
+  @@map("experience_item")
+}
+
+model Review {
+  id        String        @id @default(cuid())
+  workerId  String
+  worker    WorkerProfile @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  author    String
+  rating    Int           @default(5)
+  title     String
+  comment   String        @db.Text
+  deviceId  String?
+  flagged   Boolean       @default(false)
+  approved  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([workerId])
+  @@index([deviceId])
+  @@index([approved])
+  @@map("review")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?  @db.Text
+  icon        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("category")
+}
+
+model Article {
+  id          String         @id
+  slug        String         @unique
+  title       String
+  standfirst  String         @db.Text
+  category    String
+  date        String
+  readTime    String
+  readMinutes Int            @default(5)
+  claps       Int            @default(140)
+  heroImage   String
+  caption     String         @db.Text
+  toc         Json
+  proseHtml   String         @db.Text
+  tags        String[]
+  authorId    String?
+  author      WorkerProfile? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  userId      String?
+  userAuthor  User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([category])
+  @@index([slug])
+  @@map("article")
+}
+
+model Inquiry {
+  id            String        @id @default(cuid())
+  workerId      String
+  worker        WorkerProfile @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  clientName    String
+  clientContact String
+  targetDate    String?
+  hours         String?       @default("4")
+  description   String        @db.Text
+  status        String        @default("pending") // pending | replied | archived
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([workerId])
+  @@map("inquiry")
+}
+
+model PlatformClick {
+  id           String   @id @default(cuid())
+  workerId     String
+  platformName String
+  ipAddress    String?
+  deviceId     String?
+  createdAt    DateTime @default(now())
+
+  @@index([workerId])
+  @@index([platformName])
+  @@map("platform_click")
+}

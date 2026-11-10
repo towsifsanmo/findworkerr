@@ -1,4 +1,5 @@
 export interface PlatformLink {
+  id?: string;
   name: string;
   url: string;
   icon: string;
@@ -8,19 +9,21 @@ export interface PlatformLink {
 }
 
 export interface PortfolioItem {
+  id?: string;
   title: string;
   category: string;
-  year: string;
+  year?: string;
   image: string;
-  description: string;
-  tags: string[];
+  description?: string;
+  tags?: string[];
 }
 
 export interface ExperienceItem {
+  id?: string;
   role: string;
   company: string;
   period: string;
-  description: string;
+  description?: string;
 }
 
 export interface ServiceItem {
@@ -125,6 +128,16 @@ export interface User {
   workerId?: string;
   avatar: string;
   createdAt?: string;
+}
+
+export interface CategoryItem {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  icon?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface PlatformStats {

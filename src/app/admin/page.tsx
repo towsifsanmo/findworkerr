@@ -4,21 +4,21 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  getAllWorkers,
-  getPlatformStats,
-  getAllCategories,
-  addCategory,
-  deleteCategory,
-  getAllPlatformReviews,
-  moderateReview,
-  toggleWorkerStatus,
-  toggleWorkerFeatured,
-  deleteWorkerProfile,
-  addWorkerProfile,
-} from '@/lib/workers-data';
+  apiGetWorkers,
+  apiGetPlatformStats,
+  apiGetCategories,
+  apiAddCategory,
+  apiDeleteCategory,
+  apiGetAllPlatformReviews,
+  apiModerateReview,
+  apiToggleWorkerStatus,
+  apiToggleWorkerFeatured,
+  apiDeleteWorkerProfile,
+  apiCreateWorkerProfile,
+  apiGetCurrentUser,
+} from '@/lib/api-client';
 import {
   getCurrentUser,
-  getAdminAccount,
   updateAdminCredentials,
   setCurrentSession,
 } from '@/lib/auth';
@@ -59,78 +59,86 @@ export default function AdminPage() {
 
   // Load Admin Data & Verify
   useEffect(() => {
-    let u = getCurrentUser();
-    if (!u || u.role !== 'admin') {
-      const adminAcc = getAdminAccount();
-      u = {
-        id: adminAcc.id,
-        name: adminAcc.name,
-        email: adminAcc.email,
-        role: 'admin',
-        avatar: adminAcc.avatar,
-      };
-      setCurrentSession(u);
-    }
-    setAdminUser(u);
-    setAdminName(u.name);
-    setAdminEmail(u.email);
+    const verifyAndLoad = async () => {
+      let u = getCurrentUser();
+      const backendUser = await apiGetCurrentUser();
+      if (backendUser && backendUser.role === 'admin') {
+        u = backendUser;
+        setCurrentSession(backendUser);
+      } else if (!u || u.role !== 'admin') {
+        router.push('/admin-login');
+        return;
+      }
+      setAdminUser(u);
+      setAdminName(u.name);
+      setAdminEmail(u.email);
+      await refreshData();
+    };
 
-    refreshData();
-  }, []);
+    verifyAndLoad();
+  }, [router]);
 
-  const refreshData = () => {
-    setStats(getPlatformStats());
-    setWorkersList(getAllWorkers({ includeDrafts: true }));
-    setCategoriesList(getAllCategories());
-    setReviewsList(getAllPlatformReviews());
+  const refreshData = async () => {
+    try {
+      const [s, w, c, r] = await Promise.all([
+        apiGetPlatformStats(),
+        apiGetWorkers({ includeDrafts: true }),
+        apiGetCategories(),
+        apiGetAllPlatformReviews(),
+      ]);
+      setStats(s);
+      setWorkersList(w.workers);
+      setCategoriesList(c);
+      setReviewsList(r);
+    } catch (e) {}
   };
 
-  const handleToggleStatus = (id: string) => {
-    toggleWorkerStatus(id);
-    refreshData();
+  const handleToggleStatus = async (id: string) => {
+    await apiToggleWorkerStatus(id);
+    await refreshData();
     showToast('Freelancer status updated');
   };
 
-  const handleToggleFeatured = (id: string) => {
-    toggleWorkerFeatured(id);
-    refreshData();
+  const handleToggleFeatured = async (id: string) => {
+    await apiToggleWorkerFeatured(id);
+    await refreshData();
     showToast('Freelancer featured status updated');
   };
 
-  const handleDeleteWorker = (id: string, name: string) => {
+  const handleDeleteWorker = async (id: string, name: string) => {
     if (confirm(`Are you sure you want to delete profile for "${name}"?`)) {
-      deleteWorkerProfile(id);
-      refreshData();
+      await apiDeleteWorkerProfile(id);
+      await refreshData();
       showToast(`Deleted ${name}`);
     }
   };
 
-  const handleAddCategorySubmit = (e: React.FormEvent) => {
+  const handleAddCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCategoryName.trim()) return;
 
-    addCategory(newCategoryName.trim());
+    await apiAddCategory(newCategoryName.trim());
     setNewCategoryName('');
     setIsCategoryModalOpen(false);
-    refreshData();
+    await refreshData();
     showToast('Category created successfully');
   };
 
-  const handleDeleteCategory = (cat: string) => {
+  const handleDeleteCategory = async (cat: string) => {
     if (confirm(`Remove category "${cat}"?`)) {
-      deleteCategory(cat);
-      refreshData();
+      await apiDeleteCategory(cat);
+      await refreshData();
       showToast(`Removed category ${cat}`);
     }
   };
 
-  const handleModerateReview = (workerId: string, reviewId: string, action: 'approve' | 'flag' | 'delete') => {
-    moderateReview(workerId, reviewId, action);
-    refreshData();
+  const handleModerateReview = async (reviewId: string, action: 'approve' | 'flag' | 'delete') => {
+    await apiModerateReview(reviewId, action);
+    await refreshData();
     showToast(`Review ${action}d successfully`);
   };
 
-  const handleSettingsSubmit = (e: React.FormEvent) => {
+  const handleSettingsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSettingsFeedback(null);
 
@@ -139,7 +147,7 @@ export default function AdminPage() {
       return;
     }
 
-    const res = updateAdminCredentials({
+    const res = await updateAdminCredentials({
       currentPassword,
       newEmail: adminEmail,
       newName: adminName,
@@ -156,6 +164,7 @@ export default function AdminPage() {
     setNewPassword('');
     setConfirmPassword('');
     showToast('Admin credentials saved');
+    await refreshData();
   };
 
   const filteredAdminWorkers = workersList.filter(
@@ -324,13 +333,13 @@ export default function AdminPage() {
                   <button
                     type="button"
                     className="admin-btn-primary"
-                    onClick={() => {
-                      const newW = addWorkerProfile({
+                    onClick={async () => {
+                      await apiCreateWorkerProfile({
                         name: 'New Independent Specialist',
                         trade: 'Web Development',
                         craftTitle: 'Full-Stack Software Engineer',
                       });
-                      refreshData();
+                      await refreshData();
                       showToast('Draft specialist profile created');
                       setActiveTab('freelancers');
                     }}
@@ -438,13 +447,13 @@ export default function AdminPage() {
                     <button
                       type="button"
                       className="admin-btn-primary"
-                      onClick={() => {
-                        addWorkerProfile({
+                      onClick={async () => {
+                        await apiCreateWorkerProfile({
                           name: 'New Independent Specialist',
                           trade: 'Web Development',
                           craftTitle: 'Full-Stack Software Engineer',
                         });
-                        refreshData();
+                        await refreshData();
                         showToast('Draft specialist profile created');
                       }}
                     >
@@ -621,7 +630,7 @@ export default function AdminPage() {
                               <button
                                 type="button"
                                 className="btn btn-outline btn-sm"
-                                onClick={() => handleModerateReview(rev.workerId || '', rev.id, 'approve')}
+                                onClick={() => handleModerateReview(rev.id, 'approve')}
                               >
                                 Approve
                               </button>
@@ -629,7 +638,7 @@ export default function AdminPage() {
                                 type="button"
                                 className="btn btn-outline btn-sm"
                                 style={{ color: '#F59E0B' }}
-                                onClick={() => handleModerateReview(rev.workerId || '', rev.id, 'flag')}
+                                onClick={() => handleModerateReview(rev.id, 'flag')}
                               >
                                 Flag
                               </button>
@@ -637,7 +646,7 @@ export default function AdminPage() {
                                 type="button"
                                 className="btn btn-outline btn-sm"
                                 style={{ color: '#DC2626' }}
-                                onClick={() => handleModerateReview(rev.workerId || '', rev.id, 'delete')}
+                                onClick={() => handleModerateReview(rev.id, 'delete')}
                               >
                                 Delete
                               </button>

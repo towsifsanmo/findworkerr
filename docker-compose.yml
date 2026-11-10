@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # Next.js Application Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: findworker_app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-securepassword}@db:5432/findworker?schema=public
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-https://findworker.io}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://findworker.io}
+    volumes:
+      - uploads_data:/app/public/uploads
+      - app_logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - findworker_net
+
+  # Production PostgreSQL Database Service (Internal Network Only)
+  db:
+    image: postgres:16-alpine
+    container_name: findworker_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-securepassword}
+      POSTGRES_DB: ${POSTGRES_DB:-findworker}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-findworker}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - findworker_net
+    # Do NOT expose 5432 to host for private database security
+
+volumes:
+  postgres_data:
+    name: findworker_postgres_data
+  uploads_data:
+    name: findworker_uploads_data
+  app_logs:
+    name: findworker_app_logs
+
+networks:
+  findworker_net:
+    driver: bridge
+
