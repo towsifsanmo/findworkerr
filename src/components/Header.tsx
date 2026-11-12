@@ -22,6 +22,20 @@ export const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsMobileOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const getNavLink = (hash: string) => {
     if (pathname === '/') {
       return hash;
@@ -72,14 +86,13 @@ export const Header: React.FC = () => {
             {/* 2. Center: Frosted Capsule Navigation Trench */}
             <nav className="main-nav" aria-label="Main Navigation">
               <div className="nav-capsule-trench">
-                <a
-                  href={getNavLink('#freelancers')}
-                  className="nav-link"
+                <Link
+                  href="/freelancers"
+                  className={`nav-link ${pathname === '/freelancers' ? 'active' : ''}`}
                   id="nav-link-freelancers"
-                  onClick={(e) => handleNavClick(e, '#freelancers')}
                 >
                   <span>Freelancers</span>
-                </a>
+                </Link>
                 <a
                   href={getNavLink('#roles')}
                   className="nav-link"
@@ -105,8 +118,8 @@ export const Header: React.FC = () => {
                   <span>Voices</span>
                 </a>
                 <Link
-                  href="/blog"
-                  className="nav-link"
+                  href="#blogs"
+                  className={`nav-link ${pathname.startsWith('/blog') ? 'active' : ''}`}
                   id="nav-link-blog"
                 >
                   <span>Field Notes</span>
@@ -119,7 +132,7 @@ export const Header: React.FC = () => {
               {!user ? (
                 <Link
                   href="/signin"
-                  className="primary-btn no-min-width go-to-directory-link"
+                  className="btn btn-primary btn-md footer-action-primary"
                   id="header-login-btn"
                 >
                   <div className="btn-text">Sign In</div>
@@ -150,7 +163,7 @@ export const Header: React.FC = () => {
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    stroke-width="2.5"
+                    strokeWidth="2.5"
                   >
                     <polyline points="9 18 15 12 9 6"></polyline>
                   </svg>
@@ -173,7 +186,7 @@ export const Header: React.FC = () => {
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    stroke-width="2.5"
+                    strokeWidth="2.5"
                   >
                     <line x1="7" y1="17" x2="17" y2="7"></line>
                     <polyline points="7 7 17 7 17 17"></polyline>
@@ -181,145 +194,154 @@ export const Header: React.FC = () => {
                 </Link>
               )}
 
-              {/* Mobile Hamburger Toggle Pill */}
+              {/* Mobile Hamburger Toggle */}
               <button
-                className={`mobile-toggle ${isMobileOpen ? 'active' : ''}`}
+                className={`mobile-menu-toggle mobile-toggle ${isMobileOpen ? 'active' : ''}`}
                 id="mobile-toggle"
                 aria-label="Toggle Navigation Menu"
                 aria-expanded={isMobileOpen}
                 onClick={() => setIsMobileOpen(!isMobileOpen)}
               >
-                <span className="toggle-bar"></span>
-                <span className="toggle-bar"></span>
-                <span className="toggle-bar"></span>
+                <span className="hamburger-bar toggle-bar"></span>
+                <span className="hamburger-bar toggle-bar"></span>
+                <span className="hamburger-bar toggle-bar"></span>
               </button>
             </div>
           </div>
         </div>
-      </header>
 
-      {/* Mobile Drawer */}
-      <div
-        className={`mobile-nav-drawer ${isMobileOpen ? 'active' : ''}`}
-        id="mobile-nav-drawer"
-        style={{ display: isMobileOpen ? 'block' : 'none' }}
-      >
-        <div className="mobile-nav-content">
-          <nav className="mobile-nav-links">
-            <a
-              href={getNavLink('#freelancers')}
-              className="mobile-nav-link"
-              onClick={(e) => handleNavClick(e, '#freelancers')}
-            >
-              Freelancers
-            </a>
-            <a
-              href={getNavLink('#roles')}
-              className="mobile-nav-link"
-              onClick={(e) => handleNavClick(e, '#roles')}
-            >
-              Disciplines
-            </a>
-            <a
-              href={getNavLink('#how-it-works')}
-              className="mobile-nav-link"
-              onClick={(e) => handleNavClick(e, '#how-it-works')}
-            >
-              How It Works
-            </a>
-            <a
-              href={getNavLink('#testimonials')}
-              className="mobile-nav-link"
-              onClick={(e) => handleNavClick(e, '#testimonials')}
-            >
-              Voices
-            </a>
-            <Link
-              href="/blog"
-              className="mobile-nav-link"
-              onClick={() => setIsMobileOpen(false)}
-            >
-              Field Notes
-            </Link>
-          </nav>
-          <div className="mobile-nav-actions" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
-            {!user ? (
-              <>
-                <Link
-                  href="/signin"
-                  className="btn btn-outline"
-                  style={{ width: '100%', textAlign: 'center', textDecoration: 'none' }}
-                  onClick={() => setIsMobileOpen(false)}
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/signup"
-                  className="btn btn-primary"
-                  style={{ width: '100%', textAlign: 'center', textDecoration: 'none' }}
-                  onClick={() => setIsMobileOpen(false)}
-                >
-                  Sign Up as Freelancer ↗
-                </Link>
-              </>
-            ) : user.role === 'admin' ? (
-              <>
-                <Link
-                  href="/admin"
-                  className="btn btn-primary"
-                  style={{ width: '100%', textAlign: 'center', textDecoration: 'none' }}
-                  onClick={() => setIsMobileOpen(false)}
-                >
-                  ✦ Admin Dashboard
-                </Link>
-                <button
-                  type="button"
-                  className="btn btn-outline"
-                  style={{ width: '100%' }}
-                  onClick={() => {
-                    setIsMobileOpen(false);
-                    logout('/');
-                  }}
-                >
-                  Sign Out ({user.name})
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/dashboard"
-                  className="btn btn-primary"
-                  style={{ width: '100%', textAlign: 'center', textDecoration: 'none' }}
-                  onClick={() => setIsMobileOpen(false)}
-                >
-                  ⚡ Freelancer Dashboard
-                </Link>
-                {user.workerId && (
+        {/* Mobile Slide-Down Navigation Drawer */}
+        <div
+          className={`mobile-nav-drawer ${isMobileOpen ? 'active' : ''}`}
+          id="mobile-nav-drawer"
+        >
+          <div className="mobile-drawer-header">
+            <span className="mobile-drawer-badge">FINDWORKER DIRECTORY</span>
+            <span className="mobile-drawer-status">
+              <span className="status-dot"></span> DIRECT COMMERCE
+            </span>
+          </div>
+
+          <div className="mobile-nav-inner">
+            <nav className="mobile-nav-links">
+              <Link
+                href="/freelancers"
+                className="mobile-nav-link"
+                onClick={() => setIsMobileOpen(false)}
+              >
+                <span>All Freelancers</span>
+                <span className="mobile-link-badge">TALENT</span>
+              </Link>
+              <a
+                href={getNavLink('#roles')}
+                className="mobile-nav-link"
+                onClick={(e) => handleNavClick(e, '#roles')}
+              >
+                <span>Disciplines</span>
+              </a>
+              <a
+                href={getNavLink('#how-it-works')}
+                className="mobile-nav-link"
+                onClick={(e) => handleNavClick(e, '#how-it-works')}
+              >
+                <span>How It Works</span>
+              </a>
+              <a
+                href={getNavLink('#testimonials')}
+                className="mobile-nav-link"
+                onClick={(e) => handleNavClick(e, '#testimonials')}
+              >
+                <span>Voices</span>
+              </a>
+              <Link
+                href="/blog"
+                className="mobile-nav-link"
+                onClick={() => setIsMobileOpen(false)}
+              >
+                <span>Field Notes</span>
+                <span className="mobile-link-badge">JOURNAL</span>
+              </Link>
+            </nav>
+
+            <div className="mobile-nav-actions">
+              {!user ? (
+                <>
                   <Link
-                    href={`/profile?id=${user.workerId}`}
+                    href="/signin"
                     className="btn btn-outline"
                     style={{ width: '100%', textAlign: 'center', textDecoration: 'none' }}
                     onClick={() => setIsMobileOpen(false)}
                   >
-                    View My Public Profile ↗
+                    Sign In
                   </Link>
-                )}
-                <button
-                  type="button"
-                  className="btn btn-outline"
-                  style={{ width: '100%' }}
-                  onClick={() => {
-                    setIsMobileOpen(false);
-                    logout('/');
-                  }}
-                >
-                  Sign Out ({user.name})
-                </button>
-              </>
-            )}
+                  <Link
+                    href="/signup"
+                    className="btn btn-primary"
+                    style={{ width: '100%', textAlign: 'center', textDecoration: 'none' }}
+                    onClick={() => setIsMobileOpen(false)}
+                  >
+                    Sign Up as Freelancer ↗
+                  </Link>
+                </>
+              ) : user.role === 'admin' ? (
+                <>
+                  <Link
+                    href="/admin"
+                    className="btn btn-primary"
+                    style={{ width: '100%', textAlign: 'center', textDecoration: 'none' }}
+                    onClick={() => setIsMobileOpen(false)}
+                  >
+                    ✦ Admin Dashboard
+                  </Link>
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    style={{ width: '100%' }}
+                    onClick={() => {
+                      setIsMobileOpen(false);
+                      logout('/');
+                    }}
+                  >
+                    Sign Out ({user.name})
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/dashboard"
+                    className="btn btn-primary"
+                    style={{ width: '100%', textAlign: 'center', textDecoration: 'none' }}
+                    onClick={() => setIsMobileOpen(false)}
+                  >
+                    ⚡ Freelancer Dashboard
+                  </Link>
+                  {user.workerId && (
+                    <Link
+                      href={`/profile?id=${user.workerId}`}
+                      className="btn btn-outline"
+                      style={{ width: '100%', textAlign: 'center', textDecoration: 'none' }}
+                      onClick={() => setIsMobileOpen(false)}
+                    >
+                      View My Public Profile ↗
+                    </Link>
+                  )}
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    style={{ width: '100%' }}
+                    onClick={() => {
+                      setIsMobileOpen(false);
+                      logout('/');
+                    }}
+                  >
+                    Sign Out ({user.name})
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </header>
     </>
   );
 };

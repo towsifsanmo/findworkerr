@@ -91,39 +91,47 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Col 3: Direct Platforms */}
+          {/* Col 3: Direct Platforms & Category Links */}
           <div className="footer-matrix-col">
-            <h5 className="footer-col-heading">DIRECT WORK</h5>
+           
+
+            <h5 className="footer-col-heading" style={{ marginTop: '22px' }}>CATEGORIES</h5>
             <ul className="footer-links-list">
               <li>
-                <a href="https://www.upwork.com" target="_blank" rel="noopener noreferrer">
-                  <span>Upwork Top Rated</span> <span className="ext-arrow">↗</span>
-                </a>
+                <Link href="/freelancers?category=Web+Development">
+                  <span>Web Development</span>
+                  <span className="ext-arrow">→</span>
+                </Link>
               </li>
               <li>
-                <a href="https://www.fiverr.com" target="_blank" rel="noopener noreferrer">
-                  <span>Fiverr Pro Verified</span> <span className="ext-arrow">↗</span>
-                </a>
+                <Link href="/freelancers?category=UI%2FUX+Design">
+                  <span>UI/UX &amp; Product Design</span>
+                  <span className="ext-arrow">→</span>
+                </Link>
               </li>
               <li>
-                <a href="https://github.com" target="_blank" rel="noopener noreferrer">
-                  <span>GitHub Open Source</span> <span className="ext-arrow">↗</span>
-                </a>
+                <Link href="/freelancers?category=Software+Development">
+                  <span>Software &amp; AI Systems</span>
+                  <span className="ext-arrow">→</span>
+                </Link>
               </li>
               <li>
-                <a href="https://www.behance.net" target="_blank" rel="noopener noreferrer">
-                  <span>Behance Portfolios</span> <span className="ext-arrow">↗</span>
-                </a>
+                <Link href="/freelancers?category=Brand+Strategy">
+                  <span>Brand Identity &amp; Strategy</span>
+                  <span className="ext-arrow">→</span>
+                </Link>
               </li>
               <li>
-                <a href="https://dribbble.com" target="_blank" rel="noopener noreferrer">
-                  <span>Dribbble Showcases</span> <span className="ext-arrow">↗</span>
-                </a>
+                <Link href="/freelancers?category=Motion+Design">
+                  <span>Motion &amp; 3D Design</span>
+                  <span className="ext-arrow">→</span>
+                </Link>
               </li>
               <li>
-                <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer">
-                  <span>LinkedIn Networks</span> <span className="ext-arrow">↗</span>
-                </a>
+                <Link href="/freelancers?category=Content+Writing">
+                  <span>Technical &amp; Content Writing</span>
+                  <span className="ext-arrow">→</span>
+                </Link>
               </li>
             </ul>
           </div>
@@ -136,7 +144,7 @@ export const Footer: React.FC = () => {
               <li><a href={getNavLink('#how-it-works')}>Charter &amp; How It Works</a></li>
               <li><a href={getNavLink('#testimonials')}>Client Reviews Ledger</a></li>
               <li><a href={getNavLink('#faq')}>Frequently Asked Questions</a></li>
-              <li><a href={getNavLink('#why-outlier')}>Direct Commerce Ethics</a></li>
+              <li><Link href="/privacy">Privacy &amp; Data Charter</Link></li>
             </ul>
           </div>
         </div>
@@ -148,7 +156,7 @@ export const Footer: React.FC = () => {
           </div>
 
           <div className="footer-baseline-nav">
-            <a href={getNavLink('#why-outlier')} className="baseline-nav-link">Privacy Manifesto</a>
+            <Link target='_blank' href="/privacy" className="baseline-nav-link">Privacy Policy</Link>
             <span className="baseline-nav-sep">•</span>
             <a href={getNavLink('#why-outlier')} className="baseline-nav-link">Terms</a>
             <span className="baseline-nav-sep">•</span>

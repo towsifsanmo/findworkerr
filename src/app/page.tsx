@@ -94,8 +94,7 @@ export default function HomePage() {
       } else if (hash === '#signup' || hash.startsWith('#signup')) {
         router.push('/signup');
       } else if (hash === '#freelancers' || hash.startsWith('#freelancers')) {
-        setCurrentView('freelancers');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        router.push('/freelancers');
       } else {
         setCurrentView('home');
         if (hash && hash !== '#home') {
@@ -375,18 +374,14 @@ export default function HomePage() {
                   </div>
 
                   <div className="h-hero-user-block">
-                    <a
-                      href="#freelancers"
-                      className="primary-btn no-min-width go-to-directory-link"
+                    <Link
+                      href="/freelancers"
+                      // className="primary-btn no-min-width go-to-directory-link"
+                      className="btn btn-primary btn-md "
                       id="hero-work-together-btn"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        window.location.hash = '#freelancers';
-                      }}
                     >
                       <div className="btn-text">Let’s Work Together ?</div>
-                      <div className="btn-dot"></div>
-                    </a>
+                    </Link>
                   </div>
                 </div>
 
@@ -598,18 +593,14 @@ export default function HomePage() {
                     Independent specialists across digital engineering, design, and growth.
                   </p>
                 </div>
-                <div>
-                  <a
-                    href="#freelancers"
+                {/* <div>
+                  <Link
+                    href="/freelancers"
                     className="btn btn-outline btn-sm go-to-directory-link"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.hash = '#freelancers';
-                    }}
                   >
                     View All Freelancers →
-                  </a>
-                </div>
+                  </Link>
+                </div> */}
               </div>
 
               <div className="categories-8col-grid">
@@ -685,7 +676,7 @@ export default function HomePage() {
                           )}
                         </div>
                         <div className="role-title">{displayTitle}</div>
-                        <div className="role-count-pill">{cat.description || '★ 4.98 • Direct Hire'}</div>
+                        {/* <div className="role-count-pill">{cat.description || '★ 4.98 • Direct Hire'}</div> */}
                       </div>
                     );
                   })
@@ -695,7 +686,7 @@ export default function HomePage() {
           </section>
 
           {/* 4. Top Freelancers Section (#top-freelancers) — VIP Elite Showcase */}
-          <section className="section-padding reveal-on-scroll top-freelancers-showcase-section" id="top-freelancers">
+          {/* <section className="section-padding reveal-on-scroll top-freelancers-showcase-section" id="top-freelancers">
             <div className="container">
               <div className="section-header vip-independents-header">
                 <div className="section-header-left">
@@ -798,7 +789,7 @@ export default function HomePage() {
                       onClick={() => openWorker(w)}
                       style={{ cursor: 'pointer' }}
                     >
-                      {/* Media / Project Preview Aperture */}
+                      
                       <div className="vip-card-media-stage">
                         <img
                           src={featuredProject.image}
@@ -811,7 +802,7 @@ export default function HomePage() {
                         </div>
                       </div>
 
-                      {/* Creator Profile Deck */}
+                      
                       <div className="vip-card-profile-deck">
                         <div className="vip-card-avatar-stage">
                           <img
@@ -839,7 +830,7 @@ export default function HomePage() {
                         </div>
                       </div>
 
-                      {/* Signature Skills */}
+                      
                       <div className="vip-card-spec-highlight">
                         <div className="vip-card-skills-row">
                           {w.skills.slice(0, 2).map((s, sIdx) => (
@@ -850,7 +841,159 @@ export default function HomePage() {
                         </div>
                       </div>
 
-                      {/* Action & Metadata Bottom Dock */}
+                      
+                      <div className="vip-card-bottom-dock">
+                        <div className="vip-card-meta-pill">
+                          <span className="vip-meta-loc">
+                            {w.location ? w.location.split('&')[0].trim() : 'Remote'}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className="primary-btn no-min-width vip-card-action-btn card-profile-btn"
+                          data-id={w.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openWorker(w);
+                          }}
+                        >
+                          <span className="btn-text">View Profile ↗</span>
+                          <span className="btn-dot"></span>
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })
+                )}
+              </div>
+            </div>
+          </section> */}
+
+           <section
+            className="section-padding reveal-on-scroll site-footer"
+         
+           
+          >
+            <div className="container">
+              <div className="section-header vip-independents-header">
+                <div className="section-header-left">
+                  <h2 className="vip-section-title">Curated talent spotlight.</h2>
+                  <p className="vip-section-desc">Flagship portfolio case studies from verified independent specialists.</p>
+                </div>
+                
+              </div>
+
+              <div className="vip-independents-grid" id="specializations-container">
+                {isLoadingData && specCarouselWorkers.length === 0 ? (
+                  [...Array(4)].map((_, i) => (
+                    <article key={i} className="vip-independents-card is-skeleton">
+                      <div className="vip-card-media-stage" style={{ background: 'transparent' }}>
+                        <div className="vip-media-skeleton fw-skeleton-bone"></div>
+                      </div>
+                      <div className="vip-card-profile-deck">
+                        <div className="vip-avatar-skeleton fw-skeleton-bone"></div>
+                        <div className="vip-card-identity-block" style={{ flex: 1, minWidth: 0 }}>
+                          <div className="vip-name-skeleton fw-skeleton-bone"></div>
+                          <div className="vip-role-skeleton fw-skeleton-bone"></div>
+                        </div>
+                        <div className="vip-rating-skeleton fw-skeleton-bone"></div>
+                      </div>
+                      <div className="vip-card-spec-highlight">
+                        <div className="vip-card-skills-row">
+                          <div className="vip-skill-skeleton fw-skeleton-bone"></div>
+                          <div className="vip-skill-skeleton fw-skeleton-bone"></div>
+                        </div>
+                      </div>
+                      <div className="vip-card-bottom-dock">
+                        <div className="vip-loc-skeleton fw-skeleton-bone"></div>
+                        <div className="vip-btn-skeleton fw-skeleton-bone"></div>
+                      </div>
+                    </article>
+                  ))
+                ) : specCarouselWorkers.length === 0 ? (
+                  <div className="data-not-found-state">
+                    <div className="not-found-icon-wrap">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                      </svg>
+                    </div>
+                    <h4 className="not-found-title">Data not found</h4>
+                    <p className="not-found-desc">No curated portfolio case studies found in the database. Please try refreshing.</p>
+                    <button type="button" className="btn btn-outline btn-sm not-found-retry-btn" onClick={loadData}>
+                      ↻ Try Again
+                    </button>
+                  </div>
+                ) : (
+                  specCarouselWorkers.map((w) => {
+                  const featuredProject =
+                    w.portfolio && w.portfolio[0]
+                      ? w.portfolio[0]
+                      : {
+                          title: `${w.name} Flagship Project`,
+                          category: w.trade,
+                          image: w.image,
+                        };
+                  const avatarSrc = w.image?.startsWith('assets/') ? `/${w.image}` : (w.image || '/assets/images/hero_craftsman.jpg');
+
+                  return (
+                    <article
+                      key={w.id}
+                      className="vip-independents-card"
+                      data-id={w.id}
+                      onClick={() => openWorker(w)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div className="vip-card-media-stage">
+                        <img
+                          src={featuredProject.image}
+                          alt={featuredProject.title}
+                          className="vip-card-image"
+                          loading="lazy"
+                        />
+                        <div className="vip-card-badge-row">
+                          <span className="vip-card-category-pill">{featuredProject.category || w.trade}</span>
+                        </div>
+                      </div>
+
+                      <div className="vip-card-profile-deck">
+                        <div className="vip-card-avatar-stage">
+                          <img
+                            src={avatarSrc}
+                            alt={w.name}
+                            className="vip-card-avatar-img"
+                            loading="lazy"
+                          />
+                          <span className="vip-card-live-dot" title="Available for work"></span>
+                        </div>
+                        <div className="vip-card-identity-block">
+                          <div className="vip-card-name-line">
+                            <h3 className="vip-card-name">{w.name}</h3>
+                            <span className="vip-card-verified-icon" title="Verified Professional">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="#10B981">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                              </svg>
+                            </span>
+                          </div>
+                          <span className="vip-card-role-title">{w.craftTitle || w.trade}</span>
+                        </div>
+                        <div className="vip-card-rating-capsule">
+                          <span className="star-icon">★</span>
+                          <span className="rating-val">{w.rating?.toFixed(2) || '5.00'}</span>
+                        </div>
+                      </div>
+
+                      <div className="vip-card-spec-highlight">
+                        <div className="vip-card-skills-row">
+                          {w.skills.slice(0, 2).map((s, sIdx) => (
+                            <span key={sIdx} className="vip-card-skill-tag">
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
                       <div className="vip-card-bottom-dock">
                         <div className="vip-card-meta-pill">
                           <span className="vip-meta-loc">
@@ -992,10 +1135,10 @@ export default function HomePage() {
           </section>
 
           {/* 6. Open Opportunities / Highest Rated (#specializations) */}
-          <section
-            className="section-padding reveal-on-scroll"
-            id="specializations"
-            style={{ backgroundColor: 'var(--color-background-soft)' }}
+          {/* <section
+            className="section-padding reveal-on-scroll site-footer"
+         
+           
           >
             <div className="container">
               <div className="section-header vip-independents-header">
@@ -1003,44 +1146,7 @@ export default function HomePage() {
                   <h2 className="vip-section-title">Curated talent spotlight.</h2>
                   <p className="vip-section-desc">Flagship portfolio case studies from verified independent specialists.</p>
                 </div>
-                <div className="top-header-actions-group">
-                  <div className="carousel-nav-arrows">
-                    <button
-                      type="button"
-                      className="arrow-circle-btn elite-nav-arrow"
-                      id="spec-carousel-prev"
-                      aria-label="Previous talent cohort"
-                      onClick={() =>
-                        setSpecCarouselOffset(
-                          (specCarouselOffset - 4 + spotlightWorkersList.length) % spotlightWorkersList.length
-                        )
-                      }
-                    >
-                      ←
-                    </button>
-                    <button
-                      type="button"
-                      className="arrow-circle-btn elite-nav-arrow"
-                      id="spec-carousel-next"
-                      aria-label="Next talent cohort"
-                      onClick={() =>
-                        setSpecCarouselOffset((specCarouselOffset + 4) % spotlightWorkersList.length)
-                      }
-                    >
-                      →
-                    </button>
-                  </div>
-                  <a
-                    href="#freelancers"
-                    className="btn btn-outline btn-sm go-to-directory-link"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.hash = '#freelancers';
-                    }}
-                  >
-                    All Freelancers →
-                  </a>
-                </div>
+                
               </div>
 
               <div className="vip-independents-grid" id="specializations-container">
@@ -1179,7 +1285,7 @@ export default function HomePage() {
                 )}
               </div>
             </div>
-          </section>
+          </section> */}
 
           {/* 7. How It Works (#how-it-works) */}
           <section className="section-padding reveal-on-scroll site-footer" id="how-it-works">
@@ -1198,7 +1304,7 @@ export default function HomePage() {
                 <div className="step-card">
                   <div className="step-top-line">
                     <span className="step-number">01</span>
-                    <span className="step-time-badge">Discovery</span>
+                    
                   </div>
                   <h3 style={{ fontSize: '1.3rem' }}>Search &amp; explore.</h3>
                   <p style={{ fontSize: '0.92rem', color: 'var(--color-secondary-muted)', lineHeight: '1.6' }}>
@@ -1224,7 +1330,7 @@ export default function HomePage() {
                 <div className="step-card">
                   <div className="step-top-line">
                     <span className="step-number">02</span>
-                    <span className="step-time-badge">Evaluation</span>
+                    
                   </div>
                   <h3 style={{ fontSize: '1.3rem' }}>Inspect the Freelancer.</h3>
                   <p style={{ fontSize: '0.92rem', color: 'var(--color-secondary-muted)', lineHeight: '1.6' }}>
@@ -1249,7 +1355,7 @@ export default function HomePage() {
                 <div className="step-card">
                   <div className="step-top-line">
                     <span className="step-number">03</span>
-                    <span className="step-time-badge">Direct Contact</span>
+                    
                   </div>
                   <h3 style={{ fontSize: '1.3rem' }}>Connect directly.</h3>
                   <p style={{ fontSize: '0.92rem', color: 'var(--color-secondary-muted)', lineHeight: '1.6' }}>
@@ -1276,9 +1382,9 @@ export default function HomePage() {
 
           {/* 8. Contributor Voices / Testimonials (#testimonials) */}
           <section
-            className="section-padding reveal-on-scroll"
-            id="testimonials"
-            style={{ backgroundColor: 'var(--color-background-soft)' }}
+            className="section-padding reveal-on-scroll site-footer"
+          
+            
           >
             <div className="container">
               <div className="section-header">
@@ -1354,25 +1460,13 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* 9. Field Notes / Blog Section (#blog) */}
+          
           <section className="section-padding reveal-on-scroll site-footer" id="blog">
             <div className="container">
               <div className="section-header">
                 <div className="section-header-left">
                   <h2>Ideas from the independent web.</h2>
                   <p className="section-subtitle">Observations on making thoughtful digital work.</p>
-                </div>
-                <div>
-                  <a
-                    href="#freelancers"
-                    className="btn btn-outline btn-sm go-to-directory-link"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.hash = '#freelancers';
-                    }}
-                  >
-                    Browse Directory →
-                  </a>
                 </div>
               </div>
 
@@ -1445,8 +1539,8 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* 10. Frequently Asked Questions (#faq) */}
-          <section className="section-padding faq-section reveal-on-scroll" id="faq">
+        
+          <section className="section-padding faq-section site-footer reveal-on-scroll" id="faq">
             <div className="container">
               <div
                 className="section-header"

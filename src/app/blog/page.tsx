@@ -13,16 +13,18 @@ import {
   getClapCount,
   incrementClap,
   fetchArticleByIdFromDb,
+  fetchArticlesFromDb,
 } from '@/lib/blog-data';
 import { useToast } from '@/context/toast-context';
 import { BlogArticle } from '@/types';
 
-function BlogContent() {
+function BlogContent({ idFromProps }: { idFromProps?: string }) {
   const searchParams = useSearchParams();
-  const articleId = searchParams.get('id') || 'article-1';
+  const articleId = idFromProps || searchParams.get('id') || searchParams.get('slug') || 'article-1';
   const { showToast } = useToast();
 
   const [article, setArticle] = useState<BlogArticle | null>(null);
+  const [allArticles, setAllArticles] = useState<BlogArticle[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [claps, setClaps] = useState<number>(140);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -30,16 +32,27 @@ function BlogContent() {
 
   useEffect(() => {
     setIsLoading(true);
-    fetchArticleByIdFromDb(articleId)
-      .then((fresh) => {
+    Promise.all([
+      fetchArticleByIdFromDb(articleId),
+      fetchArticlesFromDb(),
+    ])
+      .then(([fresh, fetchedList]) => {
+        const list = fetchedList || [];
+        setAllArticles(list);
+
         if (fresh) {
           setArticle(fresh);
-          setClaps(fresh.claps);
+          setClaps(fresh.claps || 140);
+        } else if (list.length > 0) {
+          const match = list.find((a) => a.id === articleId || (a as any).slug === articleId) || list[0];
+          setArticle(match);
+          setClaps(match.claps || 140);
         } else {
           setArticle(null);
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('Failed to load article from DB:', err);
         setArticle(null);
       })
       .finally(() => {
@@ -58,8 +71,8 @@ function BlogContent() {
         setScrollProgress(Math.min(100, Math.max(0, currentProgress)));
       }
 
-      // Check TOC headings
-      if (article.toc) {
+      // Check TOC headings safely
+      if (article?.toc && Array.isArray(article.toc)) {
         for (let i = article.toc.length - 1; i >= 0; i--) {
           const el = document.getElementById(article.toc[i].id);
           if (el) {
@@ -79,6 +92,7 @@ function BlogContent() {
   }, [article]);
 
   const handleClap = async () => {
+    if (!article) return;
     const newCount = await incrementClap(article.id);
     setClaps(newCount);
     showToast(`Applauded! (${newCount} total)`);
@@ -158,9 +172,9 @@ function BlogContent() {
   const { prev, next } = getNextAndPrevArticles(article.id);
   const related = getRelatedArticles(article.id, 3);
 
-  const authorAvatarSrc = article.author.avatar.startsWith('assets/')
+  const authorAvatarSrc = article.author?.avatar?.startsWith('assets/')
     ? `/${article.author.avatar}`
-    : article.author.avatar;
+    : (article.author?.avatar || '/assets/images/hero_craftsman.jpg');
 
   return (
     <>
@@ -578,6 +592,8 @@ function BlogContent() {
     </>
   );
 }
+
+export { BlogContent };
 
 export default function BlogPage() {
   return (
