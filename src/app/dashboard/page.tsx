@@ -125,7 +125,7 @@ const PLATFORMS_CONFIG: Record<
   },
   medium: {
     name: 'Medium',
-    actionText: 'Read Field Notes',
+    actionText: 'Read Blogs',
     defaultBadge: 'Publications',
     color: '#000000',
     svg: (
@@ -431,7 +431,7 @@ export default function DashboardPage() {
   // Copy public profile link
   const handleCopyPublicLink = () => {
     if (!worker) return;
-    const fullUrl = `${window.location.origin}/profile?id=${encodeURIComponent(worker.id)}`;
+    const fullUrl = `${window.location.origin}/freelancer/${encodeURIComponent(worker.id)}`;
     navigator.clipboard
       .writeText(fullUrl)
       .then(() => {
@@ -837,7 +837,7 @@ export default function DashboardPage() {
   const avatar = worker.image || '/assets/images/hero_craftsman.jpg';
   const reviews = reviewsList;
   const ratingVal = worker.rating ? worker.rating.toFixed(2) : '5.00';
-  const publicProfileUrl = `/profile?id=${encodeURIComponent(worker.id)}`;
+  const publicProfileUrl = `/freelancer/${encodeURIComponent(worker.id)}`;
 
   const titleMap: Record<string, string> = {
     overview: 'Overview',

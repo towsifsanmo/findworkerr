@@ -1,605 +1,308 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import {
-  getArticleById,
-  getAllArticles,
-  getRelatedArticles,
-  getNextAndPrevArticles,
-  getClapCount,
-  incrementClap,
-  fetchArticleByIdFromDb,
-  fetchArticlesFromDb,
-} from '@/lib/blog-data';
-import { useToast } from '@/context/toast-context';
+import { fetchArticlesFromDb } from '@/lib/blog-data';
 import { BlogArticle } from '@/types';
 
-function BlogContent({ idFromProps }: { idFromProps?: string }) {
-  const searchParams = useSearchParams();
-  const articleId = idFromProps || searchParams.get('id') || searchParams.get('slug') || 'article-1';
-  const { showToast } = useToast();
-
-  const [article, setArticle] = useState<BlogArticle | null>(null);
-  const [allArticles, setAllArticles] = useState<BlogArticle[]>([]);
+export default function BlogsPage() {
+  const [articles, setArticles] = useState<BlogArticle[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [claps, setClaps] = useState<number>(140);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [activeTocId, setActiveTocId] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   useEffect(() => {
     setIsLoading(true);
-    Promise.all([
-      fetchArticleByIdFromDb(articleId),
-      fetchArticlesFromDb(),
-    ])
-      .then(([fresh, fetchedList]) => {
-        const list = fetchedList || [];
-        setAllArticles(list);
-
-        if (fresh) {
-          setArticle(fresh);
-          setClaps(fresh.claps || 140);
-        } else if (list.length > 0) {
-          const match = list.find((a) => a.id === articleId || (a as any).slug === articleId) || list[0];
-          setArticle(match);
-          setClaps(match.claps || 140);
-        } else {
-          setArticle(null);
-        }
+    fetchArticlesFromDb()
+      .then((data) => {
+        setArticles(data || []);
       })
       .catch((err) => {
-        console.error('Failed to load article from DB:', err);
-        setArticle(null);
+        console.error('Failed to load blog posts:', err);
+        setArticles([]);
       })
       .finally(() => {
         setIsLoading(false);
       });
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [articleId]);
+  }, []);
 
-  // Reading Progress Bar & TOC ScrollSpy
-  useEffect(() => {
-    const handleScroll = () => {
-      const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
-      if (totalScroll > 0) {
-        const currentProgress = (window.scrollY / totalScroll) * 100;
-        setScrollProgress(Math.min(100, Math.max(0, currentProgress)));
-      }
+  // Compute available categories from articles
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    articles.forEach((a) => {
+      if (a.category) set.add(a.category);
+    });
+    return ['All', ...Array.from(set)];
+  }, [articles]);
 
-      // Check TOC headings safely
-      if (article?.toc && Array.isArray(article.toc)) {
-        for (let i = article.toc.length - 1; i >= 0; i--) {
-          const el = document.getElementById(article.toc[i].id);
-          if (el) {
-            const rect = el.getBoundingClientRect();
-            if (rect.top <= 140) {
-              setActiveTocId(article.toc[i].id);
-              break;
-            }
-          }
-        }
-      }
-    };
+  // Filter articles based on search and category
+  const filteredArticles = useMemo(() => {
+    return articles.filter((a) => {
+      const matchesCategory =
+        selectedCategory === 'All' || a.category?.toLowerCase() === selectedCategory.toLowerCase();
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [article]);
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        a.title.toLowerCase().includes(q) ||
+        (a.standfirst && a.standfirst.toLowerCase().includes(q)) ||
+        (a.author?.name && a.author.name.toLowerCase().includes(q)) ||
+        (a.tags && a.tags.some((t) => t.toLowerCase().includes(q)));
 
-  const handleClap = async () => {
-    if (!article) return;
-    const newCount = await incrementClap(article.id);
-    setClaps(newCount);
-    showToast(`Applauded! (${newCount} total)`);
-  };
+      return matchesCategory && matchesSearch;
+    });
+  }, [articles, selectedCategory, searchQuery]);
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    showToast('Article URL copied to clipboard!');
-  };
-
-  if (isLoading) {
-    return (
-      <div className="blog-detail-page">
-        <Header />
-        <main className="editorial-article-page" style={{ padding: '40px 0 80px' }}>
-          <div className="container" style={{ maxWidth: '820px', margin: '0 auto' }}>
-            <div className="fw-skeleton-bone" style={{ width: '90px', height: '24px', borderRadius: '4px', marginBottom: '18px' }}></div>
-            <div className="fw-skeleton-bone" style={{ width: '85%', height: '40px', marginBottom: '12px' }}></div>
-            <div className="fw-skeleton-bone" style={{ width: '65%', height: '40px', marginBottom: '24px' }}></div>
-            <div className="fw-skeleton-bone" style={{ width: '100%', height: '22px', marginBottom: '8px' }}></div>
-            <div className="fw-skeleton-bone" style={{ width: '80%', height: '22px', marginBottom: '32px' }}></div>
-
-            {/* Byline skeleton */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '36px', paddingBottom: '24px', borderBottom: '1px solid var(--color-border)' }}>
-              <div className="fw-skeleton-bone" style={{ width: '48px', height: '48px', borderRadius: '50%' }}></div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div className="fw-skeleton-bone" style={{ width: '130px', height: '16px' }}></div>
-                <div className="fw-skeleton-bone" style={{ width: '180px', height: '13px' }}></div>
-              </div>
-            </div>
-
-            {/* Media hero skeleton */}
-            <div className="fw-skeleton-bone" style={{ width: '100%', height: '380px', borderRadius: '16px', marginBottom: '36px' }}></div>
-
-            {/* Prose text lines skeleton */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div className="fw-skeleton-bone" style={{ width: '100%', height: '16px' }}></div>
-              <div className="fw-skeleton-bone" style={{ width: '96%', height: '16px' }}></div>
-              <div className="fw-skeleton-bone" style={{ width: '92%', height: '16px' }}></div>
-              <div className="fw-skeleton-bone" style={{ width: '60%', height: '16px', marginBottom: '16px' }}></div>
-              <div className="fw-skeleton-bone" style={{ width: '40%', height: '28px', marginBottom: '10px' }}></div>
-              <div className="fw-skeleton-bone" style={{ width: '98%', height: '16px' }}></div>
-              <div className="fw-skeleton-bone" style={{ width: '95%', height: '16px' }}></div>
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (!article) {
-    return (
-      <div className="blog-detail-page">
-        <Header />
-        <div style={{ minHeight: '65vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
-          <div className="data-not-found-state" style={{ maxWidth: '480px' }}>
-            <div className="not-found-icon-wrap">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-              </svg>
-            </div>
-            <h4 className="not-found-title">Data not found</h4>
-            <p className="not-found-desc">The requested editorial field note could not be found in the database.</p>
-            <Link href="/#blog" className="btn btn-outline btn-sm not-found-retry-btn">
-              ← Back to Field Notes
-            </Link>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  const { prev, next } = getNextAndPrevArticles(article.id);
-  const related = getRelatedArticles(article.id, 3);
-
-  const authorAvatarSrc = article.author?.avatar?.startsWith('assets/')
-    ? `/${article.author.avatar}`
-    : (article.author?.avatar || '/assets/images/hero_craftsman.jpg');
+  // Featured article (first item or primary)
+  const featuredArticle = filteredArticles.length > 0 ? filteredArticles[0] : null;
+  const remainingArticles = filteredArticles.length > 1 ? filteredArticles.slice(1) : [];
 
   return (
-    <>
-      {/* Top Reading Progress Indicator */}
-      <div className="reading-progress-track" aria-hidden="true">
-        <div
-          id="reading-progress-bar"
-          className="reading-progress-bar"
-          style={{ width: `${scrollProgress}%` }}
-        ></div>
-      </div>
-
+    <div className="min-h-screen flex flex-col bg-[#F4F4F4]">
       <Header />
 
-      <main className="editorial-article-page">
-        {/* 2. Editorial Navigation Strip */}
-        <div className="editorial-nav-strip">
-          <div className="container editorial-nav-inner">
-            <Link href="/#blog" className="editorial-back-link">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="19" y1="12" x2="5" y2="12"></line>
-                <polyline points="12 19 5 12 12 5"></polyline>
-              </svg>
-              <span>Back to Field Notes</span>
-            </Link>
-            <div className="editorial-kicker-tag">
-              <span>Field Notes Dispatch</span>
-              <span>/</span>
-              <span className="kicker-cat" id="article-kicker-cat">
-                {article.category}
-              </span>
-            </div>
-          </div>
-        </div>
+      <main className="flex-1 pb-20">
+        {/* Minimalist Editorial Hero Section */}
+        <section className="pt-12 sm:pt-16 pb-10 px-4 bg-white border-b border-[#EBEBEB]">
+          <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-9">
+            <div className="max-w-3xl">
+              
 
-        {/* 3. Editorial Masthead */}
-        <section className="editorial-masthead-section">
-          <div className="container editorial-masthead-inner">
-            <div className="article-category-badge" id="article-category-badge">
-              {article.category}
-            </div>
-            <h1 className="article-title-main" id="article-title">
-              {article.title}
-            </h1>
-            <p className="article-standfirst" id="article-standfirst">
-              {article.standfirst}
-            </p>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#0F0F0F] mb-4">
+                Perspectives on Modern Digital Craft.
+              </h1>
 
-            {/* Byline Dossier Strip */}
-            <div className="editorial-byline-strip">
-              <div className="byline-author-cluster">
-                <div className="byline-avatar-frame">
-                  <img
-                    src={authorAvatarSrc}
-                    alt={article.author.name}
-                    id="byline-avatar"
-                    className="byline-avatar-img"
-                  />
-                  <span className="byline-verified-icon">✓</span>
-                </div>
-                <div className="byline-text-meta">
-                  <div className="byline-name-row">
-                    <span className="byline-author-name" id="byline-author-name">
-                      {article.author.name}
-                    </span>
-                  </div>
-                  <div className="byline-role-row" id="byline-author-role">
-                    {article.author.role}
-                  </div>
-                </div>
+              <p className="text-sm sm:text-base text-zinc-600 leading-relaxed max-w-2xl">
+                Explore in-depth articles, architectural breakdowns, and independent commerce insights written by verified designers, developers, and guild practitioners.
+              </p>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="mt-8 pt-6 border-t border-zinc-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+              {/* Category Pills */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-none">
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-3.5 py-1.5 rounded text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                      selectedCategory === cat
+                        ? 'bg-[#0F0F0F] text-white shadow-xs'
+                        : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
               </div>
 
-              <div className="byline-details-cluster">
-                <div className="byline-stat-item">
-                  <strong>Published:</strong> <span id="byline-date">{article.date}</span>
-                </div>
-                <div className="byline-stat-item">
-                  <strong>Read:</strong> <span id="byline-read-time">{article.readTime}</span>
-                </div>
-                <Link
-                  href={`/profile?id=${article.author.id}`}
-                  className="byline-view-profile-btn"
-                  id="byline-profile-btn"
-                >
-                  <span>View Profile &amp; Platforms</span>
-                  <span>→</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 4. Featured Hero Media */}
-        <section className="editorial-hero-media-wrap">
-          <div className="editorial-media-container">
-            <div className="editorial-img-frame">
-              <img src={article.heroImage} alt={article.title} id="article-hero-img" />
-            </div>
-            <div className="editorial-media-caption" id="article-hero-caption">
-              {article.caption}
-            </div>
-          </div>
-        </section>
-
-        {/* 5. Main Reader Grid (Sticky Sidebar + Prose Reading Column) */}
-        <section className="editorial-reader-section">
-          <div className="editorial-reader-container">
-            <div className="editorial-reader-grid">
-              {/* Left Column: Sticky Editorial Sidebar */}
-              <aside className="editorial-sticky-sidebar">
-                {/* Table of Contents Card */}
-                {article.toc && article.toc.length > 0 && (
-                  <div className="sidebar-box">
-                    <div className="sidebar-box-header">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <line x1="8" y1="6" x2="21" y2="6"></line>
-                        <line x1="8" y1="12" x2="21" y2="12"></line>
-                        <line x1="8" y1="18" x2="21" y2="18"></line>
-                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
-                      </svg>
-                      <span>Table of Contents</span>
-                    </div>
-                    <nav className="toc-nav-list" id="sidebar-toc-nav" aria-label="Table of contents">
-                      {article.toc.map((item, idx) => (
-                        <a
-                          key={idx}
-                          href={`#${item.id}`}
-                          className={`toc-link ${activeTocId === item.id ? 'active' : ''}`}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            const target = document.getElementById(item.id);
-                            if (target) {
-                              target.scrollIntoView({ behavior: 'smooth' });
-                              setActiveTocId(item.id);
-                            }
-                          }}
-                        >
-                          {item.label}
-                        </a>
-                      ))}
-                    </nav>
-                  </div>
-                )}
-
-                {/* Quick Dispatch Ledger */}
-                <div className="sidebar-box">
-                  <div className="sidebar-box-header">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    <span>Dispatch Ledger</span>
-                  </div>
-                  <div className="facts-list">
-                    <div className="fact-row">
-                      <span className="fact-label">Category</span>
-                      <span className="fact-value" id="stat-category">
-                        {article.category.split('&')[0].trim()}
-                      </span>
-                    </div>
-                    <div className="fact-row">
-                      <span className="fact-label">Reading Time</span>
-                      <span className="fact-value" id="stat-read-time">
-                        {article.readTime}
-                      </span>
-                    </div>
-                    <div className="fact-row">
-                      <span className="fact-label">Talent Fee</span>
-                      <span className="fact-value" style={{ color: '#0F0F0F' }}>
-                        0% Platform Take
-                      </span>
-                    </div>
-                    <div className="fact-row">
-                      <span className="fact-label">Commission</span>
-                      <span className="fact-value">Direct To Worker</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Sidebar Actions: Clap & Share */}
-                <div className="sidebar-actions-row">
-                  <button
-                    type="button"
-                    className="clap-widget-btn"
-                    id="sidebar-clap-btn"
-                    title="Applaud essay"
-                    onClick={handleClap}
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M7 11v 8a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1h3a4 4 0 0 0 4 -4v-1a2 2 0 0 1 4 0v5h3a2 2 0 0 1 2 2l-1 5a2 3 0 0 1 -2 2h-7a3 3 0 0 1 -3 -3"></path>
-                    </svg>
-                    <span>
-                      Clap (<span id="sidebar-clap-count">{claps}</span>)
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className="share-copy-btn"
-                    id="share-copy-btn"
-                    title="Copy article URL"
-                    onClick={handleShare}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="18" cy="5" r="3"></circle>
-                      <circle cx="6" cy="12" r="3"></circle>
-                      <circle cx="18" cy="19" r="3"></circle>
-                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                    </svg>
-                    <span>Share</span>
-                  </button>
-                </div>
-              </aside>
-
-              {/* Right Column: Main Editorial Prose */}
-              <div className="editorial-prose-wrap">
-                {/* Prose Content */}
-                <article
-                  className="editorial-prose"
-                  id="article-prose"
-                  dangerouslySetInnerHTML={{ __html: article.proseHtml }}
+              {/* Search Box */}
+              <div className="relative min-w-[260px]">
+                <input
+                  type="text"
+                  placeholder="Search articles, authors, topics..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 rounded bg-zinc-50 border border-zinc-200 text-xs text-[#0F0F0F] placeholder-zinc-400 focus:outline-none focus:border-[#504CFF] focus:ring-2 focus:ring-[#504CFF]/15 transition-all"
                 />
-
-                {/* Topics / Tags Cloud */}
-                {article.tags && article.tags.length > 0 && (
-                  <div className="editorial-tags-bar">
-                    <span className="tags-kicker">Topics:</span>
-                    <div className="tags-cloud" id="article-tags-cloud">
-                      {article.tags.map((tag, tIdx) => (
-                        <span key={tIdx} className="editorial-topic-pill">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                </span>
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 text-xs p-0.5 cursor-pointer"
+                  >
+                    ✕
+                  </button>
                 )}
-
-                {/* Bottom Applaud Card */}
-                <div className="bottom-applaud-card">
-                  <div className="applaud-copy-wrap">
-                    <h4>Applaud this perspective</h4>
-                    <p>Give recognition to independent specialists sharing open engineering and craft knowledge.</p>
-                  </div>
-                  <div className="applaud-action-wrap">
-                    <button
-                      type="button"
-                      className="clap-widget-btn"
-                      id="bottom-clap-btn"
-                      onClick={handleClap}
-                    >
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M7 11v 8a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1h3a4 4 0 0 0 4 -4v-1a2 2 0 0 1 4 0v5h3a2 2 0 0 1 2 2l-1 5a2 3 0 0 1 -2 2h-7a3 3 0 0 1 -3 -3"></path>
-                      </svg>
-                      <span>
-                        Clap (<span id="bottom-clap-count">{claps}</span>)
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      className="share-copy-btn"
-                      id="bottom-share-btn"
-                      onClick={handleShare}
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="18" cy="5" r="3"></circle>
-                        <circle cx="6" cy="12" r="3"></circle>
-                        <circle cx="18" cy="19" r="3"></circle>
-                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                      </svg>
-                      <span>Share Article</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Author Spotlight Dossier */}
-                <div className="editorial-author-spotlight">
-                  <img
-                    src={authorAvatarSrc}
-                    alt={article.author.name}
-                    id="author-spotlight-avatar"
-                    className="author-spotlight-avatar"
-                  />
-                  <div className="author-spotlight-content">
-                    <div className="spotlight-kicker">Author Dossier • Verified Specialist</div>
-                    <div className="spotlight-header-row">
-                      <h3 className="spotlight-name" id="author-spotlight-name">
-                        {article.author.name}
-                      </h3>
-                    </div>
-                    <div className="spotlight-craft" id="author-spotlight-craft">
-                      {article.author.role} • {article.author.location}
-                    </div>
-                    <p className="spotlight-bio" id="author-spotlight-bio">
-                      {article.author.bio}
-                    </p>
-                    <div className="spotlight-actions-row">
-                      <Link
-                        href={`/profile?id=${article.author.id}`}
-                        className="spotlight-primary-cta"
-                        id="author-spotlight-profile-btn"
-                      >
-                        <span>View Full Profile &amp; Platforms</span>
-                        <span>→</span>
-                      </Link>
-                      <Link href="/#freelancers" className="spotlight-secondary-cta">
-                        Browse All Talent
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Previous / Next Story Pagination */}
-                <nav className="editorial-story-pagination" id="story-pagination-nav" aria-label="Story pagination">
-                  {prev && (
-                    <Link
-                      href={`/blog?id=${prev.id}`}
-                      className="pagination-card pagination-prev"
-                      title={prev.title}
-                    >
-                      <div className="pagination-label">
-                        <span className="arrow-sym">←</span>
-                        <span>Previous Story</span>
-                      </div>
-                      <div className="pagination-story-title">{prev.title}</div>
-                    </Link>
-                  )}
-                  {next && (
-                    <Link
-                      href={`/blog?id=${next.id}`}
-                      className="pagination-card pagination-next"
-                      title={next.title}
-                    >
-                      <div className="pagination-label">
-                        <span>Next Story</span>
-                        <span className="arrow-sym">→</span>
-                      </div>
-                      <div className="pagination-story-title">{next.title}</div>
-                    </Link>
-                  )}
-                </nav>
               </div>
             </div>
           </div>
         </section>
 
-        {/* 6. Related Dispatches Strip ("More from Field Notes") */}
-        <section className="editorial-related-strip">
-          <div className="container">
-            <div className="related-strip-header">
-              <div>
-                <span className="spotlight-kicker">CONTINUE EXPLORING</span>
-                <h2 className="related-heading">More from Field Notes</h2>
+        {/* Content Section */}
+        <section className="pt-10 px-4">
+          <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-9">
+            {isLoading ? (
+              /* Loading Skeletons */
+              <div className="space-y-8">
+                <div className="w-full h-80 rounded-3xl bg-zinc-200 animate-pulse"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="h-96 rounded-2xl bg-zinc-200 animate-pulse"></div>
+                  ))}
+                </div>
               </div>
-              <Link href="/#blog" className="spotlight-secondary-cta">
-                All Dispatches →
-              </Link>
-            </div>
-            <div className="related-grid" id="related-stories-grid">
-              {related.map((rel) => (
-                <Link
-                  key={rel.id}
-                  href={`/blog?id=${rel.id}`}
-                  className="related-story-card"
-                  aria-label={`Read story: ${rel.title}`}
+            ) : filteredArticles.length === 0 ? (
+              /* Empty State */
+              <div className="bg-white p-12 text-center max-w-md mx-auto my-12 shadow-sm">
+                <div className="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-500 mx-auto mb-4">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-[#0F0F0F] mb-1">No articles found</h3>
+                <p className="text-xs text-zinc-500 mb-6">
+                  We couldn&apos;t find any blog posts matching &ldquo;{searchQuery}&rdquo;.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedCategory('All');
+                  }}
+                  className="px-4 py-2 bg-[#504CFF] text-white text-xs font-semibold rounded-full hover:bg-[#403BEE] transition-colors cursor-pointer"
                 >
-                  <div className="related-thumb-wrap">
-                    <img src={rel.heroImage} alt={rel.title} loading="lazy" />
-                  </div>
-                  <div className="related-body">
-                    <div className="related-cat-line">
-                      <span>{rel.category.split('&')[0].trim()}</span>
-                      <span>• {rel.readTime}</span>
+                  Reset Search &amp; Filters
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-10">
+                {/* Featured Headline Post */}
+                {featuredArticle && (
+                  <article className="group relative bg-white  rounded overflow-hidden transition-all duration-300">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
+                      <div className="lg:col-span-7 overflow-hidden bg-zinc-100">
+                        <img
+                          src={featuredArticle.heroImage || '/assets/images/hero_craftsman.jpg'}
+                          alt={featuredArticle.title}
+                          className="w-full h-64 sm:h-80 lg:h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </div>
+                      <div className="lg:col-span-5 p-7 sm:p-10 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="px-2.5 py-1 rounded-full bg-[#504CFF]/10 text-[#504CFF] text-[10px] font-bold uppercase tracking-wider">
+                              {featuredArticle.category}
+                            </span>
+                            <span className="text-xs text-zinc-400">•</span>
+                            <span className="text-xs text-zinc-500">{featuredArticle.readTime}</span>
+                          </div>
+
+                          <h2 className="text-xl sm:text-2xl font-bold text-[#0F0F0F] group-hover:text-[#504CFF] transition-colors line-clamp-3 mb-3">
+                            <Link href={`/blog/${featuredArticle.id}`}>
+                              {featuredArticle.title}
+                            </Link>
+                          </h2>
+
+                          <p className="text-xs sm:text-sm text-zinc-600 line-clamp-3 leading-relaxed mb-6">
+                            {featuredArticle.standfirst}
+                          </p>
+                        </div>
+
+                        <div className="pt-6 border-t border-zinc-100 flex items-center justify-between flex-wrap gap-3">
+                          <div className="flex items-center gap-2.5">
+                            <img
+                              src={
+                                featuredArticle.author?.avatar?.startsWith('assets/')
+                                  ? `/${featuredArticle.author.avatar}`
+                                  : featuredArticle.author?.avatar || '/assets/images/hero_craftsman.jpg'
+                              }
+                              alt={featuredArticle.author?.name}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                            <div>
+                              <div className="text-xs font-bold text-[#0F0F0F]">
+                                {featuredArticle.author?.name}
+                              </div>
+                              <div className="text-[10px] text-zinc-400">{featuredArticle.date}</div>
+                            </div>
+                          </div>
+
+                          <Link
+                            href={`/blog/${featuredArticle.id}`}
+                            className="inline-flex items-center gap-1.5 bg-[#0F0F0F] text-white text-xs font-semibold px-4 py-2 rounded hover:bg-[#504CFF] transition-colors"
+                          >
+                            <span>Read Article</span>
+                            <span>↗</span>
+                          </Link>
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="related-card-title">{rel.title}</h3>
-                    <p className="related-card-snippet">{rel.standfirst}</p>
+                  </article>
+                )}
+
+                {/* Grid of Remaining Articles */}
+                {remainingArticles.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {remainingArticles.map((art) => {
+                      const avatar = art.author?.avatar?.startsWith('assets/')
+                        ? `/${art.author.avatar}`
+                        : art.author?.avatar || '/assets/images/hero_craftsman.jpg';
+
+                      return (
+                        <article
+                          key={art.id}
+                          className="group bg-white border rounded hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
+                        >
+                          <div>
+                            <div className="overflow-hidden bg-zinc-100 h-48 relative">
+                              <img
+                                src={art.heroImage || '/assets/images/hero_craftsman.jpg'}
+                                alt={art.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              />
+                              <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-white/90 backdrop-blur-xs text-[#0F0F0F] text-[10px] font-bold uppercase tracking-wider shadow-xs">
+                                {art.category}
+                              </span>
+                            </div>
+
+                            <div className="p-5">
+                              <div className="flex items-center gap-2 text-xs text-zinc-400 mb-2">
+                                <span>{art.date}</span>
+                                <span>•</span>
+                                <span>{art.readTime}</span>
+                              </div>
+
+                              <h3 className="text-base font-bold text-[#0F0F0F] group-hover:text-[#504CFF] transition-colors line-clamp-2 mb-2">
+                                <Link href={`/blog/${art.id}`}>
+                                  {art.title}
+                                </Link>
+                              </h3>
+
+                              <p className="text-xs text-zinc-600 line-clamp-2 leading-relaxed mb-4">
+                                {art.standfirst}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="p-5 pt-0 border-t border-zinc-100 mt-auto flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <img src={avatar} alt={art.author?.name} className="w-6 h-6 rounded-full object-cover" />
+                              <span className="text-xs font-medium text-zinc-700">{art.author?.name}</span>
+                            </div>
+
+                            <Link
+                              href={`/blog/${art.id}`}
+                              className="text-xs font-semibold text-[#504CFF] group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1"
+                            >
+                              <span>Read</span>
+                              <span>→</span>
+                            </Link>
+                          </div>
+                        </article>
+                      );
+                    })}
                   </div>
-                </Link>
-              ))}
-            </div>
+                )}
+              </div>
+            )}
           </div>
         </section>
       </main>
 
       <Footer />
-    </>
+    </div>
   );
 }
-
-export { BlogContent };
-
-export default function BlogPage() {
-  return (
-    <Suspense fallback={<div style={{ padding: '80px', textAlign: 'center' }}>Loading Field Notes...</div>}>
-      <BlogContent />
-    </Suspense>
-  );
-}
-

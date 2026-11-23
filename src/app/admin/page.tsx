@@ -517,7 +517,7 @@ export default function AdminPage() {
                                 >
                                   {w.status === 'draft' ? 'Publish' : 'Unpublish'}
                                 </button>
-                                <Link href={`/profile?id=${w.id}`} target="_blank" className="btn btn-outline btn-sm">
+                                <Link href={`/freelancer/${w.id}`} target="_blank" className="btn btn-outline btn-sm">
                                   View ↗
                                 </Link>
                                 <button

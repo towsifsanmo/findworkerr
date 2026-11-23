@@ -411,7 +411,7 @@ export const WorkerModal: React.FC<WorkerModalProps> = ({
                 {/* Link to Dedicated Public Profile Page */}
                 <div style={{ marginTop: '20px' }}>
                   <Link
-                    href={`/profile?id=${worker.id}`}
+                    href={`/freelancer/${worker.id}`}
                     className="btn btn-outline"
                     style={{ width: '100%', textAlign: 'center', textDecoration: 'none' }}
                   >

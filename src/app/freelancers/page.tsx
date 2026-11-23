@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { WorkerModal } from '@/components/WorkerModal';
@@ -10,6 +10,7 @@ import { fetchWorkersFromDb, fetchCategoriesDetailedFromDb } from '@/lib/workers
 import { Worker, CategoryItem as Category } from '@/types';
 
 function FreelancersDirectoryContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialCategoryParam = searchParams.get('category') || '';
 
@@ -65,8 +66,7 @@ function FreelancersDirectoryContent() {
   }, []);
 
   const openWorker = (w: Worker) => {
-    setSelectedWorker(w);
-    setIsModalOpen(true);
+    router.push(`/freelancer/${w.id}`);
   };
 
   const closeWorkerModal = () => {
@@ -180,33 +180,9 @@ function FreelancersDirectoryContent() {
             {/* Minimalist Editorial Hero Masthead */}
             <header className="freelancers-hero-minimal" style={{ marginBottom: '32px' }}>
               <div className="hero-minimal-inner">
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    fontFamily: "'Poppins', sans-serif",
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: 'var(--color-primary, #504CFF)',
-                    marginBottom: '12px',
-                  }}
-                >
-                  <span
-                    style={{
-                      width: '8px',
-                      height: '8px',
-                      backgroundColor: 'var(--color-primary, #504CFF)',
-                      borderRadius: '50%',
-                      display: 'inline-block',
-                    }}
-                  ></span>
-                  The Sovereign Freelancers Index
-                </div>
+                
                 <h1 className="hero-minimal-title" style={{ margin: '0 0 12px 0' }}>
-                  Exceptional independent talent,<br />
+                  Exceptional independent talent, 
                   <em className="hero-minimal-em">without the middleman.</em>
                 </h1>
                 <p style={{ fontFamily: "'Poppins', sans-serif", fontSize: '0.98rem', color: '#575757', margin: 0, maxWidth: '640px' }}>
@@ -570,17 +546,16 @@ function FreelancersDirectoryContent() {
                             </div>
 
                             <div className="dock-action">
-                              <button
-                                type="button"
+                              <Link
+                                href={`/freelancer/${w.id}`}
                                 className="primary-btn no-min-width card-profile-btn"
                                 data-id={w.id}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  openWorker(w);
                                 }}
                               >
                                 <span className="btn-text">View Profile ↗</span>
-                              </button>
+                              </Link>
                             </div>
                           </div>
                         </article>

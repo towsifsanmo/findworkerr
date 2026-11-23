@@ -1,255 +1,104 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { signupFreelancer } from '@/lib/auth';
-import { useAuth } from '@/context/auth-context';
-import { useToast } from '@/context/toast-context';
+import { SignUpForm } from '@/components/auth/SignUpForm';
 
 export default function SignUpPage() {
-  const router = useRouter();
-  const { user, refreshUser } = useAuth();
-  const { showToast } = useToast();
-
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordConfirm, setPasswordConfirm] = useState('');
-  const [agreeTerms, setAgreeTerms] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  // If already logged in, redirect to proper workspace
-  useEffect(() => {
-    if (user) {
-      if (user.role === 'admin') {
-        router.push('/admin');
-      } else {
-        router.push('/dashboard');
-      }
-    }
-  }, [user, router]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (password !== passwordConfirm) {
-      const msg = 'Passwords do not match. Please verify your password.';
-      setError(msg);
-      showToast(`⚠️ ${msg}`);
-      return;
-    }
-
-    if (!agreeTerms) {
-      const msg = 'Please agree to the terms of service.';
-      setError(msg);
-      showToast(`⚠️ ${msg}`);
-      return;
-    }
-
-    setLoading(true);
-    const res = await signupFreelancer({
-      name: name.trim(),
-      email: email.trim(),
-      password,
-      trade: 'Web Development',
-      craftTitle: 'Senior Web Development Specialist',
-      experience: 5,
-      location: 'Remote Available',
-    });
-    setLoading(false);
-
-    if (res.success) {
-      refreshUser();
-      showToast(`🎉 Welcome, ${name}! Your freelancer profile is published and ready to be discovered.`);
-      router.push('/dashboard');
-    } else {
-      const msg = res.message || 'Failed to create freelancer account.';
-      setError(msg);
-      showToast(`⚠️ ${msg}`);
-    }
-  };
-
   return (
     <>
       <Header />
-      <main className="main-content">
-        <div id="signup-view" className="view-panel">
-          <section className="auth-page-section">
-            <div className="auth-page-backdrop" aria-hidden="true">
-              <div className="auth-ambient-orb hero-ambient-orb" aria-hidden="true"></div>
-              <div className="auth-grid-mesh hero-grid-mesh" aria-hidden="true"></div>
-            </div>
+      <main className="min-h-[calc(100vh-160px)] bg-[#F8F8FA] py-12 sm:py-16 px-4">
+        <div className="max-w-[1120px] mx-auto">
+          {/* Breadcrumb */}
+          <div className="mb-6">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-500 hover:text-[#0F0F0F] transition-colors"
+            >
+              <span>←</span>
+              <span>Back to Directory</span>
+            </Link>
+          </div>
 
-            <div className="container auth-page-container">
-              {/* Minimalist Auth Card */}
-              <div className="auth-card-monolith auth-signup-monolith">
-                <div className="auth-card-header">
-                  <h1 className="auth-monument-title">
-                    Create Account.
-                  </h1>
-                  <p className="auth-subtitle">
-                    Join FindWorker as an independent specialist. Direct client commissions with zero platform markups.
-                  </p>
+          {/* Architectural Split Monolith Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 bg-white border border-[#EBEBEB] rounded-3xl shadow-xl overflow-hidden">
+            {/* Left Brand Showcase Column */}
+            <div className="lg:col-span-5 bg-gradient-to-br from-[#0F0F0F] via-[#161618] to-[#1F1F24] text-white p-8 sm:p-12 flex flex-col justify-between relative overflow-hidden">
+              {/* Subtle Ambient Radial Glow */}
+              <div
+                aria-hidden="true"
+                className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-[#504CFF]/20 blur-3xl pointer-events-none"
+              ></div>
+
+              <div className="relative z-10">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[#504CFF] text-[11px] font-bold tracking-wider uppercase mb-6">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  Craft Guild Enrollment
                 </div>
 
-                {error && (
-                  <div
-                    style={{
-                      padding: '10px 14px',
-                      borderRadius: '8px',
-                      background: '#FEE2E2',
-                      color: '#DC2626',
-                      fontSize: '0.85rem',
-                      marginBottom: '14px',
-                      border: '1px solid #FCA5A5',
-                    }}
-                    role="alert"
-                  >
-                    {error}
-                  </div>
-                )}
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-4 leading-snug">
+                  Take sovereign control of your independent practice.
+                </h2>
 
-                {/* Sign Up Form (Exclusively for Freelancers) */}
-                <form id="dedicated-signup-form" className="auth-form-engine" onSubmit={handleSubmit}>
-                  {/* Name & Email Row */}
-                  <div className="form-row-grid">
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="dedicated-signup-name">
-                        Full Name
-                      </label>
-                      <div className="auth-input-wrapper">
-                        <input
-                          type="text"
-                          id="dedicated-signup-name"
-                          className="form-input auth-styled-input"
-                          placeholder="e.g. Adrian Brody"
-                          required
-                          autoComplete="name"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="dedicated-signup-email">
-                        Work Email
-                      </label>
-                      <div className="auth-input-wrapper">
-                        <input
-                          type="email"
-                          id="dedicated-signup-email"
-                          className="form-input auth-styled-input"
-                          placeholder="adrian@domain.com"
-                          required
-                          autoComplete="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                        />
-                      </div>
+                <p className="text-sm text-zinc-400 leading-relaxed mb-8">
+                  No bidding wars. No race to the bottom. Let your portfolio do the talking and connect directly with high-caliber teams.
+                </p>
+
+                {/* Benefits */}
+                <div className="space-y-4 mb-8">
+                  <div className="flex items-start gap-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#504CFF]/20 text-[#504CFF] text-xs font-bold shrink-0 mt-0.5">
+                      ✓
+                    </span>
+                    <div>
+                      <div className="text-xs font-semibold text-white">0% Platform Cut</div>
+                      <div className="text-[11px] text-zinc-400">Keep 100% of your earnings and project retainers.</div>
                     </div>
                   </div>
 
-                  {/* Password Row */}
-                  <div className="form-row-grid">
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="dedicated-signup-password">
-                        Password
-                      </label>
-                      <div className="auth-input-wrapper">
-                        <input
-                          type="password"
-                          id="dedicated-signup-password"
-                          className="form-input auth-styled-input"
-                          placeholder="At least 6 characters"
-                          required
-                          minLength={6}
-                          autoComplete="new-password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="dedicated-signup-password-confirm">
-                        Confirm Password
-                      </label>
-                      <div className="auth-input-wrapper">
-                        <input
-                          type="password"
-                          id="dedicated-signup-password-confirm"
-                          className="form-input auth-styled-input"
-                          placeholder="Re-enter password"
-                          required
-                          minLength={6}
-                          autoComplete="new-password"
-                          value={passwordConfirm}
-                          onChange={(e) => setPasswordConfirm(e.target.value)}
-                        />
-                      </div>
+                  <div className="flex items-start gap-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#504CFF]/20 text-[#504CFF] text-xs font-bold shrink-0 mt-0.5">
+                      ✓
+                    </span>
+                    <div>
+                      <div className="text-xs font-semibold text-white">Direct Communication</div>
+                      <div className="text-[11px] text-zinc-400">Clients reach out straight to your workstation, phone, or email.</div>
                     </div>
                   </div>
 
-                  {/* Terms Checkbox */}
-                  <div className="auth-meta-row">
-                    <label className="auth-checkbox-label">
-                      <input
-                        type="checkbox"
-                        id="signup-agree-terms"
-                        required
-                        checked={agreeTerms}
-                        onChange={(e) => setAgreeTerms(e.target.checked)}
-                      />
-                      <span className="auth-checkbox-text">
-                        I agree to the terms of service and 0% commission standard
-                      </span>
-                    </label>
-                  </div>
-
-                  {/* Submit Button */}
-                  <button
-                    type="submit"
-                    className="btn btn-primary btn-lg auth-submit-btn"
-                    id="dedicated-signup-submit"
-                    disabled={loading}
-                  >
-                    <span>{loading ? 'Creating...' : 'Create Freelancer Account'}</span>
-                    <svg
-                      width="15"
-                      height="15"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                    >
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                      <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                  </button>
-                </form>
-
-                {/* Bottom Link Back to Sign In Page */}
-                <div className="auth-card-footer-strip">
-                  <div className="auth-switch-prompt">
-                    <span className="prompt-text">Already registered?</span>
-                    <Link href="/signin" className="auth-switch-action" id="go-to-signin-link">
-                      <span>Sign In</span>
-                      <span className="action-arrow">→</span>
-                    </Link>
+                  <div className="flex items-start gap-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#504CFF]/20 text-[#504CFF] text-xs font-bold shrink-0 mt-0.5">
+                      ✓
+                    </span>
+                    <div>
+                      <div className="text-xs font-semibold text-white">Verified Portfolio Hub</div>
+                      <div className="text-[11px] text-zinc-400">Showcase Upwork, LinkedIn, GitHub, and custom case studies in one place.</div>
+                    </div>
                   </div>
                 </div>
+              </div>
 
+              {/* Status pill */}
+              <div className="relative z-10 p-3.5 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between text-xs text-zinc-300">
+                <span className="text-zinc-400">Application Status:</span>
+                <span className="font-semibold text-emerald-400 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Instant Publishing Active
+                </span>
               </div>
             </div>
-          </section>
+
+            {/* Right Form Column */}
+            <div className="lg:col-span-7 p-6 sm:p-10 flex items-center justify-center bg-white">
+              <SignUpForm className="border-0 p-0 shadow-none max-w-full" />
+            </div>
+          </div>
         </div>
       </main>
       <Footer />
     </>
   );
 }
-

@@ -241,7 +241,7 @@ export default function HomePage() {
   };
 
   const openWorker = (w: Worker) => {
-    router.push(`/profile?id=${w.id}`);
+    router.push(`/freelancer/${w.id}`);
   };
 
   // Top Carousel Workers (Top 4 by rating)
@@ -848,18 +848,17 @@ export default function HomePage() {
                             {w.location ? w.location.split('&')[0].trim() : 'Remote'}
                           </span>
                         </div>
-                        <button
-                          type="button"
+                        <Link
+                          href={`/freelancer/${w.id}`}
                           className="primary-btn no-min-width vip-card-action-btn card-profile-btn"
                           data-id={w.id}
                           onClick={(e) => {
                             e.stopPropagation();
-                            openWorker(w);
                           }}
                         >
                           <span className="btn-text">View Profile ↗</span>
                           <span className="btn-dot"></span>
-                        </button>
+                        </Link>
                       </div>
                     </article>
                   );
@@ -1000,18 +999,17 @@ export default function HomePage() {
                             {w.location ? w.location.split('&')[0].trim() : 'Remote'}
                           </span>
                         </div>
-                        <button
-                          type="button"
+                        <Link
+                          href={`/freelancer/${w.id}`}
                           className="primary-btn no-min-width vip-card-action-btn card-profile-btn"
                           data-id={w.id}
                           onClick={(e) => {
                             e.stopPropagation();
-                            openWorker(w);
                           }}
                         >
                           <span className="btn-text">View Profile ↗</span>
                           <span className="btn-dot"></span>
-                        </button>
+                        </Link>
                       </div>
                     </article>
                   );
@@ -1266,18 +1264,17 @@ export default function HomePage() {
                             {w.location ? w.location.split('&')[0].trim() : 'Remote'}
                           </span>
                         </div>
-                        <button
-                          type="button"
+                        <Link
+                          href={`/freelancer/${w.id}`}
                           className="primary-btn no-min-width vip-card-action-btn card-profile-btn"
                           data-id={w.id}
                           onClick={(e) => {
                             e.stopPropagation();
-                            openWorker(w);
                           }}
                         >
                           <span className="btn-text">View Profile ↗</span>
                           <span className="btn-dot"></span>
-                        </button>
+                        </Link>
                       </div>
                     </article>
                   );
@@ -1463,11 +1460,18 @@ export default function HomePage() {
           
           <section className="section-padding reveal-on-scroll site-footer" id="blog">
             <div className="container">
-              <div className="section-header">
+              <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '16px' }}>
                 <div className="section-header-left">
                   <h2>Ideas from the independent web.</h2>
                   <p className="section-subtitle">Observations on making thoughtful digital work.</p>
                 </div>
+                <Link
+                  href="/blog"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#504CFF] hover:underline"
+                >
+                  <span>View All Blogs</span>
+                  <span>→</span>
+                </Link>
               </div>
 
               <div className="blog-grid">
@@ -1508,7 +1512,7 @@ export default function HomePage() {
                   articles.slice(0, 3).map((art) => (
                     <Link
                       key={art.id}
-                      href={`/blog?id=${art.id}`}
+                      href={`/blog/${art.id}`}
                       className="blog-card"
                       data-article-id={art.id}
                       aria-label={`Read story: ${art.title}`}
@@ -1977,18 +1981,17 @@ export default function HomePage() {
                             </div>
 
                             <div className="dock-action">
-                              <button
-                                type="button"
+                              <Link
+                                href={`/freelancer/${w.id}`}
                                 className="primary-btn no-min-width card-profile-btn"
                                 data-id={w.id}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  openWorker(w);
                                 }}
                               >
                                 <span className="btn-text">View Profile ↗</span>
                                 <span className="btn-dot"></span>
-                              </button>
+                              </Link>
                             </div>
                           </div>
                         </article>

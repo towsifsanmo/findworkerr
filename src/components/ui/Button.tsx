@@ -16,13 +16,6 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   className?: string;
 }
 
-/**
- * Standardized FindWorker Button component
- * Follows the architectural footer button design system:
- * - Font: Poppins (600)
- * - Sharp architectural borders (border-radius: 0)
- * - Exact colors, padding, hover transitions
- */
 export const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'md',
@@ -38,31 +31,38 @@ export const Button: React.FC<ButtonProps> = ({
   type = 'button',
   ...props
 }) => {
-  const variantClass =
-    variant === 'primary'
-      ? 'fw-btn-primary'
-      : variant === 'outline'
-      ? 'fw-btn-outline'
-      : variant === 'dark'
-      ? 'fw-btn-dark'
-      : 'fw-btn-secondary';
+  const variantClasses = {
+    primary: 'bg-[#504CFF] text-white hover:bg-[#403BEE] active:bg-[#322DC8] shadow-xs hover:shadow',
+    outline: 'bg-white text-[#0F0F0F] border border-[#EBEBEB] hover:bg-zinc-50 hover:border-zinc-300',
+    secondary: 'bg-zinc-100 text-zinc-900 hover:bg-zinc-200',
+    dark: 'bg-[#0F0F0F] text-white hover:bg-[#262626]',
+  };
 
-  const sizeClass = size === 'sm' ? 'fw-btn-sm' : size === 'lg' ? 'fw-btn-lg' : 'fw-btn-md';
+  const sizeClasses = {
+    sm: 'text-xs px-3.5 py-1.5 rounded-full',
+    md: 'text-sm px-5 py-2.5 rounded-full',
+    lg: 'text-base px-6 py-3 rounded-full',
+  };
 
-  const combinedClass = `fw-standard-btn ${variantClass} ${sizeClass} ${loading ? 'fw-btn-loading' : ''} ${className}`.trim();
+  const baseClasses =
+    'inline-flex items-center justify-center gap-2 font-medium font-sans transition-all duration-200 select-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
+
+  const combinedClass = `${baseClasses} ${variantClasses[variant] || variantClasses.primary} ${
+    sizeClasses[size] || sizeClasses.md
+  } ${className}`.trim();
 
   const content = (
     <>
       {loading && (
-        <span className="fw-btn-spinner" aria-hidden="true">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <span className="animate-spin inline-block mr-1" aria-hidden="true">
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <circle cx="12" cy="12" r="10" strokeDasharray="32" strokeDashoffset="12" strokeLinecap="round" />
           </svg>
         </span>
       )}
-      {!loading && icon && iconPosition === 'left' && <span className="fw-btn-icon-left">{icon}</span>}
-      <span className="fw-btn-label">{children}</span>
-      {!loading && icon && iconPosition === 'right' && <span className="fw-btn-icon-right">{icon}</span>}
+      {!loading && icon && iconPosition === 'left' && <span className="inline-flex shrink-0">{icon}</span>}
+      <span>{children}</span>
+      {!loading && icon && iconPosition === 'right' && <span className="inline-flex shrink-0">{icon}</span>}
     </>
   );
 
@@ -87,4 +87,3 @@ export const Button: React.FC<ButtonProps> = ({
 };
 
 export default Button;
-

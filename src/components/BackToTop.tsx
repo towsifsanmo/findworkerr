@@ -19,17 +19,18 @@ export const BackToTop: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  if (!isVisible) return null;
+
   return (
     <button
-      className={`back-to-top-btn ${isVisible ? 'visible' : ''}`}
+      className="fixed bottom-6 right-6 z-40 w-10 h-10 rounded-full bg-[#0F0F0F] text-white shadow-lg flex items-center justify-center hover:bg-[#504CFF] hover:-translate-y-1 transition-all duration-200 cursor-pointer animate-fade-in"
       id="back-to-top-btn"
       aria-label="Scroll back to top"
       onClick={scrollToTop}
-      style={{ display: isVisible ? 'flex' : 'none' }}
     >
       <svg
-        width="20"
-        height="20"
+        width="18"
+        height="18"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -42,4 +43,3 @@ export const BackToTop: React.FC = () => {
     </button>
   );
 };
-

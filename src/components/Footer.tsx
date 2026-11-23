@@ -3,10 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/context/auth-context';
 
 export const Footer: React.FC = () => {
-  const { openSignIn, openSignUp } = useAuth();
   const pathname = usePathname();
 
   const handleScrollTop = (e: React.MouseEvent) => {
@@ -22,55 +20,59 @@ export const Footer: React.FC = () => {
   };
 
   return (
-    <footer className="site-footer">
-      <div className="container">
+    <footer className="w-full bg-white text-[#0F0F0F] border-t border-[#EBEBEB] pt-16 pb-10 transition-colors">
+      <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-9">
         {/* 1. Top Architectural Monument Strip */}
-        <div className="footer-top-monument">
-          <div className="footer-monument-left">
-            <Link href="/" className="footer-monument-brand" aria-label="FindWorker Home">
-              <span className="footer-brand-title">
-                Find<span className="brand-accent">Worker</span>
-                <span className="brand-period">.</span>
+        <div className="flex items-center justify-between pb-8 mb-10 border-b border-[#EBEBEB] flex-wrap gap-4">
+          <div className="flex flex-col gap-1">
+            <Link href="/" className="inline-flex items-center select-none" aria-label="FindWorker Home">
+              <span className="text-2xl font-bold tracking-tight text-[#0F0F0F] font-sans">
+                Find<span className="text-[#504CFF]">Worker</span>
+                <span className="text-[#504CFF]">.</span>
               </span>
             </Link>
-            <span className="footer-kicker-statement">THE INDEPENDENT COMMERCE DIRECTORY</span>
+            <span className="text-xs uppercase font-semibold tracking-wider text-zinc-500">
+              The Independent Commerce Directory
+            </span>
           </div>
 
-          <div className="footer-monument-right">
+          <div>
             <a
               href="#site-header"
               onClick={handleScrollTop}
-              className="footer-return-top-btn"
+              className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-600 hover:text-[#0F0F0F] px-3.5 py-1.5 border border-[#EBEBEB] hover:bg-zinc-50 transition-colors"
               id="footer-back-to-top"
               aria-label="Return to top of page"
             >
               <span>Back to top</span>
-              <span className="arrow-up">↑</span>
+              <span className="text-sm">↑</span>
             </a>
           </div>
         </div>
 
-        {/* 3. Main Directory Navigation Matrix (4 Columns) */}
-        <div className="footer-main-matrix">
+        {/* 2. Main Directory Navigation Matrix (4 Columns) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-12">
           {/* Col 1: Brand & Charter Statement */}
-          <div className="footer-matrix-col footer-matrix-brand-col">
-            <h5 className="footer-col-heading">DIRECTORY LEDGER</h5>
-            <p className="footer-brand-summary">
+          <div className="flex flex-col gap-4">
+            <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-900">
+              Directory Ledger
+            </h5>
+            <p className="text-sm text-zinc-600 leading-relaxed">
               FindWorker is an open portfolio-first talent index connecting forward-thinking teams with top independent
               engineers, designers, and strategists.
             </p>
-            <div className="footer-action-suite">
+            <div className="flex items-center gap-3 pt-2 flex-wrap">
               <Link
                 href="/signup"
-                className="btn btn-primary btn-sm footer-action-primary"
+                className="inline-flex items-center gap-1.5 bg-[#504CFF] hover:bg-[#403BEE] text-white text-xs font-semibold px-4 py-2 transition-all hover:shadow"
                 id="footer-signup-btn"
               >
                 <span>Apply as Freelancer</span>
-                <span className="btn-arrow">↗</span>
+                <span>↗</span>
               </Link>
               <Link
                 href="/signin"
-                className="btn btn-outline btn-sm footer-action-secondary"
+                className="inline-flex items-center gap-1.5 bg-white text-zinc-800 border border-[#EBEBEB] hover:bg-zinc-50 text-xs font-medium px-3.5 py-2 transition-colors"
                 id="footer-login-btn"
               >
                 <span>Sign In</span>
@@ -79,92 +81,146 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Col 2: Core Disciplines */}
-          <div className="footer-matrix-col">
-            <h5 className="footer-col-heading">DISCIPLINES</h5>
-            <ul className="footer-links-list">
-              <li><a href={getNavLink('#roles')} className="go-to-directory-link">Web Engineering &amp; Systems</a></li>
-              <li><a href={getNavLink('#roles')} className="go-to-directory-link">UI/UX &amp; Product Design</a></li>
-              <li><a href={getNavLink('#roles')} className="go-to-directory-link">Brand Identity &amp; Type</a></li>
-              <li><a href={getNavLink('#roles')} className="go-to-directory-link">Digital Marketing &amp; SEO</a></li>
-              <li><a href={getNavLink('#roles')} className="go-to-directory-link">Technical Writing &amp; Content</a></li>
-              <li><a href={getNavLink('#roles')} className="go-to-directory-link">Mobile App Engineering</a></li>
+          <div className="flex flex-col gap-3">
+            <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-900">
+              Disciplines
+            </h5>
+            <ul className="flex flex-col gap-2.5 text-sm text-zinc-600">
+              <li>
+                <a href={getNavLink('#roles')} className="hover:text-[#504CFF] transition-colors">
+                  Web Engineering &amp; Systems
+                </a>
+              </li>
+              <li>
+                <a href={getNavLink('#roles')} className="hover:text-[#504CFF] transition-colors">
+                  UI/UX &amp; Product Design
+                </a>
+              </li>
+              <li>
+                <a href={getNavLink('#roles')} className="hover:text-[#504CFF] transition-colors">
+                  Brand Identity &amp; Type
+                </a>
+              </li>
+              <li>
+                <a href={getNavLink('#roles')} className="hover:text-[#504CFF] transition-colors">
+                  Digital Marketing &amp; SEO
+                </a>
+              </li>
+              <li>
+                <a href={getNavLink('#roles')} className="hover:text-[#504CFF] transition-colors">
+                  Technical Writing &amp; Content
+                </a>
+              </li>
+              <li>
+                <a href={getNavLink('#roles')} className="hover:text-[#504CFF] transition-colors">
+                  Mobile App Engineering
+                </a>
+              </li>
             </ul>
           </div>
 
-          {/* Col 3: Direct Platforms & Category Links */}
-          <div className="footer-matrix-col">
-           
-
-            <h5 className="footer-col-heading" style={{ marginTop: '22px' }}>CATEGORIES</h5>
-            <ul className="footer-links-list">
+          {/* Col 3: Direct Categories */}
+          <div className="flex flex-col gap-3">
+            <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-900">
+              Categories
+            </h5>
+            <ul className="flex flex-col gap-2.5 text-sm text-zinc-600">
               <li>
-                <Link href="/freelancers?category=Web+Development">
+                <Link href="/freelancers?category=Web+Development" className="inline-flex items-center gap-1 hover:text-[#504CFF] transition-colors">
                   <span>Web Development</span>
-                  <span className="ext-arrow">→</span>
+                  <span className="text-zinc-400">→</span>
                 </Link>
               </li>
               <li>
-                <Link href="/freelancers?category=UI%2FUX+Design">
+                <Link href="/freelancers?category=UI%2FUX+Design" className="inline-flex items-center gap-1 hover:text-[#504CFF] transition-colors">
                   <span>UI/UX &amp; Product Design</span>
-                  <span className="ext-arrow">→</span>
+                  <span className="text-zinc-400">→</span>
                 </Link>
               </li>
               <li>
-                <Link href="/freelancers?category=Software+Development">
+                <Link href="/freelancers?category=Software+Development" className="inline-flex items-center gap-1 hover:text-[#504CFF] transition-colors">
                   <span>Software &amp; AI Systems</span>
-                  <span className="ext-arrow">→</span>
+                  <span className="text-zinc-400">→</span>
                 </Link>
               </li>
               <li>
-                <Link href="/freelancers?category=Brand+Strategy">
+                <Link href="/freelancers?category=Brand+Strategy" className="inline-flex items-center gap-1 hover:text-[#504CFF] transition-colors">
                   <span>Brand Identity &amp; Strategy</span>
-                  <span className="ext-arrow">→</span>
+                  <span className="text-zinc-400">→</span>
                 </Link>
               </li>
               <li>
-                <Link href="/freelancers?category=Motion+Design">
+                <Link href="/freelancers?category=Motion+Design" className="inline-flex items-center gap-1 hover:text-[#504CFF] transition-colors">
                   <span>Motion &amp; 3D Design</span>
-                  <span className="ext-arrow">→</span>
+                  <span className="text-zinc-400">→</span>
                 </Link>
               </li>
               <li>
-                <Link href="/freelancers?category=Content+Writing">
+                <Link href="/freelancers?category=Content+Writing" className="inline-flex items-center gap-1 hover:text-[#504CFF] transition-colors">
                   <span>Technical &amp; Content Writing</span>
-                  <span className="ext-arrow">→</span>
+                  <span className="text-zinc-400">→</span>
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Col 4: Trust & Navigation */}
-          <div className="footer-matrix-col">
-            <h5 className="footer-col-heading">STANDARDS &amp; DISPATCH</h5>
-            <ul className="footer-links-list">
-              <li><Link href="/blog?id=article-1">Field Notes &amp; Journal</Link></li>
-              <li><a href={getNavLink('#how-it-works')}>Charter &amp; How It Works</a></li>
-              <li><a href={getNavLink('#testimonials')}>Client Reviews Ledger</a></li>
-              <li><a href={getNavLink('#faq')}>Frequently Asked Questions</a></li>
-              <li><Link href="/privacy">Privacy &amp; Data Charter</Link></li>
+          {/* Col 4: Standards & Dispatch */}
+          <div className="flex flex-col gap-3">
+            <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-900">
+              Standards &amp; Dispatch
+            </h5>
+            <ul className="flex flex-col gap-2.5 text-sm text-zinc-600">
+              {/* Connected to Blogs page (Requirement 3) */}
+              <li>
+                <Link href="/blog" className="hover:text-[#504CFF] transition-colors font-medium">
+                  Blogs &amp; Journal
+                </Link>
+              </li>
+              <li>
+                <a href={getNavLink('#how-it-works')} className="hover:text-[#504CFF] transition-colors">
+                  Charter &amp; How It Works
+                </a>
+              </li>
+              <li>
+                <a href={getNavLink('#testimonials')} className="hover:text-[#504CFF] transition-colors">
+                  Client Reviews Ledger
+                </a>
+              </li>
+              <li>
+                <a href={getNavLink('#faq')} className="hover:text-[#504CFF] transition-colors">
+                  Frequently Asked Questions
+                </a>
+              </li>
+              <li>
+                <Link href="/privacy" className="hover:text-[#504CFF] transition-colors">
+                  Privacy &amp; Data Charter
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
 
-        {/* 4. Footer Bottom Baseline Bar */}
-        <div className="footer-baseline-strip">
-          <div className="footer-baseline-copy">
-            &copy; 2026 FindWorker. All rights reserved.
+        {/* 3. Footer Bottom Baseline Bar */}
+        <div className="pt-8 border-t border-[#EBEBEB] flex items-center justify-between flex-wrap gap-4 text-xs text-zinc-500">
+          <div>
+            &copy; {new Date().getFullYear()} FindWorker. All rights reserved.
           </div>
 
-          <div className="footer-baseline-nav">
-            <Link target='_blank' href="/privacy" className="baseline-nav-link">Privacy Policy</Link>
-            <span className="baseline-nav-sep">•</span>
-            <a href={getNavLink('#why-outlier')} className="baseline-nav-link">Terms</a>
-            <span className="baseline-nav-sep">•</span>
-            <a href={getNavLink('#why-outlier')} className="baseline-nav-link">Security</a>
+          <div className="flex items-center gap-3">
+            <Link href="/privacy" className="hover:text-[#0F0F0F] transition-colors">
+              Privacy Policy
+            </Link>
+            <span>•</span>
+            <a href={getNavLink('#why-outlier')} className="hover:text-[#0F0F0F] transition-colors">
+              Terms
+            </a>
+            <span>•</span>
+            <a href={getNavLink('#why-outlier')} className="hover:text-[#0F0F0F] transition-colors">
+              Security
+            </a>
           </div>
         </div>
       </div>
     </footer>
   );
 };
-

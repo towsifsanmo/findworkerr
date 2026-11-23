@@ -1,10 +1,6 @@
 import type { Metadata } from 'next';
 import { Poppins } from 'next/font/google';
-import '@/styles/style.css';
-import '@/styles/blog.css';
-import '@/styles/profile.css';
-import '@/styles/dashboard.css';
-import '@/styles/admin.css';
+import './globals.css';
 import { AuthProvider } from '@/context/auth-context';
 import { ToastProvider } from '@/context/toast-context';
 import { AuthModals } from '@/components/AuthModals';

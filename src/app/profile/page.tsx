@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import {
@@ -17,9 +17,14 @@ import { useToast } from '@/context/toast-context';
 import { Worker, Review } from '@/types';
 
 function ProfileContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const workerId = searchParams.get('id') || 'worker-1';
   const { showToast } = useToast();
+
+  useEffect(() => {
+    router.replace(`/freelancer/${workerId}`);
+  }, [workerId, router]);
 
   const [worker, setWorker] = useState<Worker | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
