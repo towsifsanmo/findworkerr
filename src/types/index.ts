@@ -46,6 +46,7 @@ export interface Review {
   workerId?: string;
   workerName?: string;
   workerTrade?: string;
+  workerImage?: string;
 }
 
 export interface Worker {

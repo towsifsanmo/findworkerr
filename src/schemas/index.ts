@@ -98,7 +98,7 @@ export const ReviewCreateSchema = z.object({
 });
 
 export const ReviewModerateSchema = z.object({
-  action: z.enum(['approve', 'flag', 'delete']),
+  action: z.enum(['approve', 'flag', 'unflag', 'delete']),
 });
 
 export const CategoryCreateSchema = z.object({

@@ -221,7 +221,7 @@ export async function addWorkerReview(
   return apiAddReview(workerId, reviewData, deviceId);
 }
 
-export async function moderateReview(reviewId: string, action: 'approve' | 'flag' | 'delete'): Promise<boolean> {
+export async function moderateReview(reviewId: string, action: 'approve' | 'flag' | 'unflag' | 'delete'): Promise<boolean> {
   return apiModerateReview(reviewId, action);
 }
 

@@ -41,6 +41,13 @@ export default function AdminPage() {
   const [categoriesList, setCategoriesList] = useState<string[]>([]);
   const [reviewsList, setReviewsList] = useState<Review[]>([]);
 
+  // Reviews filter & moderation state
+  const [reviewSearch, setReviewSearch] = useState('');
+  const [reviewStatusFilter, setReviewStatusFilter] = useState<'all' | 'pending' | 'accepted' | 'declined'>('all');
+  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [moderatingId, setModeratingId] = useState<string | null>(null);
+
   // Admin dropdown & mobile
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -366,10 +373,68 @@ export default function AdminPage() {
     }
   };
 
-  const handleModerateReview = async (reviewId: string, action: 'approve' | 'flag' | 'delete') => {
-    await apiModerateReview(reviewId, action);
-    await refreshData();
-    showToast(`Review ${action}d successfully`);
+  const handleModerateReview = async (
+    reviewId: string,
+    action: 'approve' | 'flag' | 'unflag' | 'delete'
+  ) => {
+    if (action === 'delete') {
+      if (!window.confirm('Delete this review permanently?')) return;
+    }
+
+    setModeratingId(reviewId);
+    try {
+      const ok = await apiModerateReview(reviewId, action);
+      if (ok) {
+        setReviewsList((prev) => {
+          if (action === 'delete') {
+            return prev.filter((r) => r.id !== reviewId);
+          }
+          return prev.map((r) => {
+            if (r.id === reviewId) {
+              return {
+                ...r,
+                approved: action === 'approve' || action === 'unflag',
+                flagged: action === 'flag',
+              };
+            }
+            return r;
+          });
+        });
+
+        if (selectedReview && selectedReview.id === reviewId) {
+          if (action === 'delete') {
+            setSelectedReview(null);
+            setIsReviewModalOpen(false);
+          } else {
+            setSelectedReview((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    approved: action === 'approve' || action === 'unflag',
+                    flagged: action === 'flag',
+                  }
+                : null
+            );
+          }
+        }
+
+        const msg =
+          action === 'approve' || action === 'unflag'
+            ? '✓ Review accepted'
+            : action === 'flag'
+            ? '✕ Review declined'
+            : '🗑 Review deleted';
+        showToast(msg);
+
+        await refreshData();
+      } else {
+        showToast('Failed to update review.');
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Error updating review.');
+    } finally {
+      setModeratingId(null);
+    }
   };
 
   const handleUploadAdminPhoto = async (file: File) => {
@@ -465,6 +530,33 @@ export default function AdminPage() {
       w.trade.toLowerCase().includes(freelancerSearch.toLowerCase()) ||
       w.craftTitle.toLowerCase().includes(freelancerSearch.toLowerCase())
   );
+
+  // Reviews counts & filtering
+  const pendingReviewsCount = reviewsList.filter((r) => !r.approved && !r.flagged).length;
+  const acceptedReviewsCount = reviewsList.filter((r) => r.approved && !r.flagged).length;
+  const declinedReviewsCount = reviewsList.filter((r) => r.flagged).length;
+
+  const filteredReviews = reviewsList
+    .filter((rev) => {
+      if (reviewStatusFilter === 'pending') {
+        if (rev.approved || rev.flagged) return false;
+      } else if (reviewStatusFilter === 'accepted') {
+        if (!rev.approved || rev.flagged) return false;
+      } else if (reviewStatusFilter === 'declined') {
+        if (!rev.flagged) return false;
+      }
+
+      if (reviewSearch.trim()) {
+        const query = reviewSearch.toLowerCase();
+        const matchesWorker = rev.workerName?.toLowerCase().includes(query) || false;
+        const matchesAuthor = rev.author.toLowerCase().includes(query);
+        const matchesComment = rev.comment.toLowerCase().includes(query);
+        return matchesWorker || matchesAuthor || matchesComment;
+      }
+
+      return true;
+    })
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <div className="dash-body">
@@ -928,67 +1020,310 @@ export default function AdminPage() {
             {/* VIEW 4: REVIEWS */}
             {activeTab === 'reviews' && (
               <section className="dash-view-section active">
-                <div className="admin-page-header">
+                <div className="admin-page-header" style={{ marginBottom: '16px' }}>
                   <div className="admin-page-header-left">
-                    <h2 className="admin-page-title">Review Moderation</h2>
+                    <h2 className="admin-page-title">Reviews</h2>
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      className="dash-input"
+                      placeholder="Search reviews..."
+                      value={reviewSearch}
+                      onChange={(e) => setReviewSearch(e.target.value)}
+                      style={{ width: '220px', fontSize: '0.85rem' }}
+                    />
                   </div>
                 </div>
 
+                {/* Filter Tabs */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => setReviewStatusFilter('all')}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '8px',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      border: '1px solid',
+                      cursor: 'pointer',
+                      background: reviewStatusFilter === 'all' ? '#111827' : '#FFFFFF',
+                      borderColor: reviewStatusFilter === 'all' ? '#111827' : '#E5E7EB',
+                      color: reviewStatusFilter === 'all' ? '#FFFFFF' : '#374151',
+                    }}
+                  >
+                    All ({reviewsList.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReviewStatusFilter('pending')}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '8px',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      border: '1px solid',
+                      cursor: 'pointer',
+                      background: reviewStatusFilter === 'pending' ? '#D97706' : '#FFFFFF',
+                      borderColor: reviewStatusFilter === 'pending' ? '#D97706' : '#E5E7EB',
+                      color: reviewStatusFilter === 'pending' ? '#FFFFFF' : '#374151',
+                    }}
+                  >
+                    Pending ({pendingReviewsCount})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReviewStatusFilter('accepted')}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '8px',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      border: '1px solid',
+                      cursor: 'pointer',
+                      background: reviewStatusFilter === 'accepted' ? '#059669' : '#FFFFFF',
+                      borderColor: reviewStatusFilter === 'accepted' ? '#059669' : '#E5E7EB',
+                      color: reviewStatusFilter === 'accepted' ? '#FFFFFF' : '#374151',
+                    }}
+                  >
+                    Accepted ({acceptedReviewsCount})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReviewStatusFilter('declined')}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '8px',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      border: '1px solid',
+                      cursor: 'pointer',
+                      background: reviewStatusFilter === 'declined' ? '#DC2626' : '#FFFFFF',
+                      borderColor: reviewStatusFilter === 'declined' ? '#DC2626' : '#E5E7EB',
+                      color: reviewStatusFilter === 'declined' ? '#FFFFFF' : '#374151',
+                    }}
+                  >
+                    Declined ({declinedReviewsCount})
+                  </button>
+                </div>
+
+                {/* Reviews Table */}
                 <div className="dash-card" style={{ padding: '0', overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid var(--color-border)', background: '#FAFAFA' }}>
-                        <th style={{ padding: '14px 16px' }}>Freelancer</th>
-                        <th style={{ padding: '14px 16px' }}>Client</th>
-                        <th style={{ padding: '14px 16px' }}>Rating</th>
-                        <th style={{ padding: '14px 16px' }}>Comment</th>
-                        <th style={{ padding: '14px 16px', textAlign: 'right' }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {reviewsList.map((rev) => (
-                        <tr key={rev.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                          <td style={{ padding: '14px 16px' }}>
-                            <strong>{rev.workerName || 'Specialist'}</strong>
-                          </td>
-                          <td style={{ padding: '14px 16px' }}>{rev.author}</td>
-                          <td style={{ padding: '14px 16px' }}>{'★'.repeat(rev.rating)}</td>
-                          <td style={{ padding: '14px 16px', maxWidth: '300px' }}>
-                            <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {rev.comment}
-                            </div>
-                          </td>
-                          <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                            <div style={{ display: 'inline-flex', gap: '6px' }}>
-                              <button
-                                type="button"
-                                className="btn btn-outline btn-sm"
-                                onClick={() => handleModerateReview(rev.id, 'approve')}
-                              >
-                                Approve
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-outline btn-sm"
-                                style={{ color: '#F59E0B' }}
-                                onClick={() => handleModerateReview(rev.id, 'flag')}
-                              >
-                                Flag
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-outline btn-sm"
-                                style={{ color: '#DC2626' }}
-                                onClick={() => handleModerateReview(rev.id, 'delete')}
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </td>
+                  {filteredReviews.length === 0 ? (
+                    <div style={{ padding: '48px 20px', textAlign: 'center', color: '#6B7280' }}>
+                      <p style={{ margin: 0, fontSize: '0.9rem' }}>No reviews found.</p>
+                    </div>
+                  ) : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid #E5E7EB', background: '#FAFAFA' }}>
+                          <th style={{ padding: '12px 16px', fontWeight: 600 }}>Freelancer</th>
+                          <th style={{ padding: '12px 16px', fontWeight: 600 }}>Client</th>
+                          <th style={{ padding: '12px 16px', fontWeight: 600 }}>Rating</th>
+                          <th style={{ padding: '12px 16px', fontWeight: 600, width: '40%' }}>Review</th>
+                          <th style={{ padding: '12px 16px', fontWeight: 600 }}>Status</th>
+                          <th style={{ padding: '12px 16px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {filteredReviews.map((rev) => {
+                          const isProcessing = moderatingId === rev.id;
+                          const worker = workersList.find((w) => w.id === rev.workerId);
+                          const workerAvatar =
+                            rev.workerImage ||
+                            worker?.image ||
+                            '/assets/images/hero_craftsman.jpg';
+                          const cleanAvatar = workerAvatar.startsWith('assets/') ? `/${workerAvatar}` : workerAvatar;
+                          const isAccepted = rev.approved && !rev.flagged;
+                          const isDeclined = rev.flagged;
+
+                          return (
+                            <tr key={rev.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                              {/* Freelancer */}
+                              <td style={{ padding: '12px 16px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                  <img
+                                    src={cleanAvatar}
+                                    alt={rev.workerName || 'Freelancer'}
+                                    style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
+                                  />
+                                  <div>
+                                    <strong style={{ display: 'block', fontSize: '0.88rem' }}>
+                                      {rev.workerName || 'Freelancer'}
+                                    </strong>
+                                    <small style={{ color: '#6B7280' }}>{rev.workerTrade || 'Specialist'}</small>
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Client */}
+                              <td style={{ padding: '12px 16px' }}>
+                                <strong style={{ display: 'block', fontSize: '0.88rem' }}>{rev.author}</strong>
+                                <small style={{ color: '#6B7280' }}>{rev.date}</small>
+                              </td>
+
+                              {/* Rating */}
+                              <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+                                <span style={{ color: '#F59E0B', fontSize: '0.95rem' }}>
+                                  {'★'.repeat(rev.rating)}
+                                </span>
+                                <span style={{ marginLeft: '4px', fontSize: '0.82rem', color: '#6B7280' }}>
+                                  {rev.rating}.0
+                                </span>
+                              </td>
+
+                              {/* Review Comment */}
+                              <td style={{ padding: '12px 16px' }}>
+                                <p
+                                  style={{
+                                    margin: 0,
+                                    fontSize: '0.85rem',
+                                    color: '#374151',
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: 'vertical',
+                                    overflow: 'hidden',
+                                  }}
+                                  title={rev.comment}
+                                >
+                                  {rev.comment}
+                                </p>
+                                {rev.comment.length > 90 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedReview(rev);
+                                      setIsReviewModalOpen(true);
+                                    }}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: 'var(--color-primary)',
+                                      fontSize: '0.78rem',
+                                      cursor: 'pointer',
+                                      padding: '2px 0',
+                                      fontWeight: 500,
+                                    }}
+                                  >
+                                    View more
+                                  </button>
+                                )}
+                              </td>
+
+                              {/* Status */}
+                              <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+                                {isAccepted ? (
+                                  <span
+                                    style={{
+                                      display: 'inline-block',
+                                      padding: '2px 8px',
+                                      borderRadius: '4px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: 600,
+                                      background: '#DCFCE7',
+                                      color: '#15803D',
+                                    }}
+                                  >
+                                    Accepted
+                                  </span>
+                                ) : isDeclined ? (
+                                  <span
+                                    style={{
+                                      display: 'inline-block',
+                                      padding: '2px 8px',
+                                      borderRadius: '4px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: 600,
+                                      background: '#FEE2E2',
+                                      color: '#B91C1C',
+                                    }}
+                                  >
+                                    Declined
+                                  </span>
+                                ) : (
+                                  <span
+                                    style={{
+                                      display: 'inline-block',
+                                      padding: '2px 8px',
+                                      borderRadius: '4px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: 600,
+                                      background: '#FEF3C7',
+                                      color: '#B45309',
+                                    }}
+                                  >
+                                    Pending
+                                  </span>
+                                )}
+                              </td>
+
+                              {/* Actions: Accept & Decline */}
+                              <td style={{ padding: '12px 16px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleModerateReview(rev.id, 'approve')}
+                                    disabled={isProcessing || isAccepted}
+                                    style={{
+                                      padding: '5px 12px',
+                                      borderRadius: '6px',
+                                      fontSize: '0.8rem',
+                                      fontWeight: 600,
+                                      cursor: isAccepted ? 'default' : 'pointer',
+                                      border: '1px solid #059669',
+                                      background: isAccepted ? '#ECFDF5' : '#059669',
+                                      color: isAccepted ? '#059669' : '#FFFFFF',
+                                      opacity: isProcessing ? 0.7 : 1,
+                                    }}
+                                  >
+                                    {isAccepted ? 'Accepted' : 'Accept'}
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleModerateReview(rev.id, 'flag')}
+                                    disabled={isProcessing || isDeclined}
+                                    style={{
+                                      padding: '5px 12px',
+                                      borderRadius: '6px',
+                                      fontSize: '0.8rem',
+                                      fontWeight: 600,
+                                      cursor: isDeclined ? 'default' : 'pointer',
+                                      border: '1px solid #DC2626',
+                                      background: isDeclined ? '#FEF2F2' : '#DC2626',
+                                      color: isDeclined ? '#DC2626' : '#FFFFFF',
+                                      opacity: isProcessing ? 0.7 : 1,
+                                    }}
+                                  >
+                                    {isDeclined ? 'Declined' : 'Decline'}
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleModerateReview(rev.id, 'delete')}
+                                    disabled={isProcessing}
+                                    style={{
+                                      padding: '5px 8px',
+                                      borderRadius: '6px',
+                                      fontSize: '0.8rem',
+                                      cursor: 'pointer',
+                                      border: '1px solid #E5E7EB',
+                                      background: '#FFFFFF',
+                                      color: '#6B7280',
+                                    }}
+                                    title="Delete review"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </section>
             )}
@@ -2070,6 +2405,133 @@ export default function AdminPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Review Details */}
+      {isReviewModalOpen && selectedReview && (
+        <div
+          className="dash-modal-overlay active"
+          role="dialog"
+          aria-modal="true"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsReviewModalOpen(false);
+          }}
+        >
+          <div className="dash-modal-window" style={{ maxWidth: '480px', width: '92%' }}>
+            <div className="dash-modal-header" style={{ padding: '14px 18px' }}>
+              <h3 className="dash-modal-title" style={{ fontSize: '1rem', fontWeight: 600 }}>
+                Review
+              </h3>
+              <button
+                type="button"
+                className="dash-modal-close-btn"
+                onClick={() => setIsReviewModalOpen(false)}
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="dash-modal-body" style={{ padding: '16px 18px' }}>
+              <div style={{ marginBottom: '14px' }}>
+                <strong style={{ fontSize: '0.92rem', color: '#111827' }}>
+                  {selectedReview.author}
+                </strong>
+                <span style={{ fontSize: '0.8rem', color: '#6B7280', marginLeft: '8px' }}>
+                  for {selectedReview.workerName || 'Freelancer'}
+                </span>
+                <div style={{ color: '#F59E0B', fontSize: '0.9rem', marginTop: '4px' }}>
+                  {'★'.repeat(selectedReview.rating)} ({selectedReview.rating}.0)
+                </div>
+              </div>
+
+              <div
+                style={{
+                  padding: '14px',
+                  borderRadius: '6px',
+                  background: '#F9FAFB',
+                  border: '1px solid #E5E7EB',
+                  fontSize: '0.9rem',
+                  lineHeight: '1.5',
+                  color: '#374151',
+                  marginBottom: '14px',
+                }}
+              >
+                {selectedReview.comment}
+              </div>
+
+              <div style={{ fontSize: '0.78rem', color: '#6B7280' }}>
+                Date: {selectedReview.date}
+              </div>
+            </div>
+
+            <div
+              className="dash-modal-footer"
+              style={{
+                padding: '12px 18px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <button
+                type="button"
+                className="dash-btn"
+                onClick={() => handleModerateReview(selectedReview.id, 'delete')}
+                disabled={moderatingId === selectedReview.id}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#DC2626',
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  padding: '6px 8px',
+                }}
+              >
+                Delete
+              </button>
+
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => handleModerateReview(selectedReview.id, 'flag')}
+                  disabled={moderatingId === selectedReview.id || selectedReview.flagged}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '6px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    cursor: selectedReview.flagged ? 'default' : 'pointer',
+                    border: '1px solid #DC2626',
+                    background: selectedReview.flagged ? '#FEF2F2' : '#DC2626',
+                    color: selectedReview.flagged ? '#DC2626' : '#FFFFFF',
+                  }}
+                >
+                  {selectedReview.flagged ? 'Declined' : 'Decline'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleModerateReview(selectedReview.id, 'approve')}
+                  disabled={moderatingId === selectedReview.id || (selectedReview.approved && !selectedReview.flagged)}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '6px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    cursor: selectedReview.approved && !selectedReview.flagged ? 'default' : 'pointer',
+                    border: '1px solid #059669',
+                    background: selectedReview.approved && !selectedReview.flagged ? '#ECFDF5' : '#059669',
+                    color: selectedReview.approved && !selectedReview.flagged ? '#059669' : '#FFFFFF',
+                  }}
+                >
+                  {selectedReview.approved && !selectedReview.flagged ? 'Accepted' : 'Accept'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

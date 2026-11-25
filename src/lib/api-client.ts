@@ -2,10 +2,24 @@ import { Worker, Review, PlatformStats, BlogArticle, User, CategoryItem } from '
 
 async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<{ success: boolean; data?: T; error?: string; message?: string; meta?: any }> {
   try {
+    const authHeaders: Record<string, string> = {};
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('findworker_auth_session');
+        if (raw) {
+          const user = JSON.parse(raw);
+          if (user?.role === 'admin' && user?.email) {
+            authHeaders['x-admin-email'] = user.email;
+          }
+        }
+      } catch (e) {}
+    }
+
     const res = await fetch(endpoint, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders,
         ...options.headers,
       },
       credentials: 'include',
@@ -245,7 +259,7 @@ export async function apiAddReview(
   };
 }
 
-export async function apiModerateReview(reviewId: string, action: 'approve' | 'flag' | 'delete'): Promise<boolean> {
+export async function apiModerateReview(reviewId: string, action: 'approve' | 'flag' | 'unflag' | 'delete'): Promise<boolean> {
   const res = await apiFetch(`/api/reviews/${encodeURIComponent(reviewId)}`, {
     method: 'POST',
     body: JSON.stringify({ action }),

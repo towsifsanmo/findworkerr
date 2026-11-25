@@ -17,7 +17,7 @@ export async function getAllPlatformReviews() {
     orderBy: { createdAt: 'desc' },
     include: {
       worker: {
-        select: { id: true, name: true, trade: true },
+        select: { id: true, name: true, trade: true, image: true },
       },
     },
   });
@@ -32,8 +32,9 @@ export async function getAllPlatformReviews() {
     flagged: r.flagged,
     approved: r.approved,
     workerId: r.workerId,
-    workerName: r.worker.name,
-    workerTrade: r.worker.trade,
+    workerName: r.worker?.name || 'Specialist',
+    workerTrade: r.worker?.trade || 'Freelancer',
+    workerImage: r.worker?.image || '/assets/images/hero_craftsman.jpg',
     deviceId: r.deviceId,
   }));
 }
@@ -98,11 +99,11 @@ export async function addWorkerReview(
   return { success: true, review: result };
 }
 
-export async function moderateReview(reviewId: string, action: 'approve' | 'flag' | 'delete') {
-  if (action === 'delete') {
-    const review = await prisma.review.findUnique({ where: { id: reviewId } });
-    if (!review) return false;
+export async function moderateReview(reviewId: string, action: 'approve' | 'flag' | 'unflag' | 'delete') {
+  const review = await prisma.review.findUnique({ where: { id: reviewId } });
+  if (!review) return false;
 
+  if (action === 'delete') {
     await prisma.$transaction(async (tx) => {
       await tx.review.delete({ where: { id: reviewId } });
       const aggregates = await tx.review.aggregate({
@@ -113,7 +114,7 @@ export async function moderateReview(reviewId: string, action: 'approve' | 'flag
       await tx.workerProfile.update({
         where: { id: review.workerId },
         data: {
-          rating: aggregates._avg.rating || 5.0,
+          rating: aggregates._avg.rating ? Number(aggregates._avg.rating.toFixed(1)) : 5.0,
           reviewsCount: aggregates._count.rating || 0,
         },
       });
@@ -121,14 +122,30 @@ export async function moderateReview(reviewId: string, action: 'approve' | 'flag
     return true;
   }
 
-  const updated = await prisma.review.update({
-    where: { id: reviewId },
-    data: {
-      flagged: action === 'flag',
-      approved: action === 'approve',
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.review.update({
+      where: { id: reviewId },
+      data: {
+        flagged: action === 'flag',
+        approved: action === 'approve' || action === 'unflag',
+      },
+    });
+
+    const aggregates = await tx.review.aggregate({
+      where: { workerId: review.workerId, approved: true },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+
+    await tx.workerProfile.update({
+      where: { id: review.workerId },
+      data: {
+        rating: aggregates._avg.rating ? Number(aggregates._avg.rating.toFixed(1)) : 5.0,
+        reviewsCount: aggregates._count.rating || 0,
+      },
+    });
   });
 
-  return !!updated;
+  return true;
 }
 
