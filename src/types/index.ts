@@ -126,6 +126,8 @@ export interface User {
   password?: string;
   role: 'admin' | 'freelancer';
   workerId?: string;
+  workerProfileId?: string;
+  image?: string;
   avatar: string;
   createdAt?: string;
 }

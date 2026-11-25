@@ -171,10 +171,18 @@ export const Header: React.FC = () => {
                   className="inline-flex items-center gap-2 bg-white border border-[#EBEBEB] hover:border-zinc-300 text-xs font-medium text-[#0F0F0F] px-3.5 py-1.5 rounded-full shadow-xs transition-all hover:bg-zinc-50"
                   id="header-login-btn"
                 >
-                  <span className="px-1.5 py-0.5 text-[10px] font-bold bg-purple-100 text-[#854CFF] rounded">
-                    ADMIN
-                  </span>
-                  <span>Admin Panel</span>
+                  {user.image || user.avatar ? (
+                    <img
+                      src={user.image || user.avatar}
+                      alt={user.name || 'Admin'}
+                      className="w-5 h-5 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="px-1.5 py-0.5 text-[10px] font-bold bg-purple-100 text-[#854CFF] rounded">
+                      ADMIN
+                    </span>
+                  )}
+                  <span>{user.name || 'Admin Panel'}</span>
                   <svg
                     width="12"
                     height="12"

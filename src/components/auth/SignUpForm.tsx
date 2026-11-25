@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signupFreelancer } from '@/lib/auth';
+import { apiUploadFile } from '@/lib/api-client';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/context/toast-context';
 
@@ -40,9 +41,43 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [image, setImage] = useState('');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const photoInputRef = React.useRef<HTMLInputElement>(null);
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const handlePhotoUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      showToast('⚠️ Please select a valid image file (JPG, PNG, WebP).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('⚠️ File size exceeds 5MB limit.');
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    try {
+      const res = await apiUploadFile(file);
+      if (res.success && res.url) {
+        setImage(res.url);
+        showToast('✓ Profile photo uploaded!');
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setImage(e.target?.result as string);
+          showToast('✓ Profile photo selected!');
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (err) {
+      showToast('Error uploading photo.');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
 
   // If already logged in, redirect
   useEffect(() => {
@@ -97,6 +132,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
       craftTitle: craftTitle.trim() || `Senior ${trade} Specialist`,
       experience: parseInt(experience, 10) || 5,
       location: location.trim() || 'Remote Available',
+      image: image || undefined,
     });
     setLoading(false);
 
@@ -149,6 +185,56 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
 
         {/* Form Grid */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Profile Picture Upload (Optional) */}
+          <div className="flex items-center gap-3.5 p-3 rounded-xl bg-zinc-50/80 border border-zinc-200/80">
+            <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-200 border border-zinc-300 shrink-0">
+              <img
+                src={image || '/assets/images/hero_craftsman.jpg'}
+                alt="Profile Avatar Preview"
+                className="w-full h-full object-cover"
+              />
+              {isUploadingPhoto && (
+                <div className="absolute inset-0 bg-black/50 text-white flex items-center justify-center text-xs">
+                  ⏳
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  ref={photoInputRef}
+                  accept="image/png, image/jpeg, image/webp, image/gif"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handlePhotoUpload(e.target.files[0]);
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  disabled={isUploadingPhoto}
+                  onClick={() => photoInputRef.current?.click()}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-zinc-300 text-zinc-800 hover:bg-zinc-100 hover:text-[#504CFF] transition-colors cursor-pointer shadow-2xs"
+                >
+                  {isUploadingPhoto ? 'Uploading...' : image ? 'Change Photo' : 'Upload Profile Picture'}
+                </button>
+                {image && (
+                  <button
+                    type="button"
+                    onClick={() => setImage('')}
+                    className="text-xs text-zinc-500 hover:text-red-600 transition-colors cursor-pointer"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <p className="text-[11px] text-zinc-400 mt-0.5">
+                Optional: PNG, JPG, or WebP up to 5MB
+              </p>
+            </div>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Full Name */}
             <div>

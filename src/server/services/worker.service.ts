@@ -241,6 +241,7 @@ export async function toggleWorkerFeatured(id: string) {
 }
 
 export async function deleteWorkerProfile(id: string) {
+  await prisma.platformClick.deleteMany({ where: { workerId: id } }).catch(() => {});
   const deleted = await prisma.workerProfile.delete({
     where: { id },
   });

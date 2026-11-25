@@ -357,10 +357,11 @@ export async function apiGetCurrentUser(): Promise<User | null> {
 }
 
 export async function apiUpdateCredentials(data: {
-  currentPassword: string;
+  currentPassword?: string;
   newPassword?: string;
   newEmail?: string;
   newName?: string;
+  newImage?: string;
   adminUpdate?: boolean;
 }): Promise<{ success: boolean; message: string; user?: any }> {
   const res = await apiFetch('/api/auth/credentials', {

@@ -155,23 +155,27 @@ export async function updateAdminCredentials(data: {
   newEmail?: string;
   newPassword?: string;
   newName?: string;
+  newImage?: string;
 }): Promise<{ success: boolean; message: string; user?: User }> {
-  if (!data.currentPassword) {
-    return { success: false, message: 'Current administrator password is required.' };
-  }
-
   const res = await apiUpdateCredentials({
     currentPassword: data.currentPassword,
     newEmail: data.newEmail,
     newName: data.newName,
     newPassword: data.newPassword,
+    newImage: data.newImage,
     adminUpdate: true,
   });
 
   if (res.success && res.user) {
     const session = getCurrentUser();
     if (session) {
-      const updated = { ...session, name: res.user.name || session.name, email: res.user.email || session.email };
+      const updated: User = {
+        ...session,
+        name: res.user.name || session.name,
+        email: res.user.email || session.email,
+        image: res.user.image !== undefined ? res.user.image : session.image,
+        avatar: res.user.avatar || res.user.image || session.avatar,
+      };
       setCurrentSession(updated);
     }
   }

@@ -24,10 +24,11 @@ export const ChangePasswordSchema = z.object({
 });
 
 export const AdminCredentialsSchema = z.object({
-  currentPassword: z.string().min(1, 'Current master password is required'),
+  currentPassword: z.string().optional(),
   newEmail: z.string().trim().email().optional(),
   newName: z.string().trim().min(2).optional(),
   newPassword: z.string().min(6).optional(),
+  newImage: z.string().optional(),
 });
 
 export const WorkerProfileUpdateSchema = z.object({

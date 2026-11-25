@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   apiGetWorkers,
+  apiGetWorkerById,
+  apiSaveWorkerProfile,
+  apiUploadFile,
   apiGetPlatformStats,
   apiGetCategories,
   apiAddCategory,
@@ -45,6 +48,40 @@ export default function AdminPage() {
   // Freelancers search
   const [freelancerSearch, setFreelancerSearch] = useState('');
 
+  // Freelancer View & Edit modals
+  const [viewingWorker, setViewingWorker] = useState<Worker | null>(null);
+  const [editingWorker, setEditingWorker] = useState<Worker | null>(null);
+  const [isSavingWorker, setIsSavingWorker] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const editImageFileInputRef = React.useRef<HTMLInputElement>(null);
+  const viewImageFileInputRef = React.useRef<HTMLInputElement>(null);
+  const [editError, setEditError] = useState('');
+  const [editForm, setEditForm] = useState({
+    name: '',
+    trade: 'Web Development',
+    craftTitle: '',
+    image: '',
+    badge: 'PRO',
+    badgeLabel: 'Independent Professional',
+    hourlyRate: 80,
+    location: 'Remote Available',
+    experienceYears: 5,
+    availability: 'Available Today',
+    workPreference: 'Remote First',
+    responseTime: 'Within 24 hours',
+    language: 'English',
+    email: '',
+    phone: '',
+    website: '',
+    bio: '',
+    about: '',
+    guarantee: 'Direct contact, 0% platform intermediary commission.',
+    skillsStr: '',
+    certificationsStr: '',
+    status: 'published' as 'published' | 'draft',
+    featured: false,
+  });
+
   // Add category modal
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -52,6 +89,10 @@ export default function AdminPage() {
   // Settings form state
   const [adminName, setAdminName] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
+  const [adminAvatar, setAdminAvatar] = useState('');
+  const [isUploadingAdminPhoto, setIsUploadingAdminPhoto] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const adminPhotoInputRef = React.useRef<HTMLInputElement>(null);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -70,8 +111,9 @@ export default function AdminPage() {
         return;
       }
       setAdminUser(u);
-      setAdminName(u.name);
-      setAdminEmail(u.email);
+      setAdminName(u.name || '');
+      setAdminEmail(u.email || '');
+      setAdminAvatar(u.avatar || u.image || '');
       await refreshData();
     };
 
@@ -90,26 +132,218 @@ export default function AdminPage() {
       setWorkersList(w.workers);
       setCategoriesList(c);
       setReviewsList(r);
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const handleToggleStatus = async (id: string) => {
-    await apiToggleWorkerStatus(id);
+    const updated = await apiToggleWorkerStatus(id);
     await refreshData();
+    if (viewingWorker && viewingWorker.id === id) {
+      setViewingWorker((prev) =>
+        prev ? { ...prev, status: prev.status === 'draft' ? 'published' : 'draft' } : null
+      );
+    }
     showToast('Freelancer status updated');
   };
 
   const handleToggleFeatured = async (id: string) => {
-    await apiToggleWorkerFeatured(id);
+    const updated = await apiToggleWorkerFeatured(id);
     await refreshData();
+    if (viewingWorker && viewingWorker.id === id) {
+      setViewingWorker((prev) =>
+        prev ? { ...prev, featured: !prev.featured } : null
+      );
+    }
     showToast('Freelancer featured status updated');
   };
 
   const handleDeleteWorker = async (id: string, name: string) => {
     if (confirm(`Are you sure you want to delete profile for "${name}"?`)) {
       await apiDeleteWorkerProfile(id);
+      if (viewingWorker?.id === id) setViewingWorker(null);
+      if (editingWorker?.id === id) setEditingWorker(null);
       await refreshData();
       showToast(`Deleted ${name}`);
+    }
+  };
+
+  const handleViewWorker = async (worker: Worker) => {
+    setViewingWorker(worker);
+    try {
+      const full = await apiGetWorkerById(worker.id);
+      if (full) setViewingWorker(full);
+    } catch (e) { }
+  };
+
+  const handleOpenEditModal = async (worker: Worker) => {
+    let full = worker;
+    try {
+      const fetched = await apiGetWorkerById(worker.id);
+      if (fetched) full = fetched;
+    } catch (e) { }
+
+    setEditingWorker(full);
+    setEditForm({
+      name: full.name || '',
+      trade: full.trade || 'Web Development',
+      craftTitle: full.craftTitle || '',
+      image: full.image || '/assets/images/hero_craftsman.jpg',
+      badge: full.badge || 'PRO',
+      badgeLabel: full.badgeLabel || 'Independent Professional',
+      hourlyRate: full.hourlyRate ?? 80,
+      location: full.location || 'Remote Available',
+      experienceYears: full.experienceYears ?? 5,
+      availability: full.availability || 'Available Today',
+      workPreference: full.workPreference || 'Remote First',
+      responseTime: full.responseTime || 'Within 24 hours',
+      language: full.language || 'English',
+      email: full.email || '',
+      phone: full.phone || '',
+      website: full.website || '',
+      bio: full.bio || '',
+      about: full.about || full.bio || '',
+      guarantee: full.guarantee || 'Direct contact, 0% platform intermediary commission.',
+      skillsStr: Array.isArray(full.skills) ? full.skills.join(', ') : '',
+      certificationsStr: Array.isArray(full.certifications) ? full.certifications.join(', ') : '',
+      status: full.status === 'draft' ? 'draft' : 'published',
+      featured: !!full.featured,
+    });
+    setEditError('');
+  };
+
+  const handleSaveEditWorker = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingWorker) return;
+
+    if (!editForm.name.trim()) {
+      setEditError('Specialist name is required.');
+      return;
+    }
+
+    setIsSavingWorker(true);
+    setEditError('');
+
+    try {
+      const skills = editForm.skillsStr
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const certifications = editForm.certificationsStr
+        .split(',')
+        .map((c) => c.trim())
+        .filter(Boolean);
+
+      const updates: Partial<Worker> = {
+        name: editForm.name.trim(),
+        trade: editForm.trade.trim(),
+        craftTitle: editForm.craftTitle.trim(),
+        image: editForm.image.trim(),
+        badge: editForm.badge.trim(),
+        badgeLabel: editForm.badgeLabel.trim(),
+        hourlyRate: Number(editForm.hourlyRate) || 0,
+        location: editForm.location.trim(),
+        experienceYears: Number(editForm.experienceYears) || 0,
+        availability: editForm.availability.trim(),
+        workPreference: editForm.workPreference.trim(),
+        responseTime: editForm.responseTime.trim(),
+        language: editForm.language.trim(),
+        email: editForm.email.trim() || undefined,
+        phone: editForm.phone.trim() || undefined,
+        website: editForm.website.trim() || undefined,
+        bio: editForm.bio.trim(),
+        about: editForm.about.trim(),
+        guarantee: editForm.guarantee.trim(),
+        skills: skills.length > 0 ? skills : [editForm.trade.trim()],
+        certifications,
+        status: editForm.status,
+        featured: editForm.featured,
+      };
+
+      const updated = await apiSaveWorkerProfile(editingWorker.id, updates);
+      if (updated) {
+        showToast(`Profile for "${updated.name}" updated successfully!`);
+        setEditingWorker(null);
+        if (viewingWorker && viewingWorker.id === editingWorker.id) {
+          setViewingWorker(updated);
+        }
+        await refreshData();
+      } else {
+        setEditError('Failed to save profile changes. Please try again.');
+      }
+    } catch (err: any) {
+      setEditError(err.message || 'An unexpected error occurred while saving.');
+    } finally {
+      setIsSavingWorker(false);
+    }
+  };
+
+  const handleUploadEditPhoto = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file (PNG, JPG, WebP, GIF).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('File size exceeds 5MB limit. Please choose a smaller image.');
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    try {
+      const res = await apiUploadFile(file);
+      if (res.success && res.url) {
+        setEditForm((prev) => ({ ...prev, image: res.url! }));
+        showToast('✓ Photo uploaded successfully!');
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target?.result as string;
+          setEditForm((prev) => ({ ...prev, image: dataUrl }));
+          showToast('✓ Photo loaded!');
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (err) {
+      showToast('Error uploading photo.');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handleUploadViewPhoto = async (file: File) => {
+    if (!viewingWorker) return;
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file (PNG, JPG, WebP, GIF).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('File size exceeds 5MB limit.');
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    try {
+      let photoUrl = '';
+      const res = await apiUploadFile(file);
+      if (res.success && res.url) {
+        photoUrl = res.url;
+      } else {
+        photoUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.readAsDataURL(file);
+        });
+      }
+
+      if (photoUrl) {
+        await apiSaveWorkerProfile(viewingWorker.id, { image: photoUrl });
+        setViewingWorker((prev) => (prev ? { ...prev, image: photoUrl } : null));
+        await refreshData();
+        showToast('✓ Profile picture updated and saved!');
+      }
+    } catch (err) {
+      showToast('Error uploading photo.');
+    } finally {
+      setIsUploadingPhoto(false);
     }
   };
 
@@ -138,33 +372,91 @@ export default function AdminPage() {
     showToast(`Review ${action}d successfully`);
   };
 
+  const handleUploadAdminPhoto = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file (PNG, JPG, WebP, GIF).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('File size exceeds 5MB limit.');
+      return;
+    }
+
+    setIsUploadingAdminPhoto(true);
+    try {
+      const res = await apiUploadFile(file);
+      if (res.success && res.url) {
+        setAdminAvatar(res.url);
+        showToast('✓ Admin avatar uploaded!');
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setAdminAvatar(e.target?.result as string);
+          showToast('✓ Admin avatar loaded!');
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (err) {
+      showToast('Error uploading photo.');
+    } finally {
+      setIsUploadingAdminPhoto(false);
+    }
+  };
+
   const handleSettingsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSettingsFeedback(null);
+
+    if (newPassword && newPassword.length < 6) {
+      setSettingsFeedback({ type: 'error', msg: 'New password must be at least 6 characters.' });
+      return;
+    }
 
     if (newPassword && newPassword !== confirmPassword) {
       setSettingsFeedback({ type: 'error', msg: 'New passwords do not match.' });
       return;
     }
 
-    const res = await updateAdminCredentials({
-      currentPassword,
-      newEmail: adminEmail,
-      newName: adminName,
-      newPassword: newPassword || undefined,
-    });
-
-    if (!res.success) {
-      setSettingsFeedback({ type: 'error', msg: res.message });
+    if (newPassword && !currentPassword) {
+      setSettingsFeedback({ type: 'error', msg: 'Current password is required to set a new password.' });
       return;
     }
 
-    setSettingsFeedback({ type: 'success', msg: res.message });
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    showToast('Admin credentials saved');
-    await refreshData();
+    setIsSavingSettings(true);
+    try {
+      const res = await updateAdminCredentials({
+        currentPassword: currentPassword || undefined,
+        newEmail: adminEmail.trim(),
+        newName: adminName.trim(),
+        newImage: adminAvatar,
+        newPassword: newPassword || undefined,
+      });
+
+      if (!res.success) {
+        setSettingsFeedback({ type: 'error', msg: res.message });
+        showToast(`⚠️ ${res.message}`);
+        return;
+      }
+
+      setSettingsFeedback({ type: 'success', msg: 'Admin profile and credentials updated successfully!' });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+
+      if (res.user) {
+        setAdminUser(res.user);
+        setAdminName(res.user.name || adminName);
+        setAdminEmail(res.user.email || adminEmail);
+        setAdminAvatar(res.user.image || res.user.avatar || adminAvatar);
+      }
+      refreshUser();
+      await refreshData();
+      showToast('✓ Admin profile updated successfully!');
+    } catch (err: any) {
+      setSettingsFeedback({ type: 'error', msg: err?.message || 'Error updating settings.' });
+    } finally {
+      setIsSavingSettings(false);
+    }
   };
 
   const filteredAdminWorkers = workersList.filter(
@@ -204,7 +496,15 @@ export default function AdminPage() {
                   aria-expanded={isDropdownOpen}
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 >
-                  <div className="admin-topbar-shield">🛡</div>
+                  {adminAvatar || adminUser?.avatar || adminUser?.image ? (
+                    <img
+                      src={adminAvatar || adminUser?.avatar || adminUser?.image}
+                      alt={adminUser?.name || 'Admin'}
+                      style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div className="admin-topbar-shield">🛡</div>
+                  )}
                   <svg className="dash-avatar-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <polyline points="6 9 12 15 18 9"></polyline>
                   </svg>
@@ -212,16 +512,29 @@ export default function AdminPage() {
 
                 {isDropdownOpen && (
                   <div className="dash-user-dropdown-menu" id="admin-user-dropdown-menu" style={{ display: 'block' }}>
-                    <div className="dash-dropdown-identity">
-                      <span className="dash-dropdown-name" id="admin-dropdown-name">
-                        {adminUser?.name || 'Platform Admin'}
-                      </span>
-                      <span className="dash-dropdown-email" id="admin-dropdown-email">
-                        {adminUser?.email || 'admin@findworker.io'}
-                      </span>
-                      <span className="admin-badge-pill" style={{ marginTop: '4px' }}>
-                        Super Admin
-                      </span>
+                    <div className="dash-dropdown-identity" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      {adminAvatar || adminUser?.avatar || adminUser?.image ? (
+                        <img
+                          src={adminAvatar || adminUser?.avatar || adminUser?.image}
+                          alt={adminUser?.name || 'Admin'}
+                          style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                        />
+                      ) : (
+                        <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#111827', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>
+                          🛡
+                        </div>
+                      )}
+                      <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                        <span className="dash-dropdown-name" id="admin-dropdown-name" style={{ display: 'block', fontWeight: 600, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                          {adminName || adminUser?.name || 'Platform Admin'}
+                        </span>
+                        <span className="dash-dropdown-email" id="admin-dropdown-email" style={{ display: 'block', fontSize: '0.8rem', color: '#6B7280', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                          {adminEmail || adminUser?.email || 'admin@findworker.io'}
+                        </span>
+                        <span className="admin-badge-pill" style={{ marginTop: '4px', display: 'inline-block' }}>
+                          Super Admin
+                        </span>
+                      </div>
                     </div>
                     <div className="dash-dropdown-divider"></div>
                     <button
@@ -334,7 +647,7 @@ export default function AdminPage() {
                     type="button"
                     className="admin-btn-primary"
                     onClick={async () => {
-                      await apiCreateWorkerProfile({
+                      const newWorker = await apiCreateWorkerProfile({
                         name: 'New Independent Specialist',
                         trade: 'Web Development',
                         craftTitle: 'Full-Stack Software Engineer',
@@ -342,6 +655,9 @@ export default function AdminPage() {
                       await refreshData();
                       showToast('Draft specialist profile created');
                       setActiveTab('freelancers');
+                      if (newWorker) {
+                        handleOpenEditModal(newWorker);
+                      }
                     }}
                   >
                     <span>+ Add Freelancer</span>
@@ -420,7 +736,7 @@ export default function AdminPage() {
                     >
                       Review Moderation Queue →
                     </button>
-                   
+
                   </div>
                 </div>
               </section>
@@ -446,13 +762,16 @@ export default function AdminPage() {
                       type="button"
                       className="admin-btn-primary"
                       onClick={async () => {
-                        await apiCreateWorkerProfile({
+                        const newWorker = await apiCreateWorkerProfile({
                           name: 'New Independent Specialist',
                           trade: 'Web Development',
                           craftTitle: 'Full-Stack Software Engineer',
                         });
                         await refreshData();
                         showToast('Draft specialist profile created');
+                        if (newWorker) {
+                          handleOpenEditModal(newWorker);
+                        }
                       }}
                     >
                       + Add Freelancer
@@ -507,22 +826,38 @@ export default function AdminPage() {
                             </td>
                             <td style={{ padding: '14px 16px' }}>★ {w.rating?.toFixed(2) || '5.00'}</td>
                             <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                              <div style={{ display: 'inline-flex', gap: '6px' }}>
+                              <div style={{ display: 'inline-flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                                 <button
                                   type="button"
                                   className="btn btn-outline btn-sm"
                                   onClick={() => handleToggleStatus(w.id)}
+                                  title={w.status === 'draft' ? 'Publish profile' : 'Unpublish profile'}
                                 >
                                   {w.status === 'draft' ? 'Publish' : 'Unpublish'}
                                 </button>
-                                <Link href={`/freelancer/${w.id}`} target="_blank" className="btn btn-outline btn-sm">
-                                  View ↗
-                                </Link>
+                                <button
+                                  type="button"
+                                  className="btn btn-outline btn-sm"
+                                  onClick={() => handleViewWorker(w)}
+                                  title="View complete freelancer profile"
+                                >
+                                  View
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-outline btn-sm"
+                                  style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+                                  onClick={() => handleOpenEditModal(w)}
+                                  title="Edit freelancer profile data"
+                                >
+                                  Edit
+                                </button>
                                 <button
                                   type="button"
                                   className="btn btn-outline btn-sm"
                                   style={{ color: '#DC2626' }}
                                   onClick={() => handleDeleteWorker(w.id, w.name)}
+                                  title="Delete freelancer profile"
                                 >
                                   Delete
                                 </button>
@@ -663,86 +998,187 @@ export default function AdminPage() {
               <section className="dash-view-section active">
                 <div className="admin-page-header">
                   <div className="admin-page-header-left">
-                    <h2 className="admin-page-title">Admin Credentials &amp; Security</h2>
+                    <h2 className="admin-page-title">Admin Profile &amp; Security Settings</h2>
+              
                   </div>
                 </div>
 
-                <div className="dash-card" style={{ maxWidth: '600px' }}>
+                <div className="dash-card" style={{ maxWidth: '680px' }}>
                   {settingsFeedback && (
                     <div
                       style={{
-                        padding: '12px 14px',
+                        padding: '12px 16px',
                         borderRadius: '8px',
-                        marginBottom: '18px',
+                        marginBottom: '20px',
                         background: settingsFeedback.type === 'error' ? '#FEE2E2' : '#DCFCE7',
                         color: settingsFeedback.type === 'error' ? '#B91C1C' : '#15803D',
                         fontSize: '0.88rem',
+                        fontWeight: 500,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
                       }}
                     >
-                      {settingsFeedback.msg}
+                      <span>{settingsFeedback.type === 'error' ? '⚠️' : '✓'}</span>
+                      <span>{settingsFeedback.msg}</span>
                     </div>
                   )}
 
                   <form onSubmit={handleSettingsSubmit}>
-                    <div className="dash-form-group" style={{ marginBottom: '16px' }}>
-                      <label className="dash-label">Administrator Name</label>
-                      <input
-                        type="text"
-                        className="dash-input"
-                        value={adminName}
-                        onChange={(e) => setAdminName(e.target.value)}
-                        required
-                      />
+                    {/* PROFILE AVATAR SECTION */}
+                    <div style={{ marginBottom: '28px', paddingBottom: '24px', borderBottom: '1px solid #F3F4F6' }}>
+                      <label className="dash-label" style={{ marginBottom: '12px', display: 'block', fontWeight: 600 }}>
+                        Profile Picture
+                      </label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                        <div
+                          style={{
+                            width: '80px',
+                            height: '80px',
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            backgroundColor: '#F3F4F6',
+                            border: '2px solid #E5E7EB',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {adminAvatar ? (
+                            <img
+                              src={adminAvatar}
+                              alt={adminName || 'Admin'}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <div style={{ fontSize: '32px' }}>🛡</div>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, minWidth: '220px' }}>
+                          <input
+                            ref={adminPhotoInputRef}
+                            type="file"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleUploadAdminPhoto(file);
+                            }}
+                          />
+                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                            <button
+                              type="button"
+                              className="dash-btn dash-btn-secondary bg-slate-200"
+                              onClick={() => adminPhotoInputRef.current?.click()}
+                              disabled={isUploadingAdminPhoto}
+                              style={{ fontSize: '0.85rem', padding: '7px 14px', cursor: 'pointer' }}
+                            >
+                              {isUploadingAdminPhoto ? 'Uploading...' : 'Upload New Photo'}
+                            </button>
+                            {adminAvatar && (
+                              <button
+                                type="button"
+                                className="dash-btn dash-btn-ghost "
+                                onClick={() => setAdminAvatar('')}
+                                style={{ fontSize: '0.85rem', padding: '7px 12px', color: '#DC2626', cursor: 'pointer' }}
+                              >
+                                Remove Photo
+                              </button>
+                            )}
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#6B7280' }}>
+                            Upload PNG, JPG, WebP, or GIF (up to 5MB)
+                          </span>
+                        </div>
+                      </div>
+
+                      
                     </div>
 
-                    <div className="dash-form-group" style={{ marginBottom: '16px' }}>
-                      <label className="dash-label">Administrator Email</label>
-                      <input
-                        type="email"
-                        className="dash-input"
-                        value={adminEmail}
-                        onChange={(e) => setAdminEmail(e.target.value)}
-                        required
-                      />
+                    {/* BASIC PROFILE INFO */}
+                    <div style={{ marginBottom: '28px', paddingBottom: '24px', borderBottom: '1px solid #F3F4F6' }}>
+                      <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#111827', marginBottom: '16px' }}>
+                        Personal Details
+                      </h3>
+
+                      <div className="dash-form-group" style={{ marginBottom: '16px' }}>
+                        <label className="dash-label">Administrator Full Name</label>
+                        <input
+                          type="text"
+                          className="dash-input"
+                          value={adminName}
+                          onChange={(e) => setAdminName(e.target.value)}
+                          placeholder="e.g. Master Administrator"
+                          required
+                        />
+                      </div>
+
+                      <div className="dash-form-group" style={{ marginBottom: '8px' }}>
+                        <label className="dash-label">Administrator Email</label>
+                        <input
+                          type="email"
+                          className="dash-input"
+                          value={adminEmail}
+                          onChange={(e) => setAdminEmail(e.target.value)}
+                          placeholder="admin@findworker.io"
+                          required
+                        />
+                      </div>
                     </div>
 
-                    <div className="dash-form-group" style={{ marginBottom: '16px' }}>
-                      <label className="dash-label">Current Password (Required for any changes)</label>
-                      <input
-                        type="password"
-                        className="dash-input"
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        placeholder="Enter current password (demo: admin123)"
-                        required
-                      />
+                    {/* SECURITY & PASSWORD SECTION */}
+                    <div style={{ marginBottom: '28px' }}>
+                      <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#111827', marginBottom: '6px' }}>
+                        Password &amp; Security
+                      </h3>
+                    
+
+                      <div className="dash-form-group" style={{ marginBottom: '16px' }}>
+                       
+                        <input
+                          type="password"
+                          className="dash-input"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          placeholder="Enter current password to verify"
+                        />
+                      </div>
+
+                      <div className="dash-form-group" style={{ marginBottom: '16px' }}>
+                        <label className="dash-label">New Password</label>
+                        <input
+                          type="password"
+                          className="dash-input"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="Minimum 6 characters"
+                        />
+                      </div>
+
+                      <div className="dash-form-group" style={{ marginBottom: '8px' }}>
+                        <label className="dash-label">Confirm New Password</label>
+                        <input
+                          type="password"
+                          className="dash-input"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="Re-enter new password"
+                        />
+                      </div>
                     </div>
 
-                    <div className="dash-form-group" style={{ marginBottom: '16px' }}>
-                      <label className="dash-label">New Password (Leave blank to keep existing)</label>
-                      <input
-                        type="password"
-                        className="dash-input"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="Minimum 6 characters"
-                      />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <button
+                        type="submit"
+                        className="admin-btn-primary"
+                        disabled={isSavingSettings || isUploadingAdminPhoto}
+                        style={{ minWidth: '160px' }}
+                      >
+                        {isSavingSettings ? 'Saving Changes...' : 'Save Profile Changes'}
+                      </button>
                     </div>
-
-                    <div className="dash-form-group" style={{ marginBottom: '24px' }}>
-                      <label className="dash-label">Confirm New Password</label>
-                      <input
-                        type="password"
-                        className="dash-input"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Re-enter new password"
-                      />
-                    </div>
-
-                    <button type="submit" className="admin-btn-primary">
-                      Save Credentials
-                    </button>
                   </form>
                 </div>
               </section>
@@ -797,6 +1233,840 @@ export default function AdminPage() {
                   style={{ background: '#854CFF', borderColor: '#854CFF' }}
                 >
                   Create
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Modal: View Freelancer Profile */}
+      {viewingWorker && (
+        <div
+          className="dash-modal-overlay active"
+          role="dialog"
+          aria-modal="true"
+          style={{ display: 'flex' }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setViewingWorker(null);
+          }}
+        >
+          <div
+            className="dash-modal-window"
+            style={{ maxWidth: '840px', width: '95%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
+          >
+            {/* Header */}
+            <div className="dash-modal-header" style={{ alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <h3 className="dash-modal-title">Freelancer Profile Details</h3>
+                <span
+                  style={{
+                    padding: '2px 8px',
+                    borderRadius: '9999px',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    background: viewingWorker.status === 'draft' ? '#FEE2E2' : '#DCFCE7',
+                    color: viewingWorker.status === 'draft' ? '#B91C1C' : '#15803D',
+                  }}
+                >
+                  {viewingWorker.status === 'draft' ? 'Draft' : 'Published'}
+                </span>
+                {viewingWorker.featured && (
+                  <span
+                    style={{
+                      padding: '2px 8px',
+                      borderRadius: '9999px',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      background: '#FEF3C7',
+                      color: '#B45309',
+                    }}
+                  >
+                    ★ Featured
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                className="dash-modal-close-btn"
+                onClick={() => setViewingWorker(null)}
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Body */}
+            <div
+              className="dash-modal-body"
+              style={{ overflowY: 'auto', flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}
+            >
+              {/* Hero Card */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px',
+                  padding: '16px',
+                  background: '#FAFAFA',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '12px',
+                }}
+              >
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <img
+                    src={
+                      viewingWorker.image?.startsWith('assets/')
+                        ? `/${viewingWorker.image}`
+                        : viewingWorker.image || '/assets/images/hero_craftsman.jpg'
+                    }
+                    alt={viewingWorker.name}
+                    style={{ width: '70px', height: '70px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #FFFFFF', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+                  />
+                  <input
+                    type="file"
+                    ref={viewImageFileInputRef}
+                    accept="image/png, image/jpeg, image/webp, image/gif, image/svg+xml"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleUploadViewPhoto(e.target.files[0]);
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => viewImageFileInputRef.current?.click()}
+                    title="Upload new profile picture"
+                    style={{
+                      position: 'absolute',
+                      bottom: '-2px',
+                      right: '-2px',
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      background: 'var(--color-primary)',
+                      color: '#FFFFFF',
+                      border: '2px solid #FFFFFF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      padding: 0,
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                    }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                  </button>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <h4 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>{viewingWorker.name}</h4>
+                    <span
+                      style={{
+                        background: 'rgba(80, 76, 255, 0.1)',
+                        color: 'var(--color-primary)',
+                        padding: '2px 8px',
+                        borderRadius: '6px',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {viewingWorker.trade}
+                    </span>
+                    {viewingWorker.badge && (
+                      <span
+                        style={{
+                          background: '#0F0F0F',
+                          color: '#FFFFFF',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.04em',
+                        }}
+                      >
+                        {viewingWorker.badge}
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ margin: '4px 0 0', color: 'var(--color-secondary-muted)', fontSize: '0.9rem' }}>
+                    {viewingWorker.craftTitle}
+                  </p>
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '6px', fontSize: '0.8rem', color: '#64748B' }}>
+                    <span>📍 {viewingWorker.location}</span>
+                    <span>•</span>
+                    <span>⚡ {viewingWorker.availability || 'Available Today'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
+                <div style={{ padding: '12px', background: '#FFFFFF', border: '1px solid var(--color-border)', borderRadius: '8px', textAlign: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#64748B', display: 'block' }}>Hourly Rate</span>
+                  <strong style={{ fontSize: '1.1rem', color: '#0F0F0F' }}>${viewingWorker.hourlyRate || 80}/hr</strong>
+                </div>
+                <div style={{ padding: '12px', background: '#FFFFFF', border: '1px solid var(--color-border)', borderRadius: '8px', textAlign: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#64748B', display: 'block' }}>Rating</span>
+                  <strong style={{ fontSize: '1.1rem', color: '#0F0F0F' }}>★ {viewingWorker.rating?.toFixed(2) || '5.00'}</strong>
+                </div>
+                <div style={{ padding: '12px', background: '#FFFFFF', border: '1px solid var(--color-border)', borderRadius: '8px', textAlign: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#64748B', display: 'block' }}>Experience</span>
+                  <strong style={{ fontSize: '1.1rem', color: '#0F0F0F' }}>{viewingWorker.experienceYears} Years</strong>
+                </div>
+                <div style={{ padding: '12px', background: '#FFFFFF', border: '1px solid var(--color-border)', borderRadius: '8px', textAlign: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#64748B', display: 'block' }}>Reviews</span>
+                  <strong style={{ fontSize: '1.1rem', color: '#0F0F0F' }}>{viewingWorker.reviewsCount || 0} Total</strong>
+                </div>
+              </div>
+
+              {/* Details 2-Column Section */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                {/* Left Column: Bio & About */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div>
+                    <h5 style={{ margin: '0 0 6px', fontSize: '0.85rem', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Short Bio
+                    </h5>
+                    <p style={{ margin: 0, fontSize: '0.88rem', color: '#1E293B', background: '#F8FAFC', padding: '10px 12px', borderRadius: '8px', border: '1px solid #E2E8F0', lineHeight: '1.5' }}>
+                      {viewingWorker.bio || 'No bio provided.'}
+                    </p>
+                  </div>
+
+                  {viewingWorker.about && (
+                    <div>
+                      <h5 style={{ margin: '0 0 6px', fontSize: '0.85rem', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Professional Background
+                      </h5>
+                      <p style={{ margin: 0, fontSize: '0.88rem', color: '#1E293B', background: '#F8FAFC', padding: '10px 12px', borderRadius: '8px', border: '1px solid #E2E8F0', lineHeight: '1.5', whiteSpace: 'pre-line' }}>
+                        {viewingWorker.about}
+                      </p>
+                    </div>
+                  )}
+
+                  {viewingWorker.guarantee && (
+                    <div>
+                      <h5 style={{ margin: '0 0 6px', fontSize: '0.85rem', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Client Guarantee
+                      </h5>
+                      <p style={{ margin: 0, fontSize: '0.85rem', color: '#047857', background: '#ECFDF5', padding: '8px 12px', borderRadius: '8px', border: '1px solid #A7F3D0' }}>
+                        🛡️ {viewingWorker.guarantee}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Column: Contact, Preferences & Skills */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ background: '#F8FAFC', padding: '12px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                    <h5 style={{ margin: '0 0 8px', fontSize: '0.85rem', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Contact &amp; Preferences
+                    </h5>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.85rem' }}>
+                      <div><strong>Email:</strong> {viewingWorker.email || <span style={{ color: '#94A3B8' }}>Not provided</span>}</div>
+                      <div><strong>Phone:</strong> {viewingWorker.phone || <span style={{ color: '#94A3B8' }}>Not provided</span>}</div>
+                      <div><strong>Website:</strong> {viewingWorker.website ? <a href={viewingWorker.website} target="_blank" rel="noreferrer" style={{ color: 'var(--color-primary)' }}>{viewingWorker.website}</a> : <span style={{ color: '#94A3B8' }}>Not provided</span>}</div>
+                      <div><strong>Work Preference:</strong> {viewingWorker.workPreference || 'Remote First'}</div>
+                      <div><strong>Response Time:</strong> {viewingWorker.responseTime || 'Within 24 hours'}</div>
+                      <div><strong>Language:</strong> {viewingWorker.language || 'English'}</div>
+                    </div>
+                  </div>
+
+                  {/* Skills */}
+                  <div>
+                    <h5 style={{ margin: '0 0 6px', fontSize: '0.85rem', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Skills &amp; Expertise
+                    </h5>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {viewingWorker.skills && viewingWorker.skills.length > 0 ? (
+                        viewingWorker.skills.map((s, idx) => (
+                          <span
+                            key={idx}
+                            style={{
+                              background: '#EEF2FF',
+                              color: '#4338CA',
+                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              fontSize: '0.78rem',
+                              fontWeight: 500,
+                              border: '1px solid #C7D2FE',
+                            }}
+                          >
+                            {s}
+                          </span>
+                        ))
+                      ) : (
+                        <span style={{ fontSize: '0.85rem', color: '#94A3B8' }}>No skills specified</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Certifications */}
+                  {viewingWorker.certifications && viewingWorker.certifications.length > 0 && (
+                    <div>
+                      <h5 style={{ margin: '0 0 6px', fontSize: '0.85rem', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Certifications
+                      </h5>
+                      <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.83rem', color: '#334155' }}>
+                        {viewingWorker.certifications.map((c, idx) => (
+                          <li key={idx}>{c}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Portfolio Showcase if any */}
+              {viewingWorker.portfolio && viewingWorker.portfolio.length > 0 && (
+                <div>
+                  <h5 style={{ margin: '0 0 8px', fontSize: '0.85rem', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Portfolio Projects ({viewingWorker.portfolio.length})
+                  </h5>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' }}>
+                    {viewingWorker.portfolio.map((p, idx) => (
+                      <div key={idx} style={{ border: '1px solid #E2E8F0', borderRadius: '8px', overflow: 'hidden', background: '#FFFFFF' }}>
+                        <img src={p.image} alt={p.title} style={{ width: '100%', height: '100px', objectFit: 'cover' }} />
+                        <div style={{ padding: '8px' }}>
+                          <strong style={{ fontSize: '0.85rem', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.title}</strong>
+                          <small style={{ color: '#64748B' }}>{p.category} {p.year ? `• ${p.year}` : ''}</small>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="dash-modal-footer" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  className="dash-btn dash-btn-outline"
+                  onClick={() => handleToggleStatus(viewingWorker.id)}
+                >
+                  {viewingWorker.status === 'draft' ? 'Publish Profile' : 'Unpublish Profile'}
+                </button>
+                <Link
+                  href={`/freelancer/${viewingWorker.id}`}
+                  target="_blank"
+                  className="dash-btn dash-btn-outline"
+                  style={{ textDecoration: 'none' }}
+                >
+                  Public Page ↗
+                </Link>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  className="dash-btn dash-btn-outline"
+                  onClick={() => setViewingWorker(null)}
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  className="dash-btn dash-btn-primary"
+                  style={{ background: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
+                  onClick={() => {
+                    const target = viewingWorker;
+                    setViewingWorker(null);
+                    handleOpenEditModal(target);
+                  }}
+                >
+                  Edit Profile ✏️
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Modal: Edit Freelancer Profile */}
+      {editingWorker && (
+        <div
+          className="dash-modal-overlay active"
+          role="dialog"
+          aria-modal="true"
+          style={{ display: 'flex' }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setEditingWorker(null);
+          }}
+        >
+          <div
+            className="dash-modal-window"
+            style={{ maxWidth: '840px', width: '95%', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}
+          >
+            {/* Header */}
+            <div className="dash-modal-header">
+              <div>
+                <h3 className="dash-modal-title">Edit Freelancer Profile</h3>
+                <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#64748B' }}>
+                  Modify profile details, pricing, skills, and publication status for {editingWorker.name}.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="dash-modal-close-btn"
+                onClick={() => setEditingWorker(null)}
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSaveEditWorker} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+              <div
+                className="dash-modal-body"
+                style={{ overflowY: 'auto', flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}
+              >
+                {editError && (
+                  <div
+                    style={{
+                      padding: '12px 14px',
+                      background: '#FEE2E2',
+                      border: '1px solid #FCA5A5',
+                      color: '#991B1B',
+                      borderRadius: '8px',
+                      fontSize: '0.88rem',
+                    }}
+                  >
+                    ⚠️ {editError}
+                  </div>
+                )}
+
+                {/* 1. Identity & Role */}
+                <div>
+                  <h4 style={{ margin: '0 0 12px', fontSize: '0.92rem', fontWeight: 700, color: '#0F0F0F', borderBottom: '1px solid #E2E8F0', paddingBottom: '6px' }}>
+                    1. Basic Specialist Information
+                  </h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+                    <div className="dash-form-group">
+                      <label className="dash-label">Full Name *</label>
+                      <input
+                        type="text"
+                        required
+                        className="dash-input"
+                        value={editForm.name}
+                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                        placeholder="e.g. Julian Vance"
+                      />
+                    </div>
+
+                    <div className="dash-form-group">
+                      <label className="dash-label">Discipline / Trade *</label>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <select
+                          className="dash-input"
+                          value={editForm.trade}
+                          onChange={(e) => setEditForm({ ...editForm, trade: e.target.value })}
+                        >
+                          {categoriesList.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                          {!categoriesList.includes(editForm.trade) && editForm.trade && (
+                            <option value={editForm.trade}>{editForm.trade}</option>
+                          )}
+                        </select>
+                        <input
+                          type="text"
+                          className="dash-input"
+                          style={{ maxWidth: '140px' }}
+                          placeholder="Or custom"
+                          value={editForm.trade}
+                          onChange={(e) => setEditForm({ ...editForm, trade: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="dash-form-group">
+                      <label className="dash-label">Professional Craft Title *</label>
+                      <input
+                        type="text"
+                        required
+                        className="dash-input"
+                        value={editForm.craftTitle}
+                        onChange={(e) => setEditForm({ ...editForm, craftTitle: e.target.value })}
+                        placeholder="e.g. Senior Frontend & Design Systems Architect"
+                      />
+                    </div>
+
+                    <div className="dash-form-group" style={{ gridColumn: 'span 2' }}>
+                      <label className="dash-label">Profile Avatar / Photo</label>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '16px',
+                          padding: '14px',
+                          background: '#F8FAFC',
+                          border: '1px solid #E2E8F0',
+                          borderRadius: '12px',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <div style={{ position: 'relative', width: '64px', height: '64px', flexShrink: 0 }}>
+                          <img
+                            src={editForm.image?.startsWith('assets/') ? `/${editForm.image}` : editForm.image || '/assets/images/hero_craftsman.jpg'}
+                            alt="Avatar Preview"
+                            style={{
+                              width: '64px',
+                              height: '64px',
+                              borderRadius: '16px',
+                              objectFit: 'cover',
+                              border: '2px solid #FFFFFF',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                            }}
+                          />
+                          {isUploadingPhoto && (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                inset: 0,
+                                background: 'rgba(0,0,0,0.55)',
+                                borderRadius: '16px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: '#FFFFFF',
+                                fontSize: '0.85rem',
+                              }}
+                            >
+                              ⏳
+                            </div>
+                          )}
+                        </div>
+
+                        <div style={{ flex: 1, minWidth: '220px' }}>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '8px' }}>
+                            <input
+                              type="file"
+                              ref={editImageFileInputRef}
+                              accept="image/png, image/jpeg, image/webp, image/gif, image/svg+xml"
+                              style={{ display: 'none' }}
+                              onChange={(e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  handleUploadEditPhoto(e.target.files[0]);
+                                }
+                              }}
+                            />
+                            <button
+                              type="button"
+                              disabled={isUploadingPhoto}
+                              className="dash-btn dash-btn-primary dash-btn-sm"
+                              style={{ background: 'var(--color-primary)', borderColor: 'var(--color-primary)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                              onClick={() => editImageFileInputRef.current?.click()}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="17 8 12 3 7 8" />
+                                <line x1="12" y1="3" x2="12" y2="15" />
+                              </svg>
+                              <span>{isUploadingPhoto ? 'Uploading...' : 'Upload Photo'}</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="dash-btn dash-btn-outline dash-btn-sm"
+                              onClick={() => setEditForm((prev) => ({ ...prev, image: '/assets/images/hero_craftsman.jpg' }))}
+                            >
+                              Reset Default
+                            </button>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '0.75rem', color: '#64748B', whiteSpace: 'nowrap' }}>Or custom URL:</span>
+                            <input
+                              type="text"
+                              className="dash-input"
+                              style={{ fontSize: '0.8rem', padding: '4px 8px', height: '30px' }}
+                              value={editForm.image}
+                              onChange={(e) => setEditForm({ ...editForm, image: e.target.value })}
+                              placeholder="https://... or /uploads/..."
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="dash-form-group">
+                      <label className="dash-label">Badge</label>
+                      <input
+                        type="text"
+                        className="dash-input"
+                        value={editForm.badge}
+                        onChange={(e) => setEditForm({ ...editForm, badge: e.target.value })}
+                        placeholder="e.g. PRO, TOP RATED"
+                      />
+                    </div>
+
+                    <div className="dash-form-group">
+                      <label className="dash-label">Badge Label</label>
+                      <input
+                        type="text"
+                        className="dash-input"
+                        value={editForm.badgeLabel}
+                        onChange={(e) => setEditForm({ ...editForm, badgeLabel: e.target.value })}
+                        placeholder="e.g. Independent Professional"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Rates, Experience & Location */}
+                <div>
+                  <h4 style={{ margin: '0 0 12px', fontSize: '0.92rem', fontWeight: 700, color: '#0F0F0F', borderBottom: '1px solid #E2E8F0', paddingBottom: '6px' }}>
+                    2. Rates, Experience &amp; Location
+                  </h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+                    <div className="dash-form-group">
+                      <label className="dash-label">Hourly Rate ($)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="dash-input"
+                        value={editForm.hourlyRate}
+                        onChange={(e) => setEditForm({ ...editForm, hourlyRate: Number(e.target.value) || 0 })}
+                      />
+                    </div>
+
+                    <div className="dash-form-group">
+                      <label className="dash-label">Experience (Years)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="60"
+                        className="dash-input"
+                        value={editForm.experienceYears}
+                        onChange={(e) => setEditForm({ ...editForm, experienceYears: Number(e.target.value) || 0 })}
+                      />
+                    </div>
+
+                    <div className="dash-form-group">
+                      <label className="dash-label">Location</label>
+                      <input
+                        type="text"
+                        className="dash-input"
+                        value={editForm.location}
+                        onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                        placeholder="e.g. Remote Available, London, UK"
+                      />
+                    </div>
+
+                    <div className="dash-form-group">
+                      <label className="dash-label">Availability</label>
+                      <input
+                        type="text"
+                        className="dash-input"
+                        value={editForm.availability}
+                        onChange={(e) => setEditForm({ ...editForm, availability: e.target.value })}
+                        placeholder="e.g. Available Today, Booked 2 weeks"
+                      />
+                    </div>
+
+                    <div className="dash-form-group">
+                      <label className="dash-label">Work Preference</label>
+                      <input
+                        type="text"
+                        className="dash-input"
+                        value={editForm.workPreference}
+                        onChange={(e) => setEditForm({ ...editForm, workPreference: e.target.value })}
+                        placeholder="e.g. Remote First, Hybrid, On-site"
+                      />
+                    </div>
+
+                    <div className="dash-form-group">
+                      <label className="dash-label">Response Time</label>
+                      <input
+                        type="text"
+                        className="dash-input"
+                        value={editForm.responseTime}
+                        onChange={(e) => setEditForm({ ...editForm, responseTime: e.target.value })}
+                        placeholder="e.g. Within 2 hours, Within 24 hours"
+                      />
+                    </div>
+
+                    <div className="dash-form-group">
+                      <label className="dash-label">Language</label>
+                      <input
+                        type="text"
+                        className="dash-input"
+                        value={editForm.language}
+                        onChange={(e) => setEditForm({ ...editForm, language: e.target.value })}
+                        placeholder="e.g. English, Spanish"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Direct Contact */}
+                <div>
+                  <h4 style={{ margin: '0 0 12px', fontSize: '0.92rem', fontWeight: 700, color: '#0F0F0F', borderBottom: '1px solid #E2E8F0', paddingBottom: '6px' }}>
+                    3. Direct Contact Information
+                  </h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+                    <div className="dash-form-group">
+                      <label className="dash-label">Email Address</label>
+                      <input
+                        type="email"
+                        className="dash-input"
+                        value={editForm.email}
+                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                        placeholder="specialist@domain.com"
+                      />
+                    </div>
+
+                    <div className="dash-form-group">
+                      <label className="dash-label">Phone</label>
+                      <input
+                        type="text"
+                        className="dash-input"
+                        value={editForm.phone}
+                        onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                        placeholder="+1 (555) 000-0000"
+                      />
+                    </div>
+
+                    <div className="dash-form-group">
+                      <label className="dash-label">Website</label>
+                      <input
+                        type="url"
+                        className="dash-input"
+                        value={editForm.website}
+                        onChange={(e) => setEditForm({ ...editForm, website: e.target.value })}
+                        placeholder="https://portfolio.com"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Bio & About Story */}
+                <div>
+                  <h4 style={{ margin: '0 0 12px', fontSize: '0.92rem', fontWeight: 700, color: '#0F0F0F', borderBottom: '1px solid #E2E8F0', paddingBottom: '6px' }}>
+                    4. Bio, Story &amp; Guarantee
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div className="dash-form-group">
+                      <label className="dash-label">Short Bio (Headline summary)</label>
+                      <input
+                        type="text"
+                        className="dash-input"
+                        value={editForm.bio}
+                        onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                        placeholder="1-2 sentence overview of experience and focus..."
+                      />
+                    </div>
+
+                    <div className="dash-form-group">
+                      <label className="dash-label">Professional Background (Full Story)</label>
+                      <textarea
+                        className="dash-input"
+                        rows={4}
+                        style={{ resize: 'vertical' }}
+                        value={editForm.about}
+                        onChange={(e) => setEditForm({ ...editForm, about: e.target.value })}
+                        placeholder="Detailed professional narrative, craftsmanship, previous engagements..."
+                      />
+                    </div>
+
+                    <div className="dash-form-group">
+                      <label className="dash-label">Working Practice / Guarantee</label>
+                      <input
+                        type="text"
+                        className="dash-input"
+                        value={editForm.guarantee}
+                        onChange={(e) => setEditForm({ ...editForm, guarantee: e.target.value })}
+                        placeholder="e.g. Direct contact, 0% platform intermediary commission."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5. Skills & Certifications */}
+                <div>
+                  <h4 style={{ margin: '0 0 12px', fontSize: '0.92rem', fontWeight: 700, color: '#0F0F0F', borderBottom: '1px solid #E2E8F0', paddingBottom: '6px' }}>
+                    5. Skills &amp; Certifications
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div className="dash-form-group">
+                      <label className="dash-label">Skills (comma-separated)</label>
+                      <input
+                        type="text"
+                        className="dash-input"
+                        value={editForm.skillsStr}
+                        onChange={(e) => setEditForm({ ...editForm, skillsStr: e.target.value })}
+                        placeholder="e.g. React, Next.js, TypeScript, Tailwind CSS, GraphQL"
+                      />
+                    </div>
+
+                    <div className="dash-form-group">
+                      <label className="dash-label">Certifications (comma-separated)</label>
+                      <input
+                        type="text"
+                        className="dash-input"
+                        value={editForm.certificationsStr}
+                        onChange={(e) => setEditForm({ ...editForm, certificationsStr: e.target.value })}
+                        placeholder="e.g. AWS Certified Solutions Architect, Google Professional"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 6. Publishing & Visibility */}
+                <div>
+                  <h4 style={{ margin: '0 0 12px', fontSize: '0.92rem', fontWeight: 700, color: '#0F0F0F', borderBottom: '1px solid #E2E8F0', paddingBottom: '6px' }}>
+                    6. Publication Status &amp; Visibility
+                  </h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', alignItems: 'center' }}>
+                    <div className="dash-form-group">
+                      <label className="dash-label">Publication Status</label>
+                      <select
+                        className="dash-input"
+                        value={editForm.status}
+                        onChange={(e) => setEditForm({ ...editForm, status: e.target.value as 'published' | 'draft' })}
+                      >
+                        <option value="published">Published (Visible in Directory)</option>
+                        <option value="draft">Draft (Unpublished / Hidden)</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '18px' }}>
+                      <input
+                        id="edit-featured-checkbox"
+                        type="checkbox"
+                        checked={editForm.featured}
+                        onChange={(e) => setEditForm({ ...editForm, featured: e.target.checked })}
+                        style={{ width: '18px', height: '18px', accentColor: 'var(--color-primary)' }}
+                      />
+                      <label htmlFor="edit-featured-checkbox" style={{ fontSize: '0.88rem', fontWeight: 600, color: '#0F0F0F', cursor: 'pointer' }}>
+                        ★ Feature on Homepage Showcase
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="dash-modal-footer">
+                <button
+                  type="button"
+                  className="dash-btn dash-btn-outline"
+                  disabled={isSavingWorker}
+                  onClick={() => setEditingWorker(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingWorker}
+                  className="dash-btn dash-btn-primary"
+                  style={{ background: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
+                >
+                  {isSavingWorker ? 'Saving Profile...' : 'Save Profile Changes'}
                 </button>
               </div>
             </form>

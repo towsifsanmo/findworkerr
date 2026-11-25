@@ -28,22 +28,25 @@ export async function POST(req: NextRequest) {
         return errorResponse(parsed.error.issues[0]?.message || 'Invalid admin credentials payload.');
       }
 
-      const { currentPassword, newEmail, newName, newPassword } = parsed.data;
+      const { currentPassword, newEmail, newName, newPassword, newImage } = parsed.data;
 
-      // 1. Verify current password by attempting internal verification
-      try {
-        await auth.api.signInEmail({
-          body: {
-            email: session.user.email,
-            password: currentPassword,
-          },
-        });
-      } catch (e: any) {
-        return errorResponse('Current administrator password is incorrect.', 401);
-      }
-
-      // 2. Change password if requested
+      // 1. Password verification & update
       if (newPassword && newPassword.trim()) {
+        if (!currentPassword) {
+          return errorResponse('Current administrator password is required to set a new password.', 400);
+        }
+
+        try {
+          await auth.api.signInEmail({
+            body: {
+              email: session.user.email,
+              password: currentPassword,
+            },
+          });
+        } catch (e: any) {
+          return errorResponse('Current administrator password is incorrect.', 401);
+        }
+
         await auth.api.changePassword({
           body: {
             currentPassword,
@@ -52,12 +55,26 @@ export async function POST(req: NextRequest) {
           },
           headers: headerList,
         });
+      } else if (currentPassword && currentPassword.trim()) {
+        try {
+          await auth.api.signInEmail({
+            body: {
+              email: session.user.email,
+              password: currentPassword,
+            },
+          });
+        } catch (e: any) {
+          return errorResponse('Current administrator password is incorrect.', 401);
+        }
       }
 
-      // 3. Update name / email if requested
-      const updates: { name?: string; email?: string } = {};
+      // 2. Update name, email, avatar image if requested
+      const updates: { name?: string; email?: string; image?: string } = {};
       if (newName && newName.trim()) {
         updates.name = newName.trim();
+      }
+      if (newImage !== undefined) {
+        updates.image = newImage.trim();
       }
       if (newEmail && newEmail.trim().toLowerCase() !== session.user.email.toLowerCase()) {
         const cleanEmail = newEmail.trim().toLowerCase();
@@ -70,16 +87,24 @@ export async function POST(req: NextRequest) {
         updates.email = cleanEmail;
       }
 
+      let updatedUser = session.user;
       if (Object.keys(updates).length > 0) {
-        await prisma.user.update({
+        const dbRes = await prisma.user.update({
           where: { id: session.user.id },
           data: updates,
         });
+        updatedUser = dbRes;
       }
 
       return successResponse(
-        { email: updates.email || session.user.email, name: updates.name || session.user.name },
-        'Admin credentials updated successfully.'
+        {
+          id: updatedUser.id,
+          email: updates.email || session.user.email,
+          name: updates.name || session.user.name,
+          image: updates.image !== undefined ? updates.image : (session.user as any).image,
+          avatar: updates.image || (session.user as any).image || '/assets/images/hero_craftsman.jpg',
+        },
+        'Admin profile updated successfully.'
       );
     }
 

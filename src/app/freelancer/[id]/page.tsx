@@ -11,7 +11,10 @@ import {
   apiAddReview,
   apiTrackPlatformClick,
   apiSendInquiry,
+  apiUploadFile,
+  apiSaveWorkerProfile,
 } from '@/lib/api-client';
+import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/context/toast-context';
 import { Worker, Review } from '@/types';
 
@@ -22,7 +25,10 @@ interface FreelancerPageProps {
 export default function FreelancerProfilePage({ params }: FreelancerPageProps) {
   const resolvedParams = use(params);
   const workerId = resolvedParams.id;
+  const { user } = useAuth();
   const { showToast } = useToast();
+  const avatarFileRef = React.useRef<HTMLInputElement>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   const [worker, setWorker] = useState<Worker | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -31,6 +37,49 @@ export default function FreelancerProfilePage({ params }: FreelancerPageProps) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasError, setHasError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+
+  const canEditProfile =
+    !!user &&
+    (user.role === 'admin' ||
+      (user.role === 'freelancer' &&
+        (user.workerProfileId === worker?.id || user.workerId === worker?.id || user.id === worker?.id)));
+
+  const handleUploadProfilePicture = async (file: File) => {
+    if (!worker) return;
+    if (!file.type.startsWith('image/')) {
+      showToast('⚠️ Please select a valid image file (JPG, PNG, WebP).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('⚠️ File size exceeds 5MB limit.');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      let newUrl = '';
+      const res = await apiUploadFile(file);
+      if (res.success && res.url) {
+        newUrl = res.url;
+      } else {
+        newUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.readAsDataURL(file);
+        });
+      }
+
+      if (newUrl) {
+        setWorker((prev) => (prev ? { ...prev, image: newUrl } : null));
+        await apiSaveWorkerProfile(worker.id, { image: newUrl });
+        showToast('✓ Profile photo updated and saved!');
+      }
+    } catch (err: any) {
+      showToast('⚠️ Error uploading profile picture.');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   // Review Form State
   const [ratingVal, setRatingVal] = useState<number>(5);
@@ -317,8 +366,8 @@ export default function FreelancerProfilePage({ params }: FreelancerPageProps) {
           <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-9">
             <div className="bg-white border border-[#EBEBEB] rounded-3xl p-6 sm:p-10 shadow-xs">
               <div className="flex flex-col md:flex-row gap-8 items-start">
-                {/* Avatar with Presence Dot */}
-                <div className="relative shrink-0">
+                {/* Avatar with Presence Dot & Upload Trigger */}
+                <div className="relative shrink-0 group">
                   <img
                     src={avatarSrc}
                     alt={worker.name}
@@ -328,6 +377,35 @@ export default function FreelancerProfilePage({ params }: FreelancerPageProps) {
                     className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-white shadow-xs"
                     title="Available for direct engagement"
                   ></span>
+
+                  {canEditProfile && (
+                    <>
+                      <input
+                        type="file"
+                        ref={avatarFileRef}
+                        accept="image/png, image/jpeg, image/webp, image/gif, image/svg+xml"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleUploadProfilePicture(e.target.files[0]);
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        disabled={isUploadingAvatar}
+                        onClick={() => avatarFileRef.current?.click()}
+                        title="Upload new profile picture"
+                        className="absolute inset-0 rounded-3xl bg-black/45 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-xs font-semibold backdrop-blur-2xs p-2 text-center"
+                      >
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mb-1">
+                          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                          <circle cx="12" cy="13" r="4" />
+                        </svg>
+                        <span>{isUploadingAvatar ? 'Uploading...' : 'Change Photo'}</span>
+                      </button>
+                    </>
+                  )}
                 </div>
 
                 {/* Identity & Core Details */}
