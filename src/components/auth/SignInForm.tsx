@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { login } from '@/lib/auth';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/context/toast-context';
-import { Button } from '@/components/ui/Button';
 
 export interface SignInFormProps {
   onSuccess?: () => void;
@@ -71,7 +70,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
 
   const handleForgotPassword = (e: React.MouseEvent) => {
     e.preventDefault();
-    showToast('✉️ Workstation recovery link dispatched to your email address.');
+    showToast('✉️ Password recovery instructions dispatched to your email.');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,7 +79,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
 
     const cleanEmail = email.trim();
     if (!cleanEmail || !password) {
-      setError('Please provide both your email address and password.');
+      setError('Please enter both your email address and password.');
       return;
     }
 
@@ -100,199 +99,189 @@ export const SignInForm: React.FC<SignInFormProps> = ({
         }
       }
     } else {
-      const msg = res.message || 'Incorrect email or password credentials.';
+      const msg = res.message || 'Invalid email or password credentials.';
       setError(msg);
       showToast(`⚠️ ${msg}`);
     }
   };
 
   return (
-    <div
-      className={`w-full max-w-md mx-auto bg-white border border-[#EBEBEB] rounded-2xl p-7 sm:p-9 shadow-md transition-all ${className}`}
-    >
-      {/* Header section */}
-      <div className="mb-6">
-        <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#504CFF]/10 text-[#504CFF] text-[11px] font-bold tracking-wider uppercase mb-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-          Workspace Authentication
+    <div className={`w-full max-w-[420px] mx-auto ${className}`}>
+      {/* Form Card */}
+      <div className="bg-white border border-zinc-200/90 rounded-2xl p-7 sm:p-9 shadow-[0_2px_16px_rgba(0,0,0,0.04)]">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight text-[#0F0F0F]">
+            Sign in
+          </h1>
+          <p className="text-sm text-zinc-500 mt-1">
+            Welcome back. Please enter your credentials.
+          </p>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0F0F0F] mb-2">
-          Sign In.
-        </h1>
-        <p className="text-xs sm:text-sm text-zinc-500 leading-relaxed">
-          Access your active client inquiries, verified portfolio, and direct workstation.
-        </p>
-      </div>
 
-      {/* 1-Click Fast Testing Bar */}
-      <div className="mb-6 p-3 rounded-xl bg-zinc-50 border border-zinc-200/80">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2 flex items-center justify-between">
-          <span>⚡ Fast Testing Access</span>
-          <span className="text-[9px] text-zinc-400">Demo accounts</span>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={() => handleQuickDemo('freelancer')}
-            className="text-xs font-medium px-3 py-1.5 rounded-full bg-white border border-zinc-200 text-zinc-800 hover:bg-zinc-100 hover:border-zinc-300 transition-colors shadow-2xs cursor-pointer"
+        {/* Error Alert */}
+        {error && (
+          <div
+            className="mb-5 p-3 rounded-xl bg-red-50 border border-red-200/80 text-red-600 text-xs sm:text-sm flex items-start gap-2.5"
+            role="alert"
           >
-            👤 Julian Vance (Freelancer)
-          </button>
-          <button
-            type="button"
-            onClick={() => handleQuickDemo('admin')}
-            className="text-xs font-medium px-3 py-1.5 rounded-full bg-white border border-purple-200 text-[#504CFF] hover:bg-purple-50 transition-colors shadow-2xs cursor-pointer"
-          >
-            🛡 Admin Portal
-          </button>
-        </div>
-      </div>
+            <svg
+              className="w-4 h-4 text-red-500 shrink-0 mt-0.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span className="leading-snug">{error}</span>
+          </div>
+        )}
 
-      {/* Error Banner */}
-      {error && (
-        <div
-          className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm flex items-start gap-2.5 animate-fade-in"
-          role="alert"
-        >
-          <span className="text-base leading-none">⚠️</span>
-          <span className="leading-tight">{error}</span>
-        </div>
-      )}
-
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Email Field */}
-        <div>
-          <label
-            htmlFor="signin-email"
-            className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1.5"
-          >
-            Email Address
-          </label>
-          <div className="relative">
+        {/* Sign In Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Email Address */}
+          <div>
+            <label
+              htmlFor="signin-email"
+              className="block text-xs font-medium text-zinc-700 mb-1.5"
+            >
+              Email address
+            </label>
             <input
               id="signin-email"
               type="email"
               required
               autoComplete="email"
-              placeholder="you@domain.com"
+              placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-zinc-200 text-sm text-[#0F0F0F] placeholder-zinc-400 focus:outline-none focus:border-[#504CFF] focus:ring-2 focus:ring-[#504CFF]/15 transition-all"
+              className="w-full px-3.5 py-2.5 rounded-lg bg-white border border-zinc-300 text-sm text-[#0F0F0F] placeholder-zinc-400 focus:outline-none focus:border-[#504CFF] focus:ring-2 focus:ring-[#504CFF]/15 transition-all"
             />
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
-                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
-              </svg>
-            </span>
           </div>
-        </div>
 
-        {/* Password Field */}
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label
-              htmlFor="signin-password"
-              className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider"
-            >
-              Password
-            </label>
-            <a
-              href="#forgot"
-              onClick={handleForgotPassword}
-              className="text-xs font-medium text-[#504CFF] hover:underline"
-            >
-              Forgot password?
-            </a>
+          {/* Password */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label
+                htmlFor="signin-password"
+                className="block text-xs font-medium text-zinc-700"
+              >
+                Password
+              </label>
+              <a
+                href="#forgot"
+                onClick={handleForgotPassword}
+                className="text-xs font-medium text-[#504CFF] hover:text-[#403BEE] hover:underline"
+              >
+                Forgot password?
+              </a>
+            </div>
+            <div className="relative">
+              <input
+                id="signin-password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                autoComplete="current-password"
+                placeholder="••••••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-3.5 pr-10 py-2.5 rounded-lg bg-white border border-zinc-300 text-sm text-[#0F0F0F] placeholder-zinc-400 focus:outline-none focus:border-[#504CFF] focus:ring-2 focus:ring-[#504CFF]/15 transition-all"
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 p-0.5 text-xs font-medium cursor-pointer transition-colors"
+              >
+                {showPassword ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
-          <div className="relative">
+
+          {/* Remember Me */}
+          <div className="flex items-center gap-2 pt-0.5">
             <input
-              id="signin-password"
-              type={showPassword ? 'text' : 'password'}
-              required
-              autoComplete="current-password"
-              placeholder="••••••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-white border border-zinc-200 text-sm text-[#0F0F0F] placeholder-zinc-400 focus:outline-none focus:border-[#504CFF] focus:ring-2 focus:ring-[#504CFF]/15 transition-all"
+              id="signin-remember"
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+              className="w-4 h-4 rounded border-zinc-300 text-[#504CFF] focus:ring-[#504CFF]/20 cursor-pointer accent-[#504CFF]"
             />
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-              </svg>
-            </span>
+            <label htmlFor="signin-remember" className="text-xs text-zinc-600 select-none cursor-pointer">
+              Remember me on this device
+            </label>
+          </div>
+
+          {/* Submit Button */}
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-10 sm:h-11 inline-flex items-center justify-center gap-2 bg-[#504CFF] hover:bg-[#403BEE] active:bg-[#322DC8] text-white font-medium text-sm rounded-lg shadow-xs hover:shadow transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                <span>Sign in</span>
+              )}
+            </button>
+          </div>
+        </form>
+
+        {/* Demo Fast Access */}
+        <div className="mt-6 pt-5 border-t border-zinc-100">
+          <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-2.5 text-center">
+            Demo Credentials
+          </p>
+          <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 p-1 cursor-pointer"
+              onClick={() => handleQuickDemo('freelancer')}
+              className="px-3 py-1.5 rounded-lg bg-zinc-50 hover:bg-zinc-100/90 border border-zinc-200/80 text-xs font-medium text-zinc-700 hover:text-[#504CFF] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              {showPassword ? (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                  <line x1="1" y1="1" x2="23" y2="23"></line>
-                </svg>
-              ) : (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-              )}
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span>Freelancer Demo</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickDemo('admin')}
+              className="px-3 py-1.5 rounded-lg bg-zinc-50 hover:bg-zinc-100/90 border border-zinc-200/80 text-xs font-medium text-zinc-700 hover:text-[#504CFF] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+              <span>Admin Portal</span>
             </button>
           </div>
         </div>
 
-        {/* Remember Me Checkbox */}
-        <div className="flex items-center gap-2 pt-1">
-          <input
-            id="signin-remember"
-            type="checkbox"
-            checked={remember}
-            onChange={(e) => setRemember(e.target.checked)}
-            className="w-4 h-4 rounded border-zinc-300 text-[#504CFF] focus:ring-[#504CFF] cursor-pointer"
-          />
-          <label htmlFor="signin-remember" className="text-xs text-zinc-600 select-none cursor-pointer">
-            Remember this workstation for 30 days
-          </label>
-        </div>
-
-        {/* Submit Button */}
-        <div className="pt-2">
-          <Button
-            type="submit"
-            variant="primary"
-            size="md"
-            loading={loading}
-            disabled={loading}
-            className="w-full"
-            icon={
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
-              </svg>
-            }
+        {/* Footer Switch */}
+        <div className="mt-6 pt-5 border-t border-zinc-100 text-center text-xs text-zinc-500">
+          <span>Don&apos;t have an account? </span>
+          <Link
+            href="/signup"
+            className="font-medium text-[#504CFF] hover:text-[#403BEE] hover:underline"
           >
-            {loading ? 'Signing In...' : 'Sign In to Workspace'}
-          </Button>
+            Create an account
+          </Link>
         </div>
-      </form>
-
-      {/* Footer Switch */}
-      <div className="mt-7 pt-5 border-t border-zinc-100 flex items-center justify-between flex-wrap gap-2 text-xs">
-        <span className="text-zinc-500">Don&apos;t have an independent profile?</span>
-        <Link
-          href="/signup"
-          className="font-semibold text-[#504CFF] hover:underline inline-flex items-center gap-1"
-        >
-          <span>Apply as Freelancer</span>
-          <span>→</span>
-        </Link>
       </div>
     </div>
   );
 };
 
 export default SignInForm;
-

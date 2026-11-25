@@ -420,9 +420,7 @@ export default function AdminPage() {
                     >
                       Review Moderation Queue →
                     </button>
-                    <Link href="/" target="_blank" className="btn btn-primary btn-sm">
-                      Open Live Public Directory ↗
-                    </Link>
+                   
                   </div>
                 </div>
               </section>

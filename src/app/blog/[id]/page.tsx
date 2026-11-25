@@ -194,10 +194,8 @@ export default function BlogDetailPage({ params }: BlogDetailPageProps) {
 
         {/* Masthead Header */}
         <section className="pt-10 pb-8 px-4">
-          <div className="max-w-4xl mx-auto">
-            <span className="inline-block px-3 py-1 rounded-full bg-[#504CFF]/10 text-[#504CFF] text-xs font-bold uppercase tracking-wider mb-4">
-              {article.category}
-            </span>
+          <div className="max-w-7xl mx-auto">
+        
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#0F0F0F] leading-tight mb-4">
               {article.title}
@@ -243,29 +241,25 @@ export default function BlogDetailPage({ params }: BlogDetailPageProps) {
 
         {/* Featured Hero Image */}
         {article.heroImage && (
-          <div className="max-w-4xl mx-auto px-4 mb-10">
-            <div className="overflow-hidden rounded-2xl border border-[#EBEBEB] shadow-sm bg-white">
+          <div className="max-w-7xl mx-auto px-4 mb-10">
+            <div className="overflow-hidden rounded border border-[#EBEBEB] bg-white">
               <img
                 src={article.heroImage}
                 alt={article.title}
-                className="w-full h-auto max-h-[500px] object-cover"
+                className="w-full h-auto max-h-[600px] object-cover"
               />
-              {article.caption && (
-                <div className="p-3 text-xs text-zinc-500 italic bg-zinc-50 border-t border-zinc-100">
-                  {article.caption}
-                </div>
-              )}
+           
             </div>
           </div>
         )}
 
         {/* Reader Layout: Sticky Sidebar + Prose */}
-        <div className="max-w-4xl mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             {/* Sidebar TOC & Actions */}
             <aside className="lg:col-span-4 order-2 lg:order-1 space-y-6">
               {article.toc && article.toc.length > 0 && (
-                <div className="bg-white border border-[#EBEBEB] rounded-2xl p-5 shadow-xs sticky top-28">
+                <div className="bg-white border border-[#EBEBEB] rounded p-5 sticky top-28">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-900 mb-3 pb-2 border-b border-zinc-100">
                     Table of Contents
                   </h3>
@@ -287,43 +281,12 @@ export default function BlogDetailPage({ params }: BlogDetailPageProps) {
                 </div>
               )}
 
-              {/* Applause & Share Actions */}
-              <div className="bg-white border border-[#EBEBEB] rounded-2xl p-5 shadow-xs flex flex-col gap-3">
-                <div className="text-xs font-bold uppercase tracking-wider text-zinc-900">
-                  Engagement &amp; Share
-                </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleClap}
-                    className="flex-1 inline-flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-xs font-semibold text-[#0F0F0F] transition-colors cursor-pointer"
-                  >
-                    <span>👏 Applaud</span>
-                    <span className="px-1.5 py-0.5 rounded-full bg-white text-zinc-700 text-[11px] font-bold">
-                      {claps}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleShare}
-                    className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border border-zinc-200 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors cursor-pointer"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="18" cy="5" r="3"></circle>
-                      <circle cx="6" cy="12" r="3"></circle>
-                      <circle cx="18" cy="19" r="3"></circle>
-                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                    </svg>
-                    <span>Share</span>
-                  </button>
-                </div>
-              </div>
+              
+              
             </aside>
 
             {/* Prose Content */}
-            <article className="lg:col-span-8 order-1 lg:order-2 bg-white border border-[#EBEBEB] rounded-2xl p-6 sm:p-10 shadow-xs">
+            <article className="lg:col-span-8 order-1 lg:order-2 bg-white border border-[#EBEBEB] rounded p-6 sm:p-10 shadow-xs">
               <div
                 className="prose prose-zinc max-w-none text-[#0F0F0F] text-base leading-relaxed [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mt-8 [&>h2]:mb-3 [&>p]:mb-4 [&>p]:text-zinc-700 [&>blockquote]:border-l-4 [&>blockquote]:border-[#504CFF] [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:my-6 [&>blockquote]:text-zinc-800"
                 dangerouslySetInnerHTML={{ __html: article.proseHtml }}
@@ -348,12 +311,12 @@ export default function BlogDetailPage({ params }: BlogDetailPageProps) {
         </div>
 
         {/* Next / Previous Article Navigation */}
-        <section className="max-w-4xl mx-auto px-4 mt-12">
+        <section className="max-w-7xl mx-auto px-4 mt-12">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {prev ? (
               <Link
                 href={`/blog/${prev.id}`}
-                className="p-5 rounded-2xl bg-white border border-[#EBEBEB] hover:border-zinc-300 shadow-xs transition-all hover:shadow block"
+                className="p-5 rounded bg-white border border-[#EBEBEB] hover:border-zinc-300 shadow-xs transition-all hover:shadow block"
               >
                 <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
                   ← Previous Article
@@ -367,7 +330,7 @@ export default function BlogDetailPage({ params }: BlogDetailPageProps) {
             {next && (
               <Link
                 href={`/blog/${next.id}`}
-                className="p-5 rounded-2xl bg-white border border-[#EBEBEB] hover:border-zinc-300 shadow-xs transition-all hover:shadow block sm:text-right"
+                className="p-5 rounded bg-white border border-[#EBEBEB] hover:border-zinc-300 shadow-xs transition-all hover:shadow block sm:text-right"
               >
                 <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
                   Next Article →
@@ -380,20 +343,20 @@ export default function BlogDetailPage({ params }: BlogDetailPageProps) {
 
         {/* Related Articles Strip */}
         {related.length > 0 && (
-          <section className="max-w-4xl mx-auto px-4 mt-12">
+          <section className="max-w-7xl mx-auto px-4 mt-12">
             <h3 className="text-lg font-bold text-[#0F0F0F] mb-4">Related Guild Articles</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {related.map((rel) => (
                 <Link
                   key={rel.id}
                   href={`/blog/${rel.id}`}
-                  className="rounded-xl bg-white border border-[#EBEBEB] overflow-hidden hover:shadow-md transition-all group"
+                  className="rounded bg-white border border-[#EBEBEB] overflow-hidden hover:shadow-md transition-all group"
                 >
                   {rel.heroImage && (
                     <img
                       src={rel.heroImage}
                       alt={rel.title}
-                      className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-52 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   )}
                   <div className="p-4">
