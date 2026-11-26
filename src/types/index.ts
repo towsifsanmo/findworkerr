@@ -118,6 +118,7 @@ export interface BlogArticle {
   toc: TocItem[];
   proseHtml: string;
   tags: string[];
+  status?: 'published' | 'draft';
 }
 
 export interface User {

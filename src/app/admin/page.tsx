@@ -19,6 +19,11 @@ import {
   apiDeleteWorkerProfile,
   apiCreateWorkerProfile,
   apiGetCurrentUser,
+  apiGetArticles,
+  apiCreateArticle,
+  apiUpdateArticle,
+  apiToggleArticleStatus,
+  apiDeleteArticle,
 } from '@/lib/api-client';
 import {
   getCurrentUser,
@@ -27,7 +32,7 @@ import {
 } from '@/lib/auth';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/context/toast-context';
-import { Worker, Review, PlatformStats, User } from '@/types';
+import { Worker, Review, PlatformStats, User, BlogArticle } from '@/types';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -35,11 +40,32 @@ export default function AdminPage() {
   const { showToast } = useToast();
 
   const [adminUser, setAdminUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'freelancers' | 'categories' | 'reviews' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'freelancers' | 'categories' | 'reviews' | 'blogs' | 'settings'>('overview');
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [workersList, setWorkersList] = useState<Worker[]>([]);
   const [categoriesList, setCategoriesList] = useState<string[]>([]);
   const [reviewsList, setReviewsList] = useState<Review[]>([]);
+  const [articlesList, setArticlesList] = useState<BlogArticle[]>([]);
+
+  // Blogs state
+  const [blogSearch, setBlogSearch] = useState('');
+  const [editingBlog, setEditingBlog] = useState<BlogArticle | null>(null);
+  const [isCreateBlogModalOpen, setIsCreateBlogModalOpen] = useState(false);
+  const [isSubmittingBlog, setIsSubmittingBlog] = useState(false);
+  const [isUploadingBlogCover, setIsUploadingBlogCover] = useState(false);
+  const blogCoverInputRef = React.useRef<HTMLInputElement>(null);
+  const [blogForm, setBlogForm] = useState({
+    title: '',
+    category: 'DESIGN & CRAFT',
+    standfirst: '',
+    heroImage: '',
+    caption: '',
+    authorId: '',
+    readMinutes: 5,
+    tagsStr: '',
+    proseHtml: '',
+    status: 'published' as 'published' | 'draft',
+  });
 
   // Reviews filter & moderation state
   const [reviewSearch, setReviewSearch] = useState('');
@@ -129,16 +155,18 @@ export default function AdminPage() {
 
   const refreshData = async () => {
     try {
-      const [s, w, c, r] = await Promise.all([
+      const [s, w, c, r, a] = await Promise.all([
         apiGetPlatformStats(),
         apiGetWorkers({ includeDrafts: true }),
         apiGetCategories(),
         apiGetAllPlatformReviews(),
+        apiGetArticles({ includeDrafts: true }),
       ]);
       setStats(s);
       setWorkersList(w.workers);
       setCategoriesList(c);
       setReviewsList(r);
+      setArticlesList(a);
     } catch (e) { }
   };
 
@@ -558,6 +586,191 @@ export default function AdminPage() {
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+  // Blog Handlers & Filter
+  const handleUploadBlogCover = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file (PNG, JPG, WebP, GIF).');
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('File size exceeds 8MB limit.');
+      return;
+    }
+
+    setIsUploadingBlogCover(true);
+    try {
+      const res = await apiUploadFile(file);
+      if (res.success && res.url) {
+        setBlogForm((prev) => ({ ...prev, heroImage: res.url! }));
+        showToast('✓ Blog cover uploaded!');
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setBlogForm((prev) => ({ ...prev, heroImage: e.target?.result as string }));
+          showToast('✓ Blog cover loaded!');
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (err) {
+      showToast('Error uploading image.');
+    } finally {
+      setIsUploadingBlogCover(false);
+    }
+  };
+
+  const handleOpenCreateBlog = () => {
+    setEditingBlog(null);
+    setBlogForm({
+      title: '',
+      category: 'DESIGN & CRAFT',
+      standfirst: '',
+      heroImage: '',
+      caption: '',
+      authorId: '',
+      readMinutes: 5,
+      tagsStr: '',
+      proseHtml: '',
+      status: 'published',
+    });
+    setIsCreateBlogModalOpen(true);
+  };
+
+  const handleOpenEditBlog = (art: BlogArticle) => {
+    setEditingBlog(art);
+    setBlogForm({
+      title: art.title,
+      category: art.category,
+      standfirst: art.standfirst,
+      heroImage: art.heroImage,
+      caption: art.caption,
+      authorId: art.author?.id && !art.author.id.startsWith('author-') ? art.author.id : '',
+      readMinutes: art.readMinutes || 5,
+      tagsStr: (art.tags || []).join(', '),
+      proseHtml: art.proseHtml,
+      status: art.status || 'published',
+    });
+    setIsCreateBlogModalOpen(true);
+  };
+
+  const handleToggleBlogStatus = async (id: string, currentStatus?: string) => {
+    try {
+      const updated = await apiToggleArticleStatus(id);
+      if (updated) {
+        setArticlesList((prev) =>
+          prev.map((a) => (a.id === id ? { ...a, status: updated.status } : a))
+        );
+        showToast(
+          updated.status === 'published'
+            ? '✓ Blog published (Live on website)'
+            : '✓ Blog turned off (Draft / Hidden from website)'
+        );
+        await refreshData();
+      }
+    } catch (err) {
+      showToast('Error toggling blog status.');
+    }
+  };
+
+  const handleBlogSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!blogForm.title.trim()) {
+      showToast('Please enter a blog title.');
+      return;
+    }
+    if (!blogForm.standfirst.trim()) {
+      showToast('Please enter a summary / standfirst.');
+      return;
+    }
+    if (!blogForm.proseHtml.trim()) {
+      showToast('Please enter article content HTML.');
+      return;
+    }
+
+    setIsSubmittingBlog(true);
+    try {
+      const payload = {
+        title: blogForm.title.trim(),
+        category: blogForm.category.trim().toUpperCase(),
+        standfirst: blogForm.standfirst.trim(),
+        heroImage: blogForm.heroImage.trim() || undefined,
+        caption: blogForm.caption.trim() || undefined,
+        authorId: blogForm.authorId || undefined,
+        readMinutes: Number(blogForm.readMinutes) || 5,
+        tags: blogForm.tagsStr
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
+        proseHtml: blogForm.proseHtml.trim(),
+        status: blogForm.status,
+      };
+
+      if (editingBlog) {
+        const updated = await apiUpdateArticle(editingBlog.id, payload);
+        if (updated) {
+          showToast('✓ Blog updated successfully!');
+          setIsCreateBlogModalOpen(false);
+          setEditingBlog(null);
+          await refreshData();
+        } else {
+          showToast('Failed to update blog post.');
+        }
+      } else {
+        const created = await apiCreateArticle(payload);
+        if (created) {
+          showToast('✓ Blog post created successfully!');
+          setIsCreateBlogModalOpen(false);
+          setBlogForm({
+            title: '',
+            category: 'DESIGN & CRAFT',
+            standfirst: '',
+            heroImage: '',
+            caption: '',
+            authorId: '',
+            readMinutes: 5,
+            tagsStr: '',
+            proseHtml: '',
+            status: 'published',
+          });
+          await refreshData();
+        } else {
+          showToast('Failed to create blog post. Check permissions.');
+        }
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Error saving blog post.');
+    } finally {
+      setIsSubmittingBlog(false);
+    }
+  };
+
+  const handleDeleteBlog = async (id: string, title: string) => {
+    if (confirm(`Are you sure you want to delete the blog "${title}"?`)) {
+      try {
+        const ok = await apiDeleteArticle(id);
+        if (ok) {
+          showToast(`✓ Deleted "${title}"`);
+          setArticlesList((prev) => prev.filter((a) => a.id !== id));
+          await refreshData();
+        } else {
+          showToast('Failed to delete blog post.');
+        }
+      } catch (err) {
+        showToast('Error deleting blog post.');
+      }
+    }
+  };
+
+  const filteredArticles = articlesList.filter((art) => {
+    if (!blogSearch.trim()) return true;
+    const q = blogSearch.toLowerCase();
+    return (
+      art.title.toLowerCase().includes(q) ||
+      art.category.toLowerCase().includes(q) ||
+      art.standfirst.toLowerCase().includes(q) ||
+      (art.author?.name && art.author.name.toLowerCase().includes(q))
+    );
+  });
+
   return (
     <div className="dash-body">
       {/* 1. Header */}
@@ -653,6 +866,16 @@ export default function AdminPage() {
                       type="button"
                       className="dash-dropdown-item"
                       onClick={() => {
+                        setActiveTab('blogs');
+                        setIsDropdownOpen(false);
+                      }}
+                    >
+                      <span>Blogs</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="dash-dropdown-item"
+                      onClick={() => {
                         setActiveTab('settings');
                         setIsDropdownOpen(false);
                       }}
@@ -712,7 +935,7 @@ export default function AdminPage() {
           {/* Navigation Dock */}
           <nav className="dash-studio-dock admin-studio-dock" aria-label="Admin Sections">
             <div className="dash-studio-dock-track">
-              {(['overview', 'freelancers', 'categories', 'reviews', 'settings'] as const).map((tab) => (
+              {(['overview', 'freelancers', 'categories', 'reviews', 'blogs', 'settings'] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
@@ -827,6 +1050,13 @@ export default function AdminPage() {
                       onClick={() => setActiveTab('reviews')}
                     >
                       Review Moderation Queue →
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={() => setActiveTab('blogs')}
+                    >
+                      Manage Blogs ({articlesList.length}) →
                     </button>
 
                   </div>
@@ -1328,7 +1558,226 @@ export default function AdminPage() {
               </section>
             )}
 
-            {/* VIEW 5: SETTINGS */}
+            {/* VIEW 5: BLOGS */}
+            {activeTab === 'blogs' && (
+              <section className="dash-view-section active">
+                <div className="admin-page-header">
+                  <div className="admin-page-header-left">
+                    <h2 className="admin-page-title">Blog Management</h2>
+                    <span style={{ fontSize: '0.85rem', color: '#6B7280' }}>
+                      Publish articles visible on Homepage &amp; Blog pages ({articlesList.length} total)
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <input
+                      type="text"
+                      className="dash-input"
+                      placeholder="Search blogs..."
+                      value={blogSearch}
+                      onChange={(e) => setBlogSearch(e.target.value)}
+                      style={{ maxWidth: '240px' }}
+                    />
+                    <button
+                      type="button"
+                      className="admin-btn-primary"
+                      onClick={() => handleOpenCreateBlog()}
+                    >
+                      + Create Blog
+                    </button>
+                  </div>
+                </div>
+
+                <div className="dash-card" style={{ padding: '0', overflowX: 'auto' }}>
+                  {filteredArticles.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '48px 24px', color: '#6B7280' }}>
+                      <p style={{ fontSize: '1rem', fontWeight: 500, marginBottom: '8px' }}>
+                        {blogSearch ? 'No blogs found matching your search.' : 'No blog articles published yet.'}
+                      </p>
+                      <button
+                        type="button"
+                        className="admin-btn-primary"
+                        style={{ marginTop: '12px' }}
+                        onClick={() => handleOpenCreateBlog()}
+                      >
+                        + Create First Blog Post
+                      </button>
+                    </div>
+                  ) : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--color-border)', background: '#FAFAFA' }}>
+                          <th style={{ padding: '14px 16px' }}>Article</th>
+                          <th style={{ padding: '14px 16px' }}>Category</th>
+                          <th style={{ padding: '14px 16px' }}>Status</th>
+                          <th style={{ padding: '14px 16px' }}>Author</th>
+                          <th style={{ padding: '14px 16px' }}>Date &amp; Read Time</th>
+                          <th style={{ padding: '14px 16px', textAlign: 'right' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredArticles.map((art) => {
+                          const coverSrc = art.heroImage?.startsWith('assets/')
+                            ? `/${art.heroImage}`
+                            : (art.heroImage || '/assets/images/hero_craftsman.jpg');
+                          const authorAvatar = art.author?.avatar?.startsWith('assets/')
+                            ? `/${art.author.avatar}`
+                            : (art.author?.avatar || '/assets/images/hero_craftsman.jpg');
+                          const isDraft = art.status === 'draft';
+                          return (
+                            <tr key={art.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                              <td style={{ padding: '14px 16px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                  <img
+                                    src={coverSrc}
+                                    alt={art.title}
+                                    style={{
+                                      width: '60px',
+                                      height: '42px',
+                                      borderRadius: '6px',
+                                      objectFit: 'cover',
+                                      border: '1px solid #E5E7EB',
+                                      flexShrink: 0,
+                                    }}
+                                  />
+                                  <div style={{ minWidth: 0, maxWidth: '340px' }}>
+                                    <strong
+                                      style={{
+                                        display: 'block',
+                                        fontSize: '0.92rem',
+                                        color: '#111827',
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                      }}
+                                      title={art.title}
+                                    >
+                                      {art.title}
+                                    </strong>
+                                    <span
+                                      style={{
+                                        display: 'block',
+                                        fontSize: '0.78rem',
+                                        color: '#6B7280',
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                      }}
+                                    >
+                                      {art.standfirst}
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+                              <td style={{ padding: '14px 16px' }}>
+                                <span
+                                  style={{
+                                    display: 'inline-block',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    letterSpacing: '0.05em',
+                                    padding: '4px 8px',
+                                    borderRadius: '4px',
+                                    background: '#F3F4F6',
+                                    color: '#374151',
+                                  }}
+                                >
+                                  {art.category}
+                                </span>
+                              </td>
+                              <td style={{ padding: '14px 16px' }}>
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 600,
+                                    padding: '3px 8px',
+                                    borderRadius: '999px',
+                                    background: isDraft ? '#FEF3C7' : '#DCFCE7',
+                                    color: isDraft ? '#92400E' : '#166534',
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      width: '6px',
+                                      height: '6px',
+                                      borderRadius: '50%',
+                                      background: isDraft ? '#F59E0B' : '#10B981',
+                                    }}
+                                  />
+                                  {isDraft ? 'Off (Draft)' : 'Live'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '14px 16px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <img
+                                    src={authorAvatar}
+                                    alt={art.author?.name || 'Author'}
+                                    style={{ width: '26px', height: '26px', borderRadius: '50%', objectFit: 'cover' }}
+                                  />
+                                  <span style={{ fontSize: '0.85rem', color: '#111827', fontWeight: 500 }}>
+                                    {art.author?.name || 'Editorial'}
+                                  </span>
+                                </div>
+                              </td>
+                              <td style={{ padding: '14px 16px' }}>
+                                <div style={{ fontSize: '0.82rem', color: '#374151' }}>{art.date}</div>
+                                <div style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>{art.readTime || `${art.readMinutes || 5} min read`}</div>
+                              </td>
+                              <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                                <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                  <button
+                                    type="button"
+                                    className="btn btn-outline btn-xs"
+                                    onClick={() => handleToggleBlogStatus(art.id, art.status)}
+                                    style={{
+                                      color: isDraft ? '#059669' : '#D97706',
+                                      borderColor: isDraft ? '#A7F3D0' : '#FDE68A',
+                                      background: isDraft ? '#ECFDF5' : '#FFFBEB',
+                                      fontWeight: 600,
+                                    }}
+                                    title={isDraft ? 'Publish blog to live website' : 'Turn off / hide blog from visitors'}
+                                  >
+                                    {isDraft ? 'Publish' : 'Turn Off'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn btn-outline btn-xs"
+                                    onClick={() => handleOpenEditBlog(art)}
+                                    style={{ color: '#2563EB', borderColor: '#BFDBFE' }}
+                                  >
+                                    Edit ✏️
+                                  </button>
+                                  <Link
+                                    href={`/blog/${art.id}`}
+                                    target="_blank"
+                                    className="btn btn-outline btn-xs"
+                                    style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                  >
+                                    View ↗
+                                  </Link>
+                                  <button
+                                    type="button"
+                                    className="btn btn-outline btn-xs"
+                                    onClick={() => handleDeleteBlog(art.id, art.title)}
+                                    style={{ color: '#DC2626', borderColor: '#FECACA' }}
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* VIEW 6: SETTINGS */}
             {activeTab === 'settings' && (
               <section className="dash-view-section active">
                 <div className="admin-page-header">
@@ -2532,6 +2981,337 @@ export default function AdminPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Blog Modal */}
+      {isCreateBlogModalOpen && (
+        <div
+          className="dash-modal-backdrop"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050 }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsCreateBlogModalOpen(false);
+          }}
+        >
+          <div
+            className="dash-modal-window"
+            style={{
+              maxWidth: '780px',
+              width: '94%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              background: '#FFFFFF',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            }}
+          >
+            <div className="dash-modal-header" style={{ padding: '16px 22px', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 className="dash-modal-title" style={{ fontSize: '1.15rem', fontWeight: 700, color: '#111827', margin: 0 }}>
+                  {editingBlog ? 'Edit Blog Post' : 'Create New Blog Post'}
+                </h3>
+                <p style={{ fontSize: '0.82rem', color: '#6B7280', margin: '2px 0 0' }}>
+                  {editingBlog
+                    ? `Update article details, publication status, or content for "${editingBlog.title}".`
+                    : 'Fill in all article details. It will immediately show on the homepage and blog listing.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="dash-modal-close-btn"
+                onClick={() => {
+                  setIsCreateBlogModalOpen(false);
+                  setEditingBlog(null);
+                }}
+                aria-label="Close"
+                style={{ fontSize: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280' }}
+              >
+                &times;
+              </button>
+            </div>
+
+            <form onSubmit={handleBlogSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+              <div className="dash-modal-body" style={{ padding: '20px 22px', overflowY: 'auto', flex: 1 }}>
+                {/* Title */}
+                <div style={{ marginBottom: '16px' }}>
+                  <label className="dash-label" style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                    Article Title <span style={{ color: '#DC2626' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="dash-input"
+                    placeholder="e.g. The Architecture of High-Trust Independent Craft"
+                    value={blogForm.title}
+                    onChange={(e) => setBlogForm({ ...blogForm, title: e.target.value })}
+                    style={{ width: '100%', fontSize: '0.95rem' }}
+                  />
+                </div>
+
+                {/* Category, Status, Estimated Read Time, Author */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', marginBottom: '16px' }}>
+                  <div>
+                    <label className="dash-label" style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                      Category
+                    </label>
+                    <select
+                      className="dash-input"
+                      value={blogForm.category}
+                      onChange={(e) => setBlogForm({ ...blogForm, category: e.target.value })}
+                      style={{ width: '100%' }}
+                    >
+                      <option value="DESIGN & CRAFT">DESIGN & CRAFT</option>
+                      <option value="ENGINEERING">ENGINEERING</option>
+                      <option value="PRACTICE">PRACTICE</option>
+                      <option value="INSIGHTS">INSIGHTS</option>
+                      <option value="PRODUCT">PRODUCT</option>
+                      <option value="CAREER & BUSINESS">CAREER & BUSINESS</option>
+                      <option value="TUTORIAL">TUTORIAL</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="dash-label" style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                      Publication Status
+                    </label>
+                    <select
+                      className="dash-input"
+                      value={blogForm.status}
+                      onChange={(e) => setBlogForm({ ...blogForm, status: e.target.value as 'published' | 'draft' })}
+                      style={{ width: '100%' }}
+                    >
+                      <option value="published">Live (Visible on website)</option>
+                      <option value="draft">Off / Draft (Hidden from website)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="dash-label" style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                      Read Time (Minutes)
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={60}
+                      className="dash-input"
+                      value={blogForm.readMinutes}
+                      onChange={(e) => setBlogForm({ ...blogForm, readMinutes: parseInt(e.target.value) || 5 })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="dash-label" style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                      Author (Freelancer)
+                    </label>
+                    <select
+                      className="dash-input"
+                      value={blogForm.authorId}
+                      onChange={(e) => setBlogForm({ ...blogForm, authorId: e.target.value })}
+                      style={{ width: '100%' }}
+                    >
+                      <option value="">Platform Editorial / Default</option>
+                      {workersList.map((w) => (
+                        <option key={w.id} value={w.id}>
+                          {w.name} ({w.trade})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Standfirst / Summary */}
+                <div style={{ marginBottom: '16px' }}>
+                  <label className="dash-label" style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                    Summary / Standfirst <span style={{ color: '#DC2626' }}>*</span>
+                  </label>
+                  <textarea
+                    required
+                    rows={2}
+                    className="dash-input"
+                    placeholder="Brief 1-2 sentence lead paragraph shown on article cards and under the main headline..."
+                    value={blogForm.standfirst}
+                    onChange={(e) => setBlogForm({ ...blogForm, standfirst: e.target.value })}
+                    style={{ width: '100%', resize: 'vertical' }}
+                  />
+                </div>
+
+                {/* Cover Image */}
+                <div style={{ marginBottom: '16px' }}>
+                  <label className="dash-label" style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                    Cover Hero Image
+                  </label>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    {blogForm.heroImage && (
+                      <div style={{ width: '90px', height: '60px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #E5E7EB', flexShrink: 0 }}>
+                        <img
+                          src={blogForm.heroImage.startsWith('assets/') ? `/${blogForm.heroImage}` : blogForm.heroImage}
+                          alt="Cover preview"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      </div>
+                    )}
+                    <input
+                      type="text"
+                      className="dash-input"
+                      placeholder="Image URL or upload a file (defaults to hero image if empty)"
+                      value={blogForm.heroImage}
+                      onChange={(e) => setBlogForm({ ...blogForm, heroImage: e.target.value })}
+                      style={{ flex: 1, minWidth: '220px' }}
+                    />
+                    <input
+                      ref={blogCoverInputRef}
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleUploadBlogCover(file);
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      disabled={isUploadingBlogCover}
+                      onClick={() => blogCoverInputRef.current?.click()}
+                    >
+                      {isUploadingBlogCover ? 'Uploading...' : '📁 Upload File'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Caption & Tags */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px', marginBottom: '16px' }}>
+                  <div>
+                    <label className="dash-label" style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                      Image Caption (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      className="dash-input"
+                      placeholder="e.g. Architectural sketch and design process"
+                      value={blogForm.caption}
+                      onChange={(e) => setBlogForm({ ...blogForm, caption: e.target.value })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="dash-label" style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                      Tags (Comma separated)
+                    </label>
+                    <input
+                      type="text"
+                      className="dash-input"
+                      placeholder="e.g. Architecture, Design Systems, Typography"
+                      value={blogForm.tagsStr}
+                      onChange={(e) => setBlogForm({ ...blogForm, tagsStr: e.target.value })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Article Prose HTML */}
+                <div style={{ marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '6px' }}>
+                    <label className="dash-label" style={{ fontWeight: 600, margin: 0 }}>
+                      Article Content (HTML Prose) <span style={{ color: '#DC2626' }}>*</span>
+                    </label>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-xs"
+                        onClick={() => {
+                          setBlogForm((prev) => ({
+                            ...prev,
+                            proseHtml: prev.proseHtml + '\n<h2>Section Title</h2>\n<p>Write your detailed section content here...</p>\n',
+                          }));
+                        }}
+                      >
+                        + &lt;h2&gt; Section
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-xs"
+                        onClick={() => {
+                          setBlogForm((prev) => ({
+                            ...prev,
+                            proseHtml: prev.proseHtml + '\n<blockquote>\n  <p>"A memorable quote or key takeaway highlight."</p>\n</blockquote>\n',
+                          }));
+                        }}
+                      >
+                        + &lt;blockquote&gt;
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-xs"
+                        onClick={() => {
+                          setBlogForm((prev) => ({
+                            ...prev,
+                            proseHtml: prev.proseHtml + '\n<p>Additional paragraph of insightful commentary...</p>\n',
+                          }));
+                        }}
+                      >
+                        + &lt;p&gt; Paragraph
+                      </button>
+                    </div>
+                  </div>
+                  <textarea
+                    required
+                    rows={8}
+                    className="dash-input"
+                    placeholder="Enter article HTML. Use <h2> tags for section headings (these are automatically added to the Table of Contents), <p> for paragraphs, <blockquote> for quotes, <strong> for emphasis..."
+                    value={blogForm.proseHtml}
+                    onChange={(e) => setBlogForm({ ...blogForm, proseHtml: e.target.value })}
+                    style={{ width: '100%', fontFamily: 'monospace', fontSize: '0.85rem', lineHeight: '1.4' }}
+                  />
+                  <span style={{ fontSize: '0.75rem', color: '#6B7280', marginTop: '4px', display: 'block' }}>
+                    Tip: Any &lt;h2&gt; headings you write will automatically generate the sidebar Table of Contents (TOC) on the article page!
+                  </span>
+                </div>
+              </div>
+
+              <div
+                className="dash-modal-footer"
+                style={{
+                  padding: '14px 22px',
+                  borderTop: '1px solid #E5E7EB',
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '12px',
+                  background: '#F9FAFB',
+                }}
+              >
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() => {
+                    setIsCreateBlogModalOpen(false);
+                    setEditingBlog(null);
+                  }}
+                  disabled={isSubmittingBlog}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="admin-btn-primary"
+                  disabled={isSubmittingBlog}
+                  style={{ minWidth: '130px' }}
+                >
+                  {isSubmittingBlog
+                    ? editingBlog
+                      ? 'Saving...'
+                      : 'Publishing...'
+                    : editingBlog
+                    ? 'Save Changes'
+                    : 'Publish Blog'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

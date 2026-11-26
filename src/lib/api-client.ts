@@ -271,8 +271,9 @@ export async function apiModerateReview(reviewId: string, action: 'approve' | 'f
 // 5. ARTICLES & CLAPS
 // ---------------------------------------------------------------------------
 
-export async function apiGetArticles(): Promise<BlogArticle[]> {
-  const res = await apiFetch<BlogArticle[]>('/api/articles');
+export async function apiGetArticles(options?: { includeDrafts?: boolean }): Promise<BlogArticle[]> {
+  const query = options?.includeDrafts ? '?includeDrafts=true' : '';
+  const res = await apiFetch<BlogArticle[]>(`/api/articles${query}`);
   return res.data || [];
 }
 
@@ -286,6 +287,61 @@ export async function apiIncrementClap(articleId: string): Promise<number> {
     method: 'POST',
   });
   return res.data?.claps || 140;
+}
+
+export async function apiCreateArticle(data: {
+  title: string;
+  standfirst: string;
+  category: string;
+  heroImage?: string;
+  caption?: string;
+  proseHtml: string;
+  readMinutes?: number;
+  tags?: string[];
+  authorId?: string;
+  status?: 'published' | 'draft';
+}): Promise<BlogArticle | null> {
+  const res = await apiFetch<BlogArticle>('/api/articles', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  return res.data || null;
+}
+
+export async function apiUpdateArticle(
+  id: string,
+  data: {
+    title?: string;
+    standfirst?: string;
+    category?: string;
+    heroImage?: string;
+    caption?: string;
+    proseHtml?: string;
+    readMinutes?: number;
+    tags?: string[];
+    authorId?: string;
+    status?: 'published' | 'draft';
+  }
+): Promise<BlogArticle | null> {
+  const res = await apiFetch<BlogArticle>(`/api/articles/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+  return res.data || null;
+}
+
+export async function apiToggleArticleStatus(id: string): Promise<BlogArticle | null> {
+  const res = await apiFetch<BlogArticle>(`/api/articles/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+  });
+  return res.data || null;
+}
+
+export async function apiDeleteArticle(id: string): Promise<boolean> {
+  const res = await apiFetch(`/api/articles/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+  return res.success;
 }
 
 // ---------------------------------------------------------------------------

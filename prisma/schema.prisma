@@ -227,6 +227,7 @@ model Article {
   toc         Json
   proseHtml   String         @db.Text
   tags        String[]
+  status      String         @default("published")
   authorId    String?
   author      WorkerProfile? @relation(fields: [authorId], references: [id], onDelete: SetNull)
   userId      String?

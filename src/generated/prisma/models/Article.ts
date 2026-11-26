@@ -49,6 +49,7 @@ export type ArticleMinAggregateOutputType = {
   heroImage: string | null
   caption: string | null
   proseHtml: string | null
+  status: string | null
   authorId: string | null
   userId: string | null
   createdAt: Date | null
@@ -68,6 +69,7 @@ export type ArticleMaxAggregateOutputType = {
   heroImage: string | null
   caption: string | null
   proseHtml: string | null
+  status: string | null
   authorId: string | null
   userId: string | null
   createdAt: Date | null
@@ -89,6 +91,7 @@ export type ArticleCountAggregateOutputType = {
   toc: number
   proseHtml: number
   tags: number
+  status: number
   authorId: number
   userId: number
   createdAt: number
@@ -120,6 +123,7 @@ export type ArticleMinAggregateInputType = {
   heroImage?: true
   caption?: true
   proseHtml?: true
+  status?: true
   authorId?: true
   userId?: true
   createdAt?: true
@@ -139,6 +143,7 @@ export type ArticleMaxAggregateInputType = {
   heroImage?: true
   caption?: true
   proseHtml?: true
+  status?: true
   authorId?: true
   userId?: true
   createdAt?: true
@@ -160,6 +165,7 @@ export type ArticleCountAggregateInputType = {
   toc?: true
   proseHtml?: true
   tags?: true
+  status?: true
   authorId?: true
   userId?: true
   createdAt?: true
@@ -268,6 +274,7 @@ export type ArticleGroupByOutputType = {
   toc: runtime.JsonValue
   proseHtml: string
   tags: string[]
+  status: string
   authorId: string | null
   userId: string | null
   createdAt: Date
@@ -312,6 +319,7 @@ export type ArticleWhereInput = {
   toc?: Prisma.JsonFilter<"Article">
   proseHtml?: Prisma.StringFilter<"Article"> | string
   tags?: Prisma.StringNullableListFilter<"Article">
+  status?: Prisma.StringFilter<"Article"> | string
   authorId?: Prisma.StringNullableFilter<"Article"> | string | null
   userId?: Prisma.StringNullableFilter<"Article"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Article"> | Date | string
@@ -335,6 +343,7 @@ export type ArticleOrderByWithRelationInput = {
   toc?: Prisma.SortOrder
   proseHtml?: Prisma.SortOrder
   tags?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   authorId?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -361,6 +370,7 @@ export type ArticleWhereUniqueInput = Prisma.AtLeast<{
   toc?: Prisma.JsonFilter<"Article">
   proseHtml?: Prisma.StringFilter<"Article"> | string
   tags?: Prisma.StringNullableListFilter<"Article">
+  status?: Prisma.StringFilter<"Article"> | string
   authorId?: Prisma.StringNullableFilter<"Article"> | string | null
   userId?: Prisma.StringNullableFilter<"Article"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Article"> | Date | string
@@ -384,6 +394,7 @@ export type ArticleOrderByWithAggregationInput = {
   toc?: Prisma.SortOrder
   proseHtml?: Prisma.SortOrder
   tags?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   authorId?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -413,6 +424,7 @@ export type ArticleScalarWhereWithAggregatesInput = {
   toc?: Prisma.JsonWithAggregatesFilter<"Article">
   proseHtml?: Prisma.StringWithAggregatesFilter<"Article"> | string
   tags?: Prisma.StringNullableListFilter<"Article">
+  status?: Prisma.StringWithAggregatesFilter<"Article"> | string
   authorId?: Prisma.StringNullableWithAggregatesFilter<"Article"> | string | null
   userId?: Prisma.StringNullableWithAggregatesFilter<"Article"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Article"> | Date | string
@@ -434,6 +446,7 @@ export type ArticleCreateInput = {
   toc: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml: string
   tags?: Prisma.ArticleCreatetagsInput | string[]
+  status?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   author?: Prisma.WorkerProfileCreateNestedOneWithoutArticlesInput
@@ -455,6 +468,7 @@ export type ArticleUncheckedCreateInput = {
   toc: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml: string
   tags?: Prisma.ArticleCreatetagsInput | string[]
+  status?: string
   authorId?: string | null
   userId?: string | null
   createdAt?: Date | string
@@ -476,6 +490,7 @@ export type ArticleUpdateInput = {
   toc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml?: Prisma.StringFieldUpdateOperationsInput | string
   tags?: Prisma.ArticleUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   author?: Prisma.WorkerProfileUpdateOneWithoutArticlesNestedInput
@@ -497,6 +512,7 @@ export type ArticleUncheckedUpdateInput = {
   toc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml?: Prisma.StringFieldUpdateOperationsInput | string
   tags?: Prisma.ArticleUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   authorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -518,6 +534,7 @@ export type ArticleCreateManyInput = {
   toc: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml: string
   tags?: Prisma.ArticleCreatetagsInput | string[]
+  status?: string
   authorId?: string | null
   userId?: string | null
   createdAt?: Date | string
@@ -539,6 +556,7 @@ export type ArticleUpdateManyMutationInput = {
   toc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml?: Prisma.StringFieldUpdateOperationsInput | string
   tags?: Prisma.ArticleUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -558,6 +576,7 @@ export type ArticleUncheckedUpdateManyInput = {
   toc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml?: Prisma.StringFieldUpdateOperationsInput | string
   tags?: Prisma.ArticleUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   authorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -589,6 +608,7 @@ export type ArticleCountOrderByAggregateInput = {
   toc?: Prisma.SortOrder
   proseHtml?: Prisma.SortOrder
   tags?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   authorId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -613,6 +633,7 @@ export type ArticleMaxOrderByAggregateInput = {
   heroImage?: Prisma.SortOrder
   caption?: Prisma.SortOrder
   proseHtml?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   authorId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -632,6 +653,7 @@ export type ArticleMinOrderByAggregateInput = {
   heroImage?: Prisma.SortOrder
   caption?: Prisma.SortOrder
   proseHtml?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   authorId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -751,6 +773,7 @@ export type ArticleCreateWithoutUserAuthorInput = {
   toc: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml: string
   tags?: Prisma.ArticleCreatetagsInput | string[]
+  status?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   author?: Prisma.WorkerProfileCreateNestedOneWithoutArticlesInput
@@ -771,6 +794,7 @@ export type ArticleUncheckedCreateWithoutUserAuthorInput = {
   toc: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml: string
   tags?: Prisma.ArticleCreatetagsInput | string[]
+  status?: string
   authorId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -820,6 +844,7 @@ export type ArticleScalarWhereInput = {
   toc?: Prisma.JsonFilter<"Article">
   proseHtml?: Prisma.StringFilter<"Article"> | string
   tags?: Prisma.StringNullableListFilter<"Article">
+  status?: Prisma.StringFilter<"Article"> | string
   authorId?: Prisma.StringNullableFilter<"Article"> | string | null
   userId?: Prisma.StringNullableFilter<"Article"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Article"> | Date | string
@@ -841,6 +866,7 @@ export type ArticleCreateWithoutAuthorInput = {
   toc: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml: string
   tags?: Prisma.ArticleCreatetagsInput | string[]
+  status?: string
   createdAt?: Date | string
   updatedAt?: Date | string
   userAuthor?: Prisma.UserCreateNestedOneWithoutAuthoredArticlesInput
@@ -861,6 +887,7 @@ export type ArticleUncheckedCreateWithoutAuthorInput = {
   toc: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml: string
   tags?: Prisma.ArticleCreatetagsInput | string[]
+  status?: string
   userId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -907,6 +934,7 @@ export type ArticleCreateManyUserAuthorInput = {
   toc: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml: string
   tags?: Prisma.ArticleCreatetagsInput | string[]
+  status?: string
   authorId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -927,6 +955,7 @@ export type ArticleUpdateWithoutUserAuthorInput = {
   toc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml?: Prisma.StringFieldUpdateOperationsInput | string
   tags?: Prisma.ArticleUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   author?: Prisma.WorkerProfileUpdateOneWithoutArticlesNestedInput
@@ -947,6 +976,7 @@ export type ArticleUncheckedUpdateWithoutUserAuthorInput = {
   toc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml?: Prisma.StringFieldUpdateOperationsInput | string
   tags?: Prisma.ArticleUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   authorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -967,6 +997,7 @@ export type ArticleUncheckedUpdateManyWithoutUserAuthorInput = {
   toc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml?: Prisma.StringFieldUpdateOperationsInput | string
   tags?: Prisma.ArticleUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   authorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -987,6 +1018,7 @@ export type ArticleCreateManyAuthorInput = {
   toc: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml: string
   tags?: Prisma.ArticleCreatetagsInput | string[]
+  status?: string
   userId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1007,6 +1039,7 @@ export type ArticleUpdateWithoutAuthorInput = {
   toc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml?: Prisma.StringFieldUpdateOperationsInput | string
   tags?: Prisma.ArticleUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userAuthor?: Prisma.UserUpdateOneWithoutAuthoredArticlesNestedInput
@@ -1027,6 +1060,7 @@ export type ArticleUncheckedUpdateWithoutAuthorInput = {
   toc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml?: Prisma.StringFieldUpdateOperationsInput | string
   tags?: Prisma.ArticleUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1047,6 +1081,7 @@ export type ArticleUncheckedUpdateManyWithoutAuthorInput = {
   toc?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   proseHtml?: Prisma.StringFieldUpdateOperationsInput | string
   tags?: Prisma.ArticleUpdatetagsInput | string[]
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1069,6 +1104,7 @@ export type ArticleSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   toc?: boolean
   proseHtml?: boolean
   tags?: boolean
+  status?: boolean
   authorId?: boolean
   userId?: boolean
   createdAt?: boolean
@@ -1092,6 +1128,7 @@ export type ArticleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   toc?: boolean
   proseHtml?: boolean
   tags?: boolean
+  status?: boolean
   authorId?: boolean
   userId?: boolean
   createdAt?: boolean
@@ -1115,6 +1152,7 @@ export type ArticleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   toc?: boolean
   proseHtml?: boolean
   tags?: boolean
+  status?: boolean
   authorId?: boolean
   userId?: boolean
   createdAt?: boolean
@@ -1138,13 +1176,14 @@ export type ArticleSelectScalar = {
   toc?: boolean
   proseHtml?: boolean
   tags?: boolean
+  status?: boolean
   authorId?: boolean
   userId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "slug" | "title" | "standfirst" | "category" | "date" | "readTime" | "readMinutes" | "claps" | "heroImage" | "caption" | "toc" | "proseHtml" | "tags" | "authorId" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["article"]>
+export type ArticleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "slug" | "title" | "standfirst" | "category" | "date" | "readTime" | "readMinutes" | "claps" | "heroImage" | "caption" | "toc" | "proseHtml" | "tags" | "status" | "authorId" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["article"]>
 export type ArticleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   author?: boolean | Prisma.Article$authorArgs<ExtArgs>
   userAuthor?: boolean | Prisma.Article$userAuthorArgs<ExtArgs>
@@ -1179,6 +1218,7 @@ export type $ArticlePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     toc: runtime.JsonValue
     proseHtml: string
     tags: string[]
+    status: string
     authorId: string | null
     userId: string | null
     createdAt: Date
@@ -1622,6 +1662,7 @@ export interface ArticleFieldRefs {
   readonly toc: Prisma.FieldRef<"Article", 'Json'>
   readonly proseHtml: Prisma.FieldRef<"Article", 'String'>
   readonly tags: Prisma.FieldRef<"Article", 'String[]'>
+  readonly status: Prisma.FieldRef<"Article", 'String'>
   readonly authorId: Prisma.FieldRef<"Article", 'String'>
   readonly userId: Prisma.FieldRef<"Article", 'String'>
   readonly createdAt: Prisma.FieldRef<"Article", 'DateTime'>

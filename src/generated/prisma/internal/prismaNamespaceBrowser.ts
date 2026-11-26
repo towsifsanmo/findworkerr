@@ -273,6 +273,7 @@ export const ArticleScalarFieldEnum = {
   toc: 'toc',
   proseHtml: 'proseHtml',
   tags: 'tags',
+  status: 'status',
   authorId: 'authorId',
   userId: 'userId',
   createdAt: 'createdAt',

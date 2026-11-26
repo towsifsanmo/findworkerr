@@ -116,3 +116,29 @@ export const InquiryCreateSchema = z.object({
   description: z.string().trim().min(5, 'Project description is required'),
 });
 
+export const ArticleCreateSchema = z.object({
+  title: z.string().trim().min(3, 'Title must be at least 3 characters'),
+  standfirst: z.string().trim().min(10, 'Summary/Standfirst must be at least 10 characters'),
+  category: z.string().trim().min(2, 'Category is required'),
+  heroImage: z.string().optional(),
+  caption: z.string().optional(),
+  proseHtml: z.string().trim().min(20, 'Content must be at least 20 characters'),
+  readMinutes: z.number().optional().default(5),
+  tags: z.array(z.string()).optional().default([]),
+  authorId: z.string().optional(),
+  status: z.enum(['published', 'draft']).optional().default('published'),
+});
+
+export const ArticleUpdateSchema = z.object({
+  title: z.string().trim().min(3).optional(),
+  standfirst: z.string().trim().min(10).optional(),
+  category: z.string().trim().min(2).optional(),
+  heroImage: z.string().optional(),
+  caption: z.string().optional(),
+  proseHtml: z.string().trim().min(20).optional(),
+  readMinutes: z.number().optional(),
+  tags: z.array(z.string()).optional(),
+  authorId: z.string().optional(),
+  status: z.enum(['published', 'draft']).optional(),
+});
+
