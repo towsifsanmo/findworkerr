@@ -199,16 +199,24 @@ export async function apiGetCategoriesDetailed(): Promise<CategoryItem[]> {
   return res.data && Array.isArray(res.data) ? res.data : [];
 }
 
-export async function apiAddCategory(name: string): Promise<boolean> {
-  const res = await apiFetch('/api/categories', {
+export async function apiAddCategory(name: string, description?: string, icon?: string): Promise<CategoryItem | null> {
+  const res = await apiFetch<CategoryItem>('/api/categories', {
     method: 'POST',
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ name, description, icon }),
   });
-  return res.success;
+  return res.data || null;
 }
 
-export async function apiDeleteCategory(name: string): Promise<boolean> {
-  const res = await apiFetch(`/api/categories?name=${encodeURIComponent(name)}`, {
+export async function apiUpdateCategory(id: string, data: { name?: string; description?: string; icon?: string }): Promise<CategoryItem | null> {
+  const res = await apiFetch<CategoryItem>(`/api/categories/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+  return res.data || null;
+}
+
+export async function apiDeleteCategory(nameOrId: string): Promise<boolean> {
+  const res = await apiFetch(`/api/categories?name=${encodeURIComponent(nameOrId)}&id=${encodeURIComponent(nameOrId)}`, {
     method: 'DELETE',
   });
   return res.success;

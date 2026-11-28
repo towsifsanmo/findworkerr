@@ -128,10 +128,10 @@ export default function AdminLoginPage() {
             🛡️
           </div>
           <h1 style={{ fontSize: '1.65rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '6px' }}>
-            Platform Control
+            Platform Admin
           </h1>
           <p style={{ fontSize: '0.85rem', color: '#94A3B8', margin: 0 }}>
-            Administrative sign-in portal. Authorized operators only.
+            Administrative sign-in portal.
           </p>
         </div>
 
@@ -157,7 +157,7 @@ export default function AdminLoginPage() {
               transition: 'all 0.2s ease',
             }}
           >
-            <span>⚡ Click to Demo-Fill &amp; Auto-Login Admin</span>
+            <span>Click to Demo-Fill &amp; Auto-Login Admin</span>
           </button>
         </div>
 

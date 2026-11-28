@@ -107,6 +107,12 @@ export const CategoryCreateSchema = z.object({
   icon: z.string().optional(),
 });
 
+export const CategoryUpdateSchema = z.object({
+  name: z.string().trim().min(2, 'Category name must be at least 2 characters').optional(),
+  description: z.string().optional(),
+  icon: z.string().optional(),
+});
+
 export const InquiryCreateSchema = z.object({
   workerId: z.string().min(1, 'Worker ID is required'),
   clientName: z.string().trim().min(2, 'Your name is required'),

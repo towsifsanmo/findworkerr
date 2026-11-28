@@ -177,7 +177,7 @@ export async function addCategory(categoryName: string): Promise<boolean> {
       window.dispatchEvent(new CustomEvent('findworker:data-updated', { detail: { category: name } }));
     }
   }
-  return ok;
+  return !!ok;
 }
 
 export async function deleteCategory(categoryName: string): Promise<boolean> {

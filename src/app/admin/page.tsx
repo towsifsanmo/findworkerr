@@ -9,8 +9,9 @@ import {
   apiSaveWorkerProfile,
   apiUploadFile,
   apiGetPlatformStats,
-  apiGetCategories,
+  apiGetCategoriesDetailed,
   apiAddCategory,
+  apiUpdateCategory,
   apiDeleteCategory,
   apiGetAllPlatformReviews,
   apiModerateReview,
@@ -32,7 +33,7 @@ import {
 } from '@/lib/auth';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/context/toast-context';
-import { Worker, Review, PlatformStats, User, BlogArticle } from '@/types';
+import { Worker, Review, PlatformStats, User, BlogArticle, CategoryItem } from '@/types';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -43,7 +44,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'freelancers' | 'categories' | 'reviews' | 'blogs' | 'settings'>('overview');
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [workersList, setWorkersList] = useState<Worker[]>([]);
-  const [categoriesList, setCategoriesList] = useState<string[]>([]);
+  const [categoriesList, setCategoriesList] = useState<CategoryItem[]>([]);
   const [reviewsList, setReviewsList] = useState<Review[]>([]);
   const [articlesList, setArticlesList] = useState<BlogArticle[]>([]);
 
@@ -115,9 +116,16 @@ export default function AdminPage() {
     featured: false,
   });
 
-  // Add category modal
+  // Category modal & state
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
+  const [editingCategory, setEditingCategory] = useState<CategoryItem | null>(null);
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
+  const [categorySearch, setCategorySearch] = useState('');
+  const [categoryForm, setCategoryForm] = useState({
+    name: '',
+    description: '',
+    icon: '',
+  });
 
   // Settings form state
   const [adminName, setAdminName] = useState('');
@@ -158,7 +166,7 @@ export default function AdminPage() {
       const [s, w, c, r, a] = await Promise.all([
         apiGetPlatformStats(),
         apiGetWorkers({ includeDrafts: true }),
-        apiGetCategories(),
+        apiGetCategoriesDetailed(),
         apiGetAllPlatformReviews(),
         apiGetArticles({ includeDrafts: true }),
       ]);
@@ -382,24 +390,142 @@ export default function AdminPage() {
     }
   };
 
-  const handleAddCategorySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCategoryName.trim()) return;
+  const renderCategoryIcon = (icon?: string | null, name: string = '') => {
+    if (
+      icon &&
+      (icon.includes('<') ||
+        icon.includes('points=') ||
+        icon.includes('path') ||
+        icon.includes('line') ||
+        icon.includes('rect') ||
+        icon.includes('circle') ||
+        icon.includes('polygon'))
+    ) {
+      const cleanInner = icon.replace(/<svg[^>]*>|<\/svg>/gi, '').trim();
+      return (
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ color: '#4F46E5', flexShrink: 0 }}
+          dangerouslySetInnerHTML={{ __html: cleanInner }}
+        />
+      );
+    }
 
-    await apiAddCategory(newCategoryName.trim());
-    setNewCategoryName('');
-    setIsCategoryModalOpen(false);
-    await refreshData();
-    showToast('Category created successfully');
+    if (icon && icon.trim().length > 0) {
+      return <span style={{ fontSize: '1.15rem', lineHeight: 1 }}>{icon}</span>;
+    }
+
+    const monogram = name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase() || '')
+      .join('');
+
+    return <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4F46E5' }}>{monogram || '✦'}</span>;
   };
 
-  const handleDeleteCategory = async (cat: string) => {
-    if (confirm(`Remove category "${cat}"?`)) {
-      await apiDeleteCategory(cat);
-      await refreshData();
-      showToast(`Removed category ${cat}`);
+  const handleOpenCreateCategory = () => {
+    setEditingCategory(null);
+    setCategoryForm({ name: '', description: '', icon: '' });
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleOpenEditCategory = (cat: CategoryItem) => {
+    setEditingCategory(cat);
+    setCategoryForm({
+      name: cat.name,
+      description: cat.description || '',
+      icon: cat.icon || '',
+    });
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleCategorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!categoryForm.name.trim()) {
+      showToast('Please enter a category title.');
+      return;
+    }
+
+    setIsSavingCategory(true);
+    try {
+      if (editingCategory) {
+        const updated = await apiUpdateCategory(editingCategory.id, {
+          name: categoryForm.name.trim(),
+          description: categoryForm.description.trim() || undefined,
+          icon: categoryForm.icon.trim() || undefined,
+        });
+        if (updated) {
+          showToast(`✓ Category "${updated.name}" updated successfully!`);
+          setIsCategoryModalOpen(false);
+          setEditingCategory(null);
+          await refreshData();
+        } else {
+          showToast('Failed to update category.');
+        }
+      } else {
+        const created = await apiAddCategory(
+          categoryForm.name.trim(),
+          categoryForm.description.trim() || undefined,
+          categoryForm.icon.trim() || undefined
+        );
+        if (created) {
+          showToast(`✓ Category "${categoryForm.name}" created successfully!`);
+          setIsCategoryModalOpen(false);
+          setCategoryForm({ name: '', description: '', icon: '' });
+          await refreshData();
+        } else {
+          showToast('Failed to create category.');
+        }
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Error saving category.');
+    } finally {
+      setIsSavingCategory(false);
     }
   };
+
+  const handleDeleteCategory = async (cat: CategoryItem) => {
+    const workerCount = workersList.filter(
+      (w) => w.trade.toLowerCase() === cat.name.toLowerCase()
+    ).length;
+
+    const warn =
+      workerCount > 0
+        ? `Category "${cat.name}" is currently assigned to ${workerCount} specialist(s). Are you sure you want to delete it?`
+        : `Are you sure you want to delete category "${cat.name}"?`;
+
+    if (confirm(warn)) {
+      try {
+        const ok = await apiDeleteCategory(cat.id || cat.name);
+        if (ok) {
+          showToast(`✓ Category "${cat.name}" removed successfully.`);
+          await refreshData();
+        } else {
+          showToast('Failed to remove category.');
+        }
+      } catch (err) {
+        showToast('Error deleting category.');
+      }
+    }
+  };
+
+  const filteredCategories = categoriesList.filter((cat) => {
+    if (!categorySearch.trim()) return true;
+    const q = categorySearch.toLowerCase();
+    return (
+      cat.name.toLowerCase().includes(q) ||
+      (cat.description && cat.description.toLowerCase().includes(q)) ||
+      (cat.slug && cat.slug.toLowerCase().includes(q))
+    );
+  });
 
   const handleModerateReview = async (
     reviewId: string,
@@ -1040,7 +1166,7 @@ export default function AdminPage() {
                     <button
                       type="button"
                       className="btn btn-outline btn-sm"
-                      onClick={() => setIsCategoryModalOpen(true)}
+                      onClick={handleOpenCreateCategory}
                     >
                       + Add New Category
                     </button>
@@ -1197,53 +1323,224 @@ export default function AdminPage() {
             {/* VIEW 3: CATEGORIES */}
             {activeTab === 'categories' && (
               <section className="dash-view-section active">
-                <div className="admin-page-header">
-                  <div className="admin-page-header-left">
-                    <h2 className="admin-page-title">Discipline Categories</h2>
+                <div className="admin-page-header" style={{ marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                    <h2 className="admin-page-title" style={{ margin: 0 }}>
+                      Discipline Categories
+                    </h2>
+                    <span style={{ fontSize: '0.84rem', color: '#6B7280' }}>
+                      {categoriesList.length} professional disciplines &amp; classifications
+                    </span>
                   </div>
-                  <button
-                    type="button"
-                    className="admin-btn-primary"
-                    onClick={() => setIsCategoryModalOpen(true)}
-                  >
-                    + Add Category
-                  </button>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      className="dash-input"
+                      placeholder="Search categories..."
+                      value={categorySearch}
+                      onChange={(e) => setCategorySearch(e.target.value)}
+                      style={{ maxWidth: '240px' }}
+                    />
+                    <button
+                      type="button"
+                      className="admin-btn-primary"
+                      onClick={handleOpenCreateCategory}
+                    >
+                      + Add Category
+                    </button>
+                  </div>
                 </div>
 
-                <div className="dash-card">
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
-                    {categoriesList.map((cat, idx) => {
-                      const count = workersList.filter((w) => w.trade.toLowerCase() === cat.toLowerCase()).length;
+                {filteredCategories.length === 0 ? (
+                  <div className="dash-card" style={{ textAlign: 'center', padding: '48px 24px', color: '#6B7280' }}>
+                    <p style={{ fontSize: '1rem', fontWeight: 500, marginBottom: '6px', color: '#111827' }}>
+                      {categorySearch ? 'No categories matching your search.' : 'No discipline categories created yet.'}
+                    </p>
+                    <p style={{ fontSize: '0.85rem', color: '#6B7280', margin: '0 0 16px' }}>
+                      Create categories to classify specialist crafts and power visitor search.
+                    </p>
+                    <button
+                      type="button"
+                      className="admin-btn-primary"
+                      onClick={handleOpenCreateCategory}
+                    >
+                      + Create First Category
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))',
+                      gap: '16px',
+                    }}
+                  >
+                    {filteredCategories.map((cat) => {
+                      const count = workersList.filter(
+                        (w) => w.trade.toLowerCase() === cat.name.toLowerCase()
+                      ).length;
+
                       return (
                         <div
-                          key={idx}
+                          key={cat.id || cat.name}
                           style={{
-                            padding: '16px',
-                            borderRadius: '10px',
-                            border: '1px solid var(--color-border)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
                             background: '#FFFFFF',
+                            border: '1px solid #E5E7EB',
+                            borderRadius: '12px',
+                            padding: '18px 20px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between',
+                            transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
                           }}
                         >
                           <div>
-                            <strong style={{ display: 'block', fontSize: '0.95rem' }}>{cat}</strong>
-                            <small style={{ color: 'var(--color-secondary-muted)' }}>{count} Specialists</small>
+                            {/* Card Header */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                                <div
+                                  style={{
+                                    width: '38px',
+                                    height: '38px',
+                                    borderRadius: '8px',
+                                    background: '#F5F3FF',
+                                    border: '1px solid #EDE9FE',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0,
+                                    overflow: 'hidden',
+                                  }}
+                                >
+                                  {renderCategoryIcon(cat.icon, cat.name)}
+                                </div>
+                                <div style={{ minWidth: 0 }}>
+                                  <h3
+                                    style={{
+                                      fontSize: '0.98rem',
+                                      fontWeight: 600,
+                                      color: '#111827',
+                                      margin: 0,
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      maxWidth: '170px',
+                                    }}
+                                    title={cat.name}
+                                  >
+                                    {cat.name}
+                                  </h3>
+                                  <span style={{ fontSize: '0.74rem', color: '#9CA3AF', fontFamily: 'monospace' }}>
+                                    /{cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <span
+                                style={{
+                                  fontSize: '0.72rem',
+                                  fontWeight: 600,
+                                  padding: '4px 9px',
+                                  borderRadius: '999px',
+                                  background: count > 0 ? '#EFF6FF' : '#F3F4F6',
+                                  color: count > 0 ? '#1D4ED8' : '#6B7280',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {count} {count === 1 ? 'Specialist' : 'Specialists'}
+                              </span>
+                            </div>
+
+                            {/* Description */}
+                            <p
+                              style={{
+                                fontSize: '0.82rem',
+                                color: '#64748B',
+                                lineHeight: '1.45',
+                                margin: '0 0 16px',
+                                minHeight: '36px',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                              }}
+                            >
+                              {cat.description || `Specialists and services classified under ${cat.name}.`}
+                            </p>
                           </div>
-                          <button
-                            type="button"
-                            className="btn btn-outline btn-sm"
-                            style={{ color: '#DC2626', padding: '4px 8px' }}
-                            onClick={() => handleDeleteCategory(cat)}
+
+                          {/* Card Footer Actions */}
+                          <div
+                            style={{
+                              paddingTop: '12px',
+                              borderTop: '1px solid #F1F5F9',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                            }}
                           >
-                            ×
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFreelancerSearch(cat.name);
+                                setActiveTab('freelancers');
+                              }}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: 0,
+                                fontSize: '0.78rem',
+                                color: '#4F46E5',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                              }}
+                            >
+                              View Specialists →
+                            </button>
+
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button
+                                type="button"
+                                className="btn btn-outline btn-xs"
+                                onClick={() => handleOpenEditCategory(cat)}
+                                style={{
+                                  color: '#2563EB',
+                                  borderColor: '#BFDBFE',
+                                  background: '#EFF6FF',
+                                  padding: '3px 8px',
+                                  fontSize: '0.76rem',
+                                  fontWeight: 500,
+                                }}
+                                title="Edit category"
+                              >
+                                Edit ✏️
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-outline btn-xs"
+                                onClick={() => handleDeleteCategory(cat)}
+                                style={{
+                                  color: '#DC2626',
+                                  borderColor: '#FECACA',
+                                  background: '#FEF2F2',
+                                  padding: '3px 8px',
+                                  fontSize: '0.76rem',
+                                  fontWeight: 500,
+                                }}
+                                title="Delete category"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       );
                     })}
                   </div>
-                </div>
+                )}
               </section>
             )}
 
@@ -1971,52 +2268,177 @@ export default function AdminPage() {
         </div>
       </main>
 
-      {/* Modal: Add Category */}
+      {/* Modal: Create & Edit Category */}
       {isCategoryModalOpen && (
-        <div className="dash-modal-overlay active" role="dialog" aria-modal="true" style={{ display: 'flex' }}>
-          <div className="dash-modal-window" style={{ maxWidth: '440px' }}>
-            <div className="dash-modal-header">
-              <h3 className="dash-modal-title">Add Category</h3>
+        <div
+          className="dash-modal-overlay active"
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(15, 15, 15, 0.55)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            padding: '20px',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsCategoryModalOpen(false);
+              setEditingCategory(null);
+            }
+          }}
+        >
+          <div
+            className="dash-modal-window"
+            style={{
+              maxWidth: '480px',
+              width: '92%',
+              background: '#FFFFFF',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              position: 'relative',
+              zIndex: 10000,
+            }}
+          >
+            <div
+              className="dash-modal-header"
+              style={{
+                padding: '16px 20px',
+                borderBottom: '1px solid #E5E7EB',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <div>
+                <h3 className="dash-modal-title" style={{ fontSize: '1.05rem', fontWeight: 700, color: '#111827', margin: 0 }}>
+                  {editingCategory ? 'Edit Discipline Category' : 'Add Discipline Category'}
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: '#6B7280', margin: '2px 0 0' }}>
+                  {editingCategory
+                    ? `Update details and taxonomy for "${editingCategory.name}".`
+                    : 'Create a new discipline category to organize specialists.'}
+                </p>
+              </div>
               <button
                 type="button"
                 className="dash-modal-close-btn"
-                onClick={() => setIsCategoryModalOpen(false)}
+                onClick={() => {
+                  setIsCategoryModalOpen(false);
+                  setEditingCategory(null);
+                }}
                 aria-label="Close"
+                style={{ fontSize: '1.4rem', background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280' }}
               >
                 &times;
               </button>
             </div>
-            <form onSubmit={handleAddCategorySubmit}>
-              <div className="dash-modal-body">
-                <div className="dash-form-group">
-                  <label className="dash-label" htmlFor="input-new-cat-name">
-                    Category Title *
+
+            <form onSubmit={handleCategorySubmit}>
+              <div className="dash-modal-body" style={{ padding: '20px' }}>
+                <div style={{ marginBottom: '16px' }}>
+                  <label className="dash-label" style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                    Category Title <span style={{ color: '#DC2626' }}>*</span>
                   </label>
                   <input
                     type="text"
-                    id="input-new-cat-name"
-                    className="dash-input"
                     required
+                    className="dash-input"
                     placeholder="e.g. Mobile App Development"
-                    value={newCategoryName}
-                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    value={categoryForm.name}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label className="dash-label" style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                    Icon or Emoji (Optional)
+                  </label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div
+                      style={{
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '8px',
+                        background: '#F5F3FF',
+                        border: '1px solid #EDE9FE',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {renderCategoryIcon(categoryForm.icon, categoryForm.name || 'Category')}
+                    </div>
+                    <input
+                      type="text"
+                      className="dash-input"
+                      placeholder="e.g. 💻 or 🎨 or SVG snippet"
+                      value={categoryForm.icon}
+                      onChange={(e) => setCategoryForm({ ...categoryForm, icon: e.target.value })}
+                      style={{ flex: 1 }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '8px' }}>
+                  <label className="dash-label" style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                    Description (Optional)
+                  </label>
+                  <textarea
+                    rows={3}
+                    className="dash-input"
+                    placeholder="Brief description of the craftsmen and projects in this discipline..."
+                    value={categoryForm.description}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                    style={{ width: '100%', resize: 'vertical' }}
                   />
                 </div>
               </div>
-              <div className="dash-modal-footer">
+
+              <div
+                className="dash-modal-footer"
+                style={{
+                  padding: '14px 20px',
+                  borderTop: '1px solid #E5E7EB',
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '10px',
+                  background: '#F9FAFB',
+                }}
+              >
                 <button
                   type="button"
-                  className="dash-btn dash-btn-outline"
-                  onClick={() => setIsCategoryModalOpen(false)}
+                  className="btn btn-outline btn-sm"
+                  onClick={() => {
+                    setIsCategoryModalOpen(false);
+                    setEditingCategory(null);
+                  }}
+                  disabled={isSavingCategory}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="dash-btn dash-btn-primary"
-                  style={{ background: '#854CFF', borderColor: '#854CFF' }}
+                  className="admin-btn-primary"
+                  disabled={isSavingCategory}
+                  style={{ minWidth: '120px' }}
                 >
-                  Create
+                  {isSavingCategory
+                    ? editingCategory
+                      ? 'Saving...'
+                      : 'Creating...'
+                    : editingCategory
+                    ? 'Save Changes'
+                    : 'Create Category'}
                 </button>
               </div>
             </form>
@@ -2452,9 +2874,9 @@ export default function AdminPage() {
                           onChange={(e) => setEditForm({ ...editForm, trade: e.target.value })}
                         >
                           {categoriesList.map((c) => (
-                            <option key={c} value={c}>{c}</option>
+                            <option key={c.id || c.name} value={c.name}>{c.name}</option>
                           ))}
-                          {!categoriesList.includes(editForm.trade) && editForm.trade && (
+                          {!categoriesList.some((c) => c.name === editForm.trade) && editForm.trade && (
                             <option value={editForm.trade}>{editForm.trade}</option>
                           )}
                         </select>
@@ -2988,8 +3410,21 @@ export default function AdminPage() {
       {/* Create Blog Modal */}
       {isCreateBlogModalOpen && (
         <div
-          className="dash-modal-backdrop"
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050 }}
+          className="dash-modal-overlay active"
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(15, 15, 15, 0.55)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            padding: '20px',
+          }}
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsCreateBlogModalOpen(false);
           }}
@@ -3003,9 +3438,11 @@ export default function AdminPage() {
               display: 'flex',
               flexDirection: 'column',
               background: '#FFFFFF',
-              borderRadius: '12px',
+              borderRadius: '16px',
               overflow: 'hidden',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              position: 'relative',
+              zIndex: 10000,
             }}
           >
             <div className="dash-modal-header" style={{ padding: '16px 22px', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

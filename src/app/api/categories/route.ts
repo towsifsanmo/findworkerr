@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server';
-import { getAllCategories, createCategory, deleteCategory } from '@/server/services/category.service';
-import { successResponse, forbiddenResponse, errorResponse, serverErrorResponse } from '@/server/utils/response';
+import { getAllCategories, createCategory, updateCategory, deleteCategory } from '@/server/services/category.service';
+import { successResponse, forbiddenResponse, errorResponse, notFoundResponse, serverErrorResponse } from '@/server/utils/response';
 import { requireAdmin } from '@/server/utils/auth-check';
-import { CategoryCreateSchema } from '@/schemas';
+import { CategoryCreateSchema, CategoryUpdateSchema } from '@/schemas';
 
 export async function GET() {
   try {
@@ -30,6 +30,35 @@ export async function POST(req: NextRequest) {
     return successResponse(created, 'Category created.', undefined, 201);
   } catch (err) {
     return serverErrorResponse(err, 'Failed to create category.');
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const admin = await requireAdmin();
+    if (!admin) {
+      return forbiddenResponse('Administrator privileges required to update categories.');
+    }
+
+    const body = await req.json();
+    const target = body.id || body.name;
+    if (!target) {
+      return errorResponse('Category ID or Name is required.');
+    }
+
+    const parsed = CategoryUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+      return errorResponse(parsed.error.issues[0]?.message || 'Invalid category data.');
+    }
+
+    const updated = await updateCategory(target, parsed.data);
+    if (!updated) {
+      return notFoundResponse('Category not found or could not be updated.');
+    }
+
+    return successResponse(updated, 'Category updated.');
+  } catch (err) {
+    return serverErrorResponse(err, 'Failed to update category.');
   }
 }
 

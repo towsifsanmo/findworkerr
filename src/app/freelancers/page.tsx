@@ -513,7 +513,7 @@ function FreelancersDirectoryContent() {
 
                           {/* Center: Flagship Case Study Preview Box */}
                           <div className="freelancer-card-case">
-                            <span className="case-kicker">FLAGSHIP WORK</span>
+                            
                             <div className="case-thumb-wrap">
                               <img
                                 src={featuredProject.image || avatarSrc}
@@ -522,9 +522,7 @@ function FreelancersDirectoryContent() {
                                 loading="lazy"
                               />
                             </div>
-                            <span className="case-title-line" title={featuredProject.title}>
-                              {featuredProject.title}
-                            </span>
+                          
                           </div>
 
                           {/* Right: Commercial Terms & Direct Action */}
