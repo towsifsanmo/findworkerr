@@ -25,6 +25,9 @@ import {
   apiUpdateArticle,
   apiToggleArticleStatus,
   apiDeleteArticle,
+  apiGetVisitorStatsAndList,
+  apiGetVisitorDetails,
+  apiDeleteVisitor,
 } from '@/lib/api-client';
 import {
   getCurrentUser,
@@ -33,7 +36,34 @@ import {
 } from '@/lib/auth';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/context/toast-context';
-import { Worker, Review, PlatformStats, User, BlogArticle, CategoryItem } from '@/types';
+import {
+  Worker,
+  Review,
+  PlatformStats,
+  User,
+  BlogArticle,
+  CategoryItem,
+  VisitorItem,
+  VisitorStats,
+} from '@/types';
+import {
+  Laptop,
+  Smartphone,
+  Tablet,
+  Globe,
+  Clock,
+  Activity,
+  Trash2,
+  Eye,
+  RefreshCw,
+  X,
+  ExternalLink,
+  Search,
+  Layers,
+  Copy,
+  Check,
+  Calendar,
+} from 'lucide-react';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -41,12 +71,24 @@ export default function AdminPage() {
   const { showToast } = useToast();
 
   const [adminUser, setAdminUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'freelancers' | 'categories' | 'reviews' | 'blogs' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'freelancers' | 'categories' | 'reviews' | 'blogs' | 'visitors' | 'settings'>('overview');
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [workersList, setWorkersList] = useState<Worker[]>([]);
   const [categoriesList, setCategoriesList] = useState<CategoryItem[]>([]);
   const [reviewsList, setReviewsList] = useState<Review[]>([]);
   const [articlesList, setArticlesList] = useState<BlogArticle[]>([]);
+
+  // Website Visitors state
+  const [visitorStats, setVisitorStats] = useState<VisitorStats | null>(null);
+  const [visitorsList, setVisitorsList] = useState<VisitorItem[]>([]);
+  const [isLoadingVisitors, setIsLoadingVisitors] = useState(false);
+  const [visitorSearch, setVisitorSearch] = useState('');
+  const [visitorDeviceFilter, setVisitorDeviceFilter] = useState<'all' | 'Desktop' | 'Mobile' | 'Tablet'>('all');
+  const [selectedVisitor, setSelectedVisitor] = useState<VisitorItem | null>(null);
+  const [isVisitorModalOpen, setIsVisitorModalOpen] = useState(false);
+  const [isLoadingVisitorDetails, setIsLoadingVisitorDetails] = useState(false);
+  const [deletingVisitorId, setDeletingVisitorId] = useState<string | null>(null);
+  const [copiedUserAgent, setCopiedUserAgent] = useState(false);
 
   // Blogs state
   const [blogSearch, setBlogSearch] = useState('');
@@ -897,6 +939,131 @@ export default function AdminPage() {
     );
   });
 
+  // Website Visitors helper functions & handlers
+  const formatDuration = (seconds: number) => {
+    if (!seconds || seconds <= 0) return '0s';
+    if (seconds < 60) return `${seconds}s`;
+    const mins = Math.floor(seconds / 60);
+    const rem = seconds % 60;
+    return rem > 0 ? `${mins}m ${rem}s` : `${mins}m`;
+  };
+
+  const formatTimeAgo = (dateStr: string) => {
+    if (!dateStr) return '';
+    const diffMs = Date.now() - new Date(dateStr).getTime();
+    const diffSecs = Math.floor(diffMs / 1000);
+    if (diffSecs < 60) return 'Just now';
+    const diffMins = Math.floor(diffSecs / 60);
+    if (diffMins < 5) return `${diffMins}m ago (Active)`;
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return new Date(dateStr).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const isVisitorActive = (lastActiveAt: string) => {
+    if (!lastActiveAt) return false;
+    return Date.now() - new Date(lastActiveAt).getTime() <= 5 * 60 * 1000;
+  };
+
+  const fetchVisitors = async () => {
+    try {
+      setIsLoadingVisitors(true);
+      const data = await apiGetVisitorStatsAndList({
+        search: visitorSearch.trim() || undefined,
+        device: visitorDeviceFilter === 'all' ? undefined : visitorDeviceFilter,
+      });
+      setVisitorStats(data.stats);
+      setVisitorsList(data.visitors);
+    } catch (e) {
+    } finally {
+      setIsLoadingVisitors(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'visitors') {
+      fetchVisitors();
+    }
+  }, [activeTab, visitorDeviceFilter]);
+
+  const handleOpenVisitorDetails = async (vis: VisitorItem) => {
+    setSelectedVisitor(vis);
+    setIsVisitorModalOpen(true);
+    setCopiedUserAgent(false);
+    try {
+      setIsLoadingVisitorDetails(true);
+      const full = await apiGetVisitorDetails(vis.id);
+      if (full) {
+        setSelectedVisitor(full);
+      }
+    } catch (e) {
+    } finally {
+      setIsLoadingVisitorDetails(false);
+    }
+  };
+
+  const handleDeleteVisitor = async (id: string, visitorId: string) => {
+    if (
+      confirm(
+        `Are you sure you want to delete visitor "${visitorId}" and all their recorded browsing history? This cannot be undone.`
+      )
+    ) {
+      try {
+        setDeletingVisitorId(id);
+        const ok = await apiDeleteVisitor(id);
+        if (ok) {
+          showToast('✓ Visitor data deleted from database');
+          if (selectedVisitor?.id === id) {
+            setIsVisitorModalOpen(false);
+            setSelectedVisitor(null);
+          }
+          await fetchVisitors();
+        } else {
+          showToast('Failed to delete visitor record.');
+        }
+      } catch (e) {
+        showToast('Error deleting visitor record.');
+      } finally {
+        setDeletingVisitorId(null);
+      }
+    }
+  };
+
+  const handleCopyUserAgent = (ua?: string | null) => {
+    if (!ua) return;
+    navigator.clipboard?.writeText(ua).then(() => {
+      setCopiedUserAgent(true);
+      setTimeout(() => setCopiedUserAgent(false), 2000);
+      showToast('Copied User-Agent string to clipboard');
+    });
+  };
+
+  const filteredVisitors = visitorsList.filter((vis) => {
+    if (visitorDeviceFilter !== 'all') {
+      if ((vis.deviceType || '').toLowerCase() !== visitorDeviceFilter.toLowerCase()) {
+        return false;
+      }
+    }
+    if (!visitorSearch.trim()) return true;
+    const q = visitorSearch.toLowerCase();
+    return (
+      (vis.visitorId || '').toLowerCase().includes(q) ||
+      (vis.userName || '').toLowerCase().includes(q) ||
+      (vis.userEmail || '').toLowerCase().includes(q) ||
+      (vis.ipAddress || '').toLowerCase().includes(q) ||
+      (vis.browser || '').toLowerCase().includes(q) ||
+      (vis.os || '').toLowerCase().includes(q) ||
+      (vis.initialLanding || '').toLowerCase().includes(q) ||
+      (vis.referrer || '').toLowerCase().includes(q)
+    );
+  });
+
   return (
     <div className="dash-body">
       {/* 1. Header */}
@@ -1049,11 +1216,11 @@ export default function AdminPage() {
                 <span>Admin</span>
                 <span className="dash-bc-sep">/</span>
                 <span className="dash-bc-current" style={{ textTransform: 'capitalize' }}>
-                  {activeTab}
+                  {activeTab === 'visitors' ? 'Website Visitors' : activeTab}
                 </span>
               </div>
               <h1 className="dash-subbar-title" style={{ textTransform: 'capitalize' }}>
-                {activeTab}
+                {activeTab === 'visitors' ? 'Website Visitors' : activeTab}
               </h1>
             </div>
           </div>
@@ -1061,7 +1228,7 @@ export default function AdminPage() {
           {/* Navigation Dock */}
           <nav className="dash-studio-dock admin-studio-dock" aria-label="Admin Sections">
             <div className="dash-studio-dock-track">
-              {(['overview', 'freelancers', 'categories', 'reviews', 'blogs', 'settings'] as const).map((tab) => (
+              {(['overview', 'freelancers', 'categories', 'reviews', 'blogs', 'visitors', 'settings'] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
@@ -1069,7 +1236,7 @@ export default function AdminPage() {
                   onClick={() => setActiveTab(tab)}
                   style={{ textTransform: 'capitalize' }}
                 >
-                  <span>{tab}</span>
+                  <span>{tab === 'visitors' ? 'Website Visitors' : tab}</span>
                 </button>
               ))}
             </div>
@@ -2061,6 +2228,459 @@ export default function AdminPage() {
                                     style={{ color: '#DC2626', borderColor: '#FECACA' }}
                                   >
                                     Delete
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* VIEW: WEBSITE VISITORS */}
+            {activeTab === 'visitors' && (
+              <section className="dash-view-section active">
+                <div className="admin-page-header">
+                  <div className="admin-page-header-left">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                      <h2 className="admin-page-title">Website Visitors</h2>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '4px 10px',
+                          borderRadius: '9999px',
+                          background: '#ECFDF5',
+                          color: '#059669',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          border: '1px solid #A7F3D0',
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: '7px',
+                            height: '7px',
+                            borderRadius: '50%',
+                            background: '#10B981',
+                            boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.25)',
+                          }}
+                        />
+                        {visitorStats?.activeVisitors ?? 0} Active Now
+                      </span>
+                    </div>
+                  
+                  </div>
+                  <button
+                    type="button"
+                    onClick={fetchVisitors}
+                    disabled={isLoadingVisitors}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '7px',
+                      padding: '9px 15px',
+                      fontSize: '0.84rem',
+                      fontWeight: 600,
+                      borderRadius: '8px',
+                      border: '1px solid #E5E7EB',
+                      background: '#FFFFFF',
+                      color: '#374151',
+                      cursor: isLoadingVisitors ? 'not-allowed' : 'pointer',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                    }}
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingVisitors ? 'animate-spin' : ''}`} />
+                    <span>{isLoadingVisitors ? 'Refreshing...' : 'Refresh Live Data'}</span>
+                  </button>
+                </div>
+
+                {/* Stat Tiles */}
+                <div className="admin-stat-tiles-grid" style={{ marginBottom: '24px' }}>
+                  <div className="admin-tile">
+                    <div className="admin-tile-icon" style={{ background: 'rgba(80, 76, 255, 0.1)', color: '#504CFF' }}>
+                      <Globe className="w-5 h-5" />
+                    </div>
+                    <div className="admin-tile-metric">{visitorStats?.totalVisitors ?? 0}</div>
+                    <div className="admin-tile-label">Total Website Visitors</div>
+                  </div>
+
+                  <div className="admin-tile">
+                    <div className="admin-tile-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}>
+                      <Activity className="w-5 h-5" />
+                    </div>
+                    <div className="admin-tile-metric" style={{ color: '#059669' }}>
+                      {visitorStats?.activeVisitors ?? 0}
+                    </div>
+                    <div className="admin-tile-label">Active Visitors (Last 5m)</div>
+                  </div>
+
+                  <div className="admin-tile">
+                    <div className="admin-tile-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B' }}>
+                      <Layers className="w-5 h-5" />
+                    </div>
+                    <div className="admin-tile-metric">{visitorStats?.totalPageViews ?? 0}</div>
+                    <div className="admin-tile-label">Total Page Views</div>
+                  </div>
+
+                  <div className="admin-tile">
+                    <div className="admin-tile-icon" style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8B5CF6' }}>
+                      <Clock className="w-5 h-5" />
+                    </div>
+                    <div className="admin-tile-metric">
+                      {formatDuration(visitorStats?.avgDuration ?? 0)}
+                    </div>
+                    <div className="admin-tile-label">Avg. Time on Website</div>
+                  </div>
+                </div>
+
+                {/* Search & Device Filter Toolbar */}
+                <div
+                  className="dash-toolbar"
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '12px',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '16px',
+                  }}
+                >
+                  <div style={{ position: 'relative', flex: 1, minWidth: '260px', maxWidth: '440px' }}>
+                    <Search
+                      className="w-4 h-4"
+                      style={{
+                        position: 'absolute',
+                        left: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: '#9CA3AF',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Search by ID, IP, OS, browser, or landing page..."
+                      value={visitorSearch}
+                      onChange={(e) => setVisitorSearch(e.target.value)}
+                      className="dash-search-input"
+                      style={{ paddingLeft: '36px', width: '100%', fontSize: '0.85rem' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    {(['all', 'Desktop', 'Mobile', 'Tablet'] as const).map((dev) => {
+                      const isSelected = visitorDeviceFilter === dev;
+                      return (
+                        <button
+                          key={dev}
+                          type="button"
+                          onClick={() => setVisitorDeviceFilter(dev)}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            border: '1px solid',
+                            borderColor: isSelected ? '#504CFF' : '#E5E7EB',
+                            background: isSelected ? '#504CFF' : '#FFFFFF',
+                            color: isSelected ? '#FFFFFF' : '#4B5563',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          {dev === 'all' ? 'All Devices' : dev}
+                        </button>
+                      );
+                    })}
+                    <span
+                      style={{
+                        fontSize: '0.78rem',
+                        color: '#6B7280',
+                        background: '#F3F4F6',
+                        padding: '5px 10px',
+                        borderRadius: '6px',
+                        fontWeight: 500,
+                      }}
+                    >
+                      {filteredVisitors.length} Visitors
+                    </span>
+                  </div>
+                </div>
+
+                {/* Table */}
+                <div className="dash-table-container">
+                  {filteredVisitors.length === 0 ? (
+                    <div style={{ padding: '48px 24px', textAlign: 'center', color: '#6B7280' }}>
+                      <Globe className="w-10 h-10 mx-auto text-gray-300 mb-2" />
+                      <p style={{ fontWeight: 600, fontSize: '0.95rem' }}>No visitors found matching your criteria</p>
+                      <p style={{ fontSize: '0.82rem', marginTop: '4px' }}>
+                        Try clearing search terms or changing device filters.
+                      </p>
+                    </div>
+                  ) : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                      <thead>
+                        <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
+                          <th style={{ padding: '12px 16px', fontWeight: 600, color: '#4B5563' }}>Visitor &amp; IP</th>
+                          <th style={{ padding: '12px 16px', fontWeight: 600, color: '#4B5563' }}>Device &amp; Browser</th>
+                          <th style={{ padding: '12px 16px', fontWeight: 600, color: '#4B5563' }}>Referral Source</th>
+                          <th style={{ padding: '12px 16px', fontWeight: 600, color: '#4B5563' }}>Pages Viewed</th>
+                          <th style={{ padding: '12px 16px', fontWeight: 600, color: '#4B5563' }}>Total Time</th>
+                          <th style={{ padding: '12px 16px', fontWeight: 600, color: '#4B5563' }}>Status / Last Active</th>
+                          <th style={{ padding: '12px 16px', fontWeight: 600, color: '#4B5563', textAlign: 'right' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredVisitors.map((vis) => {
+                          const active = isVisitorActive(vis.lastActiveAt);
+                          const isMobile = (vis.deviceType || '').toLowerCase() === 'mobile';
+                          const isTablet = (vis.deviceType || '').toLowerCase() === 'tablet';
+
+                          return (
+                            <tr
+                              key={vis.id}
+                              style={{
+                                borderBottom: '1px solid #F3F4F6',
+                                transition: 'background 0.15s ease',
+                                cursor: 'pointer',
+                              }}
+                              onClick={() => handleOpenVisitorDetails(vis)}
+                            >
+                              <td style={{ padding: '14px 16px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                  {vis.userName || vis.userEmail ? (
+                                    <>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#111827' }}>
+                                          {vis.userName || vis.userEmail}
+                                        </span>
+                                        {vis.userRole && (
+                                          <span
+                                            style={{
+                                              fontSize: '0.68rem',
+                                              padding: '1px 6px',
+                                              borderRadius: '4px',
+                                              background: vis.userRole === 'admin' ? '#EDE9FE' : '#E0E7FF',
+                                              color: vis.userRole === 'admin' ? '#6D28D9' : '#3730A3',
+                                              fontWeight: 600,
+                                              textTransform: 'capitalize',
+                                            }}
+                                          >
+                                            {vis.userRole}
+                                          </span>
+                                        )}
+                                      </div>
+                                      {vis.userName && vis.userEmail && (
+                                        <span style={{ fontSize: '0.78rem', color: '#4B5563' }}>
+                                          {vis.userEmail}
+                                        </span>
+                                      )}
+                                      <span style={{ fontSize: '0.72rem', color: '#6B7280' }}>
+                                        IP: {vis.ipAddress || '127.0.0.1'} • <code style={{ fontFamily: 'monospace' }}>{vis.visitorId}</code>
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span style={{ fontSize: '0.84rem', fontWeight: 600, color: '#111827' }}>
+                                          Guest Visitor
+                                        </span>
+                                        <span
+                                          style={{
+                                            fontSize: '0.68rem',
+                                            padding: '1px 6px',
+                                            borderRadius: '4px',
+                                            background: '#F3F4F6',
+                                            color: '#6B7280',
+                                            fontWeight: 500,
+                                          }}
+                                        >
+                                          Guest
+                                        </span>
+                                      </div>
+                                      <span style={{ fontSize: '0.76rem', color: '#4B5563' }}>
+                                        IP: {vis.ipAddress || '127.0.0.1'}
+                                      </span>
+                                      <span style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: '#9CA3AF' }}>
+                                        {vis.visitorId}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+
+                              <td style={{ padding: '14px 16px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <div
+                                    style={{
+                                      width: '32px',
+                                      height: '32px',
+                                      borderRadius: '8px',
+                                      background: isMobile
+                                        ? '#ECFDF5'
+                                        : isTablet
+                                        ? '#F5F3FF'
+                                        : '#EFF6FF',
+                                      color: isMobile
+                                        ? '#059669'
+                                        : isTablet
+                                        ? '#7C3AED'
+                                        : '#2563EB',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    {isMobile ? (
+                                      <Smartphone className="w-4 h-4" />
+                                    ) : isTablet ? (
+                                      <Tablet className="w-4 h-4" />
+                                    ) : (
+                                      <Laptop className="w-4 h-4" />
+                                    )}
+                                  </div>
+                                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <span style={{ fontSize: '0.84rem', fontWeight: 600, color: '#111827' }}>
+                                      {vis.deviceType || 'Desktop'}
+                                    </span>
+                                    <span style={{ fontSize: '0.76rem', color: '#6B7280' }}>
+                                      {vis.os || 'OS'} • {vis.browser || 'Browser'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td style={{ padding: '14px 16px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                  <span
+                                    style={{
+                                      fontSize: '0.8rem',
+                                      color: '#374151',
+                                      fontWeight: 500,
+                                      maxWidth: '220px',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                    }}
+                                    title={vis.referrer || 'Direct / Bookmark'}
+                                  >
+                                    {vis.referrer || 'Direct / Bookmark'}
+                                  </span>
+                                  {vis.initialLanding && (
+                                    <span style={{ fontSize: '0.72rem', color: '#9CA3AF' }}>
+                                      Entry: {vis.initialLanding}
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+
+                              <td style={{ padding: '14px 16px' }}>
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    padding: '3px 8px',
+                                    borderRadius: '6px',
+                                    background: '#F3F4F6',
+                                    color: '#374151',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {vis._count?.pageViews ?? vis.pageViews?.length ?? 1} pages
+                                </span>
+                              </td>
+
+                              <td style={{ padding: '14px 16px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#374151', fontSize: '0.82rem', fontWeight: 600 }}>
+                                  <Clock className="w-3.5 h-3.5 text-gray-400" />
+                                  <span>{formatDuration(vis.totalDuration)}</span>
+                                </div>
+                              </td>
+
+                              <td style={{ padding: '14px 16px' }}>
+                                {active ? (
+                                  <span
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '5px',
+                                      padding: '3px 8px',
+                                      borderRadius: '9999px',
+                                      background: '#ECFDF5',
+                                      color: '#059669',
+                                      fontSize: '0.75rem',
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    <span
+                                      style={{
+                                        width: '6px',
+                                        height: '6px',
+                                        borderRadius: '50%',
+                                        background: '#10B981',
+                                        boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)',
+                                      }}
+                                    />
+                                    Active Now
+                                  </span>
+                                ) : (
+                                  <span style={{ fontSize: '0.8rem', color: '#6B7280' }}>
+                                    {formatTimeAgo(vis.lastActiveAt)}
+                                  </span>
+                                )}
+                              </td>
+
+                              <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                                <div
+                                  style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', alignItems: 'center' }}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <button
+                                    type="button"
+                                    className="btn btn-outline btn-xs"
+                                    onClick={() => handleOpenVisitorDetails(vis)}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      color: '#504CFF',
+                                      borderColor: '#C7D2FE',
+                                      background: '#EEF2FF',
+                                      fontWeight: 600,
+                                    }}
+                                    title="View full browser details & browsing history"
+                                  >
+                                    <Eye className="w-3 h-3" />
+                                    <span>Details</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    className="btn btn-outline btn-xs"
+                                    onClick={() => handleDeleteVisitor(vis.id, vis.visitorId)}
+                                    disabled={deletingVisitorId === vis.id}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      color: '#DC2626',
+                                      borderColor: '#FECACA',
+                                      background: '#FEF2F2',
+                                      fontWeight: 600,
+                                    }}
+                                    title="Delete visitor record from database"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                    <span>{deletingVisitorId === vis.id ? '...' : 'Delete'}</span>
                                   </button>
                                 </div>
                               </td>
@@ -3749,6 +4369,574 @@ export default function AdminPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Visitor Intelligence & Browser Details Modal */}
+      {isVisitorModalOpen && selectedVisitor && (
+        <div
+          className="dash-modal-overlay active"
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(15, 15, 15, 0.65)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            padding: '20px',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsVisitorModalOpen(false);
+          }}
+        >
+          <div
+            className="dash-modal-window"
+            style={{
+              maxWidth: '860px',
+              width: '95%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              background: '#FFFFFF',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              className="dash-modal-header"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '18px 24px',
+                borderBottom: '1px solid #E5E7EB',
+                background: '#FAFAFA',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                    background:
+                      (selectedVisitor.deviceType || '').toLowerCase() === 'mobile'
+                        ? '#ECFDF5'
+                        : (selectedVisitor.deviceType || '').toLowerCase() === 'tablet'
+                        ? '#F5F3FF'
+                        : '#EFF6FF',
+                    color:
+                      (selectedVisitor.deviceType || '').toLowerCase() === 'mobile'
+                        ? '#059669'
+                        : (selectedVisitor.deviceType || '').toLowerCase() === 'tablet'
+                        ? '#7C3AED'
+                        : '#2563EB',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  {(selectedVisitor.deviceType || '').toLowerCase() === 'mobile' ? (
+                    <Smartphone className="w-5 h-5" />
+                  ) : (selectedVisitor.deviceType || '').toLowerCase() === 'tablet' ? (
+                    <Tablet className="w-5 h-5" />
+                  ) : (
+                    <Laptop className="w-5 h-5" />
+                  )}
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#111827', margin: 0 }}>
+                      {selectedVisitor.userName || (selectedVisitor.userEmail ? selectedVisitor.userEmail : 'Authentic Visitor Details')}
+                    </h3>
+                    {isVisitorActive(selectedVisitor.lastActiveAt) && (
+                      <span
+                        style={{
+                          fontSize: '0.72rem',
+                          padding: '2px 8px',
+                          borderRadius: '9999px',
+                          background: '#ECFDF5',
+                          color: '#059669',
+                          fontWeight: 600,
+                          border: '1px solid #A7F3D0',
+                        }}
+                      >
+                        ● Active Now
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ fontSize: '0.78rem', color: '#6B7280', margin: 0, marginTop: '2px' }}>
+                    {selectedVisitor.userEmail && <span>{selectedVisitor.userEmail} • </span>}
+                    {selectedVisitor.userRole && (
+                      <span style={{ textTransform: 'capitalize', fontWeight: 600, color: '#4F46E5' }}>
+                        {selectedVisitor.userRole} •{' '}
+                      </span>
+                    )}
+                    <span>IP: {selectedVisitor.ipAddress || '127.0.0.1'} • </span>
+                    <span>Session: <code style={{ fontFamily: 'monospace' }}>{selectedVisitor.visitorId}</code></span>
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteVisitor(selectedVisitor.id, selectedVisitor.visitorId)}
+                  disabled={deletingVisitorId === selectedVisitor.id}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    color: '#DC2626',
+                    background: '#FEF2F2',
+                    border: '1px solid #FECACA',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>{deletingVisitorId === selectedVisitor.id ? 'Deleting...' : 'Delete Visitor Data'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsVisitorModalOpen(false)}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: 'none',
+                    background: '#E5E7EB',
+                    color: '#4B5563',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div
+              className="dash-modal-body"
+              style={{
+                padding: '22px 24px',
+                overflowY: 'auto',
+                flex: 1,
+              }}
+            >
+              {/* Authentic User Account Details if authenticated */}
+              {(selectedVisitor.userName || selectedVisitor.userEmail || selectedVisitor.userId) && (
+                <div style={{ marginBottom: '20px', padding: '14px 16px', borderRadius: '10px', background: '#EEF2FF', border: '1px solid #C7D2FE' }}>
+                  <div style={{ fontSize: '0.72rem', color: '#4F46E5', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.04em', marginBottom: '8px' }}>
+                    Authentic Registered User Account
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' }}>
+                    <div>
+                      <span style={{ fontSize: '0.72rem', color: '#6B7280', display: 'block' }}>Name:</span>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1E1B4B' }}>{selectedVisitor.userName || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.72rem', color: '#6B7280', display: 'block' }}>Email:</span>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1E1B4B' }}>{selectedVisitor.userEmail || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.72rem', color: '#6B7280', display: 'block' }}>Role:</span>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#4338CA', textTransform: 'capitalize' }}>{selectedVisitor.userRole || 'User'}</span>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.72rem', color: '#6B7280', display: 'block' }}>User ID:</span>
+                      <code style={{ fontSize: '0.78rem', color: '#4338CA', fontFamily: 'monospace' }}>{selectedVisitor.userId || 'N/A'}</code>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Hardware & Browser Environment Specs */}
+              <div style={{ marginBottom: '24px' }}>
+                <h4 style={{ fontSize: '0.86rem', fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '12px' }}>
+                  Hardware, Browser &amp; Network Profile
+                </h4>
+
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
+                    gap: '12px',
+                  }}
+                >
+                  {/* Browser */}
+                  <div style={{ padding: '12px', borderRadius: '10px', background: '#F9FAFB', border: '1px solid #E5E7EB' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#6B7280', textTransform: 'uppercase', fontWeight: 600 }}>Browser &amp; Engine</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827', marginTop: '3px' }}>
+                      {selectedVisitor.browser || 'Unknown'} {selectedVisitor.browserVersion || ''}
+                    </div>
+                  </div>
+
+                  {/* OS */}
+                  <div style={{ padding: '12px', borderRadius: '10px', background: '#F9FAFB', border: '1px solid #E5E7EB' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#6B7280', textTransform: 'uppercase', fontWeight: 600 }}>Operating System</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827', marginTop: '3px' }}>
+                      {selectedVisitor.os || 'Unknown OS'} {selectedVisitor.osVersion ? `v${selectedVisitor.osVersion}` : ''}
+                    </div>
+                  </div>
+
+                  {/* Device Model */}
+                  <div style={{ padding: '12px', borderRadius: '10px', background: '#F9FAFB', border: '1px solid #E5E7EB' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#6B7280', textTransform: 'uppercase', fontWeight: 600 }}>Device Type &amp; Model</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827', marginTop: '3px' }}>
+                      {selectedVisitor.deviceType || 'Desktop'} • {selectedVisitor.deviceModel || 'General Device'}
+                    </div>
+                  </div>
+
+                  {/* Screen & Viewport */}
+                  <div style={{ padding: '12px', borderRadius: '10px', background: '#F9FAFB', border: '1px solid #E5E7EB' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#6B7280', textTransform: 'uppercase', fontWeight: 600 }}>Screen Resolution</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827', marginTop: '3px' }}>
+                      {selectedVisitor.screenResolution || 'N/A'}
+                    </div>
+                    {selectedVisitor.viewport && (
+                      <div style={{ fontSize: '0.72rem', color: '#6B7280', marginTop: '2px' }}>
+                        Viewport: {selectedVisitor.viewport}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Language & Timezone */}
+                  <div style={{ padding: '12px', borderRadius: '10px', background: '#F9FAFB', border: '1px solid #E5E7EB' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#6B7280', textTransform: 'uppercase', fontWeight: 600 }}>Language &amp; Timezone</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827', marginTop: '3px' }}>
+                      {selectedVisitor.language || 'en-US'}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#6B7280', marginTop: '2px' }}>
+                      {selectedVisitor.timezone || 'UTC'}
+                    </div>
+                  </div>
+
+                  {/* IP & Platform */}
+                  <div style={{ padding: '12px', borderRadius: '10px', background: '#F9FAFB', border: '1px solid #E5E7EB' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#6B7280', textTransform: 'uppercase', fontWeight: 600 }}>IP &amp; Architecture</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827', marginTop: '3px' }}>
+                      {selectedVisitor.ipAddress || '127.0.0.1'}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#6B7280', marginTop: '2px' }}>
+                      Platform: {selectedVisitor.platform || 'Unknown'}
+                    </div>
+                  </div>
+
+                  {/* Referral Source */}
+                  <div style={{ padding: '12px', borderRadius: '10px', background: '#F9FAFB', border: '1px solid #E5E7EB', gridColumn: 'span 2' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#6B7280', textTransform: 'uppercase', fontWeight: 600 }}>Traffic Referral Channel</div>
+                    <div style={{ fontSize: '0.86rem', fontWeight: 600, color: '#2563EB', marginTop: '3px', wordBreak: 'break-all' }}>
+                      {selectedVisitor.referrer || 'Direct Visit / Bookmark'}
+                    </div>
+                    {selectedVisitor.initialLanding && (
+                      <div style={{ fontSize: '0.75rem', color: '#6B7280', marginTop: '3px' }}>
+                        Initial landing page: <code style={{ color: '#111827' }}>{selectedVisitor.initialLanding}</code>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Time Summary */}
+                  <div style={{ padding: '12px', borderRadius: '10px', background: '#F9FAFB', border: '1px solid #E5E7EB' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#6B7280', textTransform: 'uppercase', fontWeight: 600 }}>Engagement Summary</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#059669', marginTop: '3px' }}>
+                      {formatDuration(selectedVisitor.totalDuration)} spent
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#6B7280', marginTop: '2px' }}>
+                      {selectedVisitor.totalVisits} sessions recorded
+                    </div>
+                  </div>
+                </div>
+
+                {/* Raw User Agent Box */}
+                {selectedVisitor.userAgent && (
+                  <div style={{ marginTop: '12px', padding: '10px 14px', borderRadius: '8px', background: '#F3F4F6', border: '1px solid #E5E7EB' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#4B5563', textTransform: 'uppercase' }}>
+                        Full User-Agent String
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyUserAgent(selectedVisitor.userAgent)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontSize: '0.72rem',
+                          color: copiedUserAgent ? '#059669' : '#504CFF',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {copiedUserAgent ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedUserAgent ? 'Copied' : 'Copy String'}</span>
+                      </button>
+                    </div>
+                    <code
+                      style={{
+                        fontFamily: 'monospace',
+                        fontSize: '0.74rem',
+                        color: '#374151',
+                        wordBreak: 'break-all',
+                        display: 'block',
+                      }}
+                    >
+                      {selectedVisitor.userAgent}
+                    </code>
+                  </div>
+                )}
+              </div>
+
+              {/* Pages Visited & Time Spent Breakdown */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <h4 style={{ fontSize: '0.86rem', fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
+                    Pages Visited &amp; Time Spent History
+                  </h4>
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      background: '#EFF6FF',
+                      color: '#2563EB',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {selectedVisitor.pageViews?.length || 0} page views
+                  </span>
+                </div>
+
+                {isLoadingVisitorDetails ? (
+                  <div style={{ padding: '36px', textAlign: 'center', color: '#6B7280' }}>
+                    <RefreshCw className="w-6 h-6 animate-spin mx-auto text-indigo-500 mb-2" />
+                    <span style={{ fontSize: '0.85rem' }}>Loading visitor page history...</span>
+                  </div>
+                ) : !selectedVisitor.pageViews || selectedVisitor.pageViews.length === 0 ? (
+                  <div style={{ padding: '24px', textAlign: 'center', color: '#9CA3AF', background: '#F9FAFB', borderRadius: '8px' }}>
+                    No recorded page view history yet for this visitor.
+                  </div>
+                ) : (
+                  (() => {
+                    const map = new Map<string, typeof selectedVisitor.pageViews>();
+                    for (const pv of selectedVisitor.pageViews) {
+                      const d = new Date(pv.startedAt);
+                      const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                      const list = map.get(dateKey) || [];
+                      list.push(pv);
+                      map.set(dateKey, list);
+                    }
+
+                    const now = new Date();
+                    const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                    const yDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                    const yesterdayKey = `${yDate.getFullYear()}-${String(yDate.getMonth() + 1).padStart(2, '0')}-${String(yDate.getDate()).padStart(2, '0')}`;
+
+                    const groups: { dateKey: string; dateLabel: string; views: typeof selectedVisitor.pageViews }[] = [];
+                    for (const [dateKey, views] of map.entries()) {
+                      let dateLabel = dateKey;
+                      if (dateKey === todayKey) {
+                        dateLabel = `Today — ${now.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                      } else if (dateKey === yesterdayKey) {
+                        dateLabel = `Yesterday — ${yDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                      } else {
+                        const parts = dateKey.split('-');
+                        const parsed = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+                        dateLabel = parsed.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                      }
+                      groups.push({ dateKey, dateLabel, views });
+                    }
+                    groups.sort((a, b) => b.dateKey.localeCompare(a.dateKey));
+
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                        {groups.map((group) => {
+                          const groupTotalSec = group.views.reduce((acc, v) => acc + (v.duration || 0), 0);
+                          return (
+                            <div key={group.dateKey}>
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  padding: '8px 12px',
+                                  background: '#F8FAFC',
+                                  border: '1px solid #E2E8F0',
+                                  borderRadius: '8px',
+                                  marginBottom: '8px',
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <Calendar className="w-4 h-4 text-indigo-600" />
+                                  <span style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0F172A' }}>
+                                    {group.dateLabel}
+                                  </span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span
+                                    style={{
+                                      fontSize: '0.74rem',
+                                      color: '#475569',
+                                      background: '#FFFFFF',
+                                      padding: '2px 8px',
+                                      borderRadius: '4px',
+                                      border: '1px solid #E2E8F0',
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    {group.views.length} {group.views.length === 1 ? 'page view' : 'pages viewed'}
+                                  </span>
+                                  <span
+                                    style={{
+                                      fontSize: '0.74rem',
+                                      color: '#059669',
+                                      background: '#ECFDF5',
+                                      padding: '2px 8px',
+                                      borderRadius: '4px',
+                                      border: '1px solid #A7F3D0',
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    {formatDuration(groupTotalSec)} spent
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div style={{ border: '1px solid #E5E7EB', borderRadius: '10px', overflow: 'hidden' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
+                                  <thead>
+                                    <tr style={{ background: '#FAFAFA', borderBottom: '1px solid #E5E7EB' }}>
+                                      <th style={{ padding: '9px 14px', fontWeight: 600, color: '#4B5563' }}>Page Visited</th>
+                                      <th style={{ padding: '9px 14px', fontWeight: 600, color: '#4B5563' }}>Page Title</th>
+                                      <th style={{ padding: '9px 14px', fontWeight: 600, color: '#4B5563' }}>Time Spent</th>
+                                      <th style={{ padding: '9px 14px', fontWeight: 600, color: '#4B5563' }}>Visit Time</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {group.views.map((pv) => (
+                                      <tr key={pv.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                                        <td style={{ padding: '11px 14px' }}>
+                                          <Link
+                                            href={pv.path}
+                                            target="_blank"
+                                            style={{
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              gap: '4px',
+                                              color: '#504CFF',
+                                              fontWeight: 600,
+                                              textDecoration: 'none',
+                                            }}
+                                          >
+                                            <span>{pv.path}</span>
+                                            <ExternalLink className="w-3 h-3 opacity-60" />
+                                          </Link>
+                                        </td>
+
+                                        <td style={{ padding: '11px 14px', color: '#4B5563' }}>
+                                          <span
+                                            style={{
+                                              maxWidth: '280px',
+                                              display: 'inline-block',
+                                              whiteSpace: 'nowrap',
+                                              overflow: 'hidden',
+                                              textOverflow: 'ellipsis',
+                                            }}
+                                            title={pv.title || pv.path}
+                                          >
+                                            {pv.title || pv.path}
+                                          </span>
+                                        </td>
+
+                                        <td style={{ padding: '11px 14px' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <span
+                                              style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                                padding: '3px 8px',
+                                                borderRadius: '6px',
+                                                background: pv.duration > 60 ? '#ECFDF5' : '#F3F4F6',
+                                                color: pv.duration > 60 ? '#059669' : '#374151',
+                                                fontWeight: 700,
+                                                fontSize: '0.8rem',
+                                              }}
+                                            >
+                                              <Clock className="w-3 h-3" />
+                                              <span>{formatDuration(pv.duration)}</span>
+                                            </span>
+                                          </div>
+                                        </td>
+
+                                        <td style={{ padding: '11px 14px', color: '#6B7280', fontSize: '0.8rem' }}>
+                                          {new Date(pv.startedAt).toLocaleTimeString(undefined, {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            second: '2-digit',
+                                          })}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div
+              className="dash-modal-footer"
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                padding: '14px 24px',
+                borderTop: '1px solid #E5E7EB',
+                background: '#FAFAFA',
+              }}
+            >
+              <button
+                type="button"
+                className="admin-btn-secondary"
+                onClick={() => setIsVisitorModalOpen(false)}
+                style={{
+                  padding: '8px 20px',
+                  borderRadius: '8px',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  border: '1px solid #D1D5DB',
+                  background: '#FFFFFF',
+                  cursor: 'pointer',
+                }}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

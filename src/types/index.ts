@@ -153,3 +153,54 @@ export interface PlatformStats {
   averageRating: string;
   totalClicks: number;
 }
+
+export interface PageViewItem {
+  id: string;
+  visitorId: string;
+  path: string;
+  title?: string | null;
+  referrer?: string | null;
+  duration: number; // in seconds
+  startedAt: string;
+  createdAt: string;
+}
+
+export interface VisitorItem {
+  id: string;
+  visitorId: string;
+  userId?: string | null;
+  userName?: string | null;
+  userEmail?: string | null;
+  userRole?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  browser?: string | null;
+  browserVersion?: string | null;
+  os?: string | null;
+  osVersion?: string | null;
+  deviceType?: string | null; // Desktop | Mobile | Tablet
+  deviceModel?: string | null;
+  screenResolution?: string | null;
+  viewport?: string | null;
+  language?: string | null;
+  timezone?: string | null;
+  platform?: string | null;
+  referrer?: string | null;
+  initialLanding?: string | null;
+  totalVisits: number;
+  totalDuration: number;
+  firstSeenAt: string;
+  lastActiveAt: string;
+  createdAt: string;
+  pageViews?: PageViewItem[];
+  _count?: {
+    pageViews: number;
+  };
+}
+
+export interface VisitorStats {
+  totalVisitors: number;
+  activeVisitors: number;
+  totalPageViews: number;
+  avgDuration: number; // in seconds
+}

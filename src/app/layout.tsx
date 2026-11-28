@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { Poppins } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/auth-context';
 import { ToastProvider } from '@/context/toast-context';
 import { AuthModals } from '@/components/AuthModals';
 import { BackToTop } from '@/components/BackToTop';
+import { WebsiteVisitorTracker } from '@/components/WebsiteVisitorTracker';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -31,6 +33,9 @@ export default function RootLayout({
       <body className={poppins.className}>
         <AuthProvider>
           <ToastProvider>
+            <Suspense fallback={null}>
+              <WebsiteVisitorTracker />
+            </Suspense>
             {children}
             <AuthModals />
             <BackToTop />

@@ -63,7 +63,9 @@ export const ModelName = {
   Category: 'Category',
   Article: 'Article',
   Inquiry: 'Inquiry',
-  PlatformClick: 'PlatformClick'
+  PlatformClick: 'PlatformClick',
+  Visitor: 'Visitor',
+  PageView: 'PageView'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -309,6 +311,54 @@ export const PlatformClickScalarFieldEnum = {
 } as const
 
 export type PlatformClickScalarFieldEnum = (typeof PlatformClickScalarFieldEnum)[keyof typeof PlatformClickScalarFieldEnum]
+
+
+export const VisitorScalarFieldEnum = {
+  id: 'id',
+  visitorId: 'visitorId',
+  userId: 'userId',
+  userName: 'userName',
+  userEmail: 'userEmail',
+  userRole: 'userRole',
+  ipAddress: 'ipAddress',
+  userAgent: 'userAgent',
+  browser: 'browser',
+  browserVersion: 'browserVersion',
+  os: 'os',
+  osVersion: 'osVersion',
+  deviceType: 'deviceType',
+  deviceModel: 'deviceModel',
+  screenResolution: 'screenResolution',
+  viewport: 'viewport',
+  language: 'language',
+  timezone: 'timezone',
+  platform: 'platform',
+  referrer: 'referrer',
+  initialLanding: 'initialLanding',
+  totalVisits: 'totalVisits',
+  totalDuration: 'totalDuration',
+  firstSeenAt: 'firstSeenAt',
+  lastActiveAt: 'lastActiveAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type VisitorScalarFieldEnum = (typeof VisitorScalarFieldEnum)[keyof typeof VisitorScalarFieldEnum]
+
+
+export const PageViewScalarFieldEnum = {
+  id: 'id',
+  visitorId: 'visitorId',
+  path: 'path',
+  title: 'title',
+  referrer: 'referrer',
+  duration: 'duration',
+  startedAt: 'startedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PageViewScalarFieldEnum = (typeof PageViewScalarFieldEnum)[keyof typeof PageViewScalarFieldEnum]
 
 
 export const SortOrder = {

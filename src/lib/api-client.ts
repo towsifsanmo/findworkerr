@@ -1,4 +1,4 @@
-import { Worker, Review, PlatformStats, BlogArticle, User, CategoryItem } from '@/types';
+import { Worker, Review, PlatformStats, BlogArticle, User, CategoryItem, VisitorItem, VisitorStats } from '@/types';
 
 async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<{ success: boolean; data?: T; error?: string; message?: string; meta?: any }> {
   try {
@@ -452,4 +452,55 @@ export async function apiUpdateCredentials(data: {
     user: res.data,
   };
 }
+
+// ---------------------------------------------------------------------------
+// 8. WEBSITE VISITORS & ANALYTICS
+// ---------------------------------------------------------------------------
+
+export async function apiGetVisitorStatsAndList(params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  device?: string;
+} = {}): Promise<{
+  stats: VisitorStats;
+  visitors: VisitorItem[];
+  pagination?: any;
+}> {
+  const query = new URLSearchParams();
+  if (params.page) query.set('page', String(params.page));
+  if (params.limit) query.set('limit', String(params.limit));
+  if (params.search) query.set('search', params.search);
+  if (params.device) query.set('device', params.device);
+
+  const res = await apiFetch<{
+    stats: VisitorStats;
+    visitors: VisitorItem[];
+    pagination?: any;
+  }>(`/api/admin/visitors?${query.toString()}`);
+
+  return {
+    stats: res.data?.stats || {
+      totalVisitors: 0,
+      activeVisitors: 0,
+      totalPageViews: 0,
+      avgDuration: 0,
+    },
+    visitors: res.data?.visitors || [],
+    pagination: res.data?.pagination,
+  };
+}
+
+export async function apiGetVisitorDetails(id: string): Promise<VisitorItem | null> {
+  const res = await apiFetch<VisitorItem>(`/api/admin/visitors/${encodeURIComponent(id)}`);
+  return res.data || null;
+}
+
+export async function apiDeleteVisitor(id: string): Promise<boolean> {
+  const res = await apiFetch(`/api/admin/visitors/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+  return res.success;
+}
+
 

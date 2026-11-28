@@ -269,3 +269,61 @@ model PlatformClick {
   @@index([platformName])
   @@map("platform_click")
 }
+
+model Visitor {
+  id               String     @id @default(cuid())
+  visitorId        String     @unique
+  userId           String?    // Authentic logged-in User ID if authenticated
+  userName         String?    // Authentic user full name
+  userEmail        String?    // Authentic user email
+  userRole         String?    // "admin" | "freelancer" | "user"
+  ipAddress        String?
+  userAgent        String?    @db.Text
+  browser          String?
+  browserVersion   String?
+  os               String?
+  osVersion        String?
+  deviceType       String?    // "Desktop" | "Mobile" | "Tablet"
+  deviceModel      String?
+  screenResolution String?
+  viewport         String?
+  language         String?
+  timezone         String?
+  platform         String?
+  referrer         String?    @db.Text
+  initialLanding   String?
+  totalVisits      Int        @default(1)
+  totalDuration    Int        @default(0) // total seconds spent on website
+  firstSeenAt      DateTime   @default(now())
+  lastActiveAt     DateTime   @default(now())
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  pageViews        PageView[]
+
+  @@index([visitorId])
+  @@index([userId])
+  @@index([userEmail])
+  @@index([lastActiveAt])
+  @@index([deviceType])
+  @@map("visitor")
+}
+
+model PageView {
+  id          String   @id @default(cuid())
+  visitorId   String
+  visitor     Visitor  @relation(fields: [visitorId], references: [visitorId], onDelete: Cascade)
+  path        String
+  title       String?
+  referrer    String?  @db.Text
+  duration    Int      @default(0) // seconds spent on this page
+  startedAt   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([visitorId])
+  @@index([path])
+  @@index([startedAt])
+  @@map("page_view")
+}
+

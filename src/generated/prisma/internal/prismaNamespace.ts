@@ -409,7 +409,9 @@ export const ModelName = {
   Category: 'Category',
   Article: 'Article',
   Inquiry: 'Inquiry',
-  PlatformClick: 'PlatformClick'
+  PlatformClick: 'PlatformClick',
+  Visitor: 'Visitor',
+  PageView: 'PageView'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -425,7 +427,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "account" | "verification" | "workerProfile" | "platformLink" | "portfolioItem" | "experienceItem" | "review" | "category" | "article" | "inquiry" | "platformClick"
+    modelProps: "user" | "session" | "account" | "verification" | "workerProfile" | "platformLink" | "portfolioItem" | "experienceItem" | "review" | "category" | "article" | "inquiry" | "platformClick" | "visitor" | "pageView"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1391,6 +1393,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Visitor: {
+      payload: Prisma.$VisitorPayload<ExtArgs>
+      fields: Prisma.VisitorFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.VisitorFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.VisitorFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorPayload>
+        }
+        findFirst: {
+          args: Prisma.VisitorFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.VisitorFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorPayload>
+        }
+        findMany: {
+          args: Prisma.VisitorFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorPayload>[]
+        }
+        create: {
+          args: Prisma.VisitorCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorPayload>
+        }
+        createMany: {
+          args: Prisma.VisitorCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.VisitorCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorPayload>[]
+        }
+        delete: {
+          args: Prisma.VisitorDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorPayload>
+        }
+        update: {
+          args: Prisma.VisitorUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorPayload>
+        }
+        deleteMany: {
+          args: Prisma.VisitorDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.VisitorUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.VisitorUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorPayload>[]
+        }
+        upsert: {
+          args: Prisma.VisitorUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$VisitorPayload>
+        }
+        aggregate: {
+          args: Prisma.VisitorAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateVisitor>
+        }
+        groupBy: {
+          args: Prisma.VisitorGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.VisitorGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.VisitorCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.VisitorCountAggregateOutputType> | number
+        }
+      }
+    }
+    PageView: {
+      payload: Prisma.$PageViewPayload<ExtArgs>
+      fields: Prisma.PageViewFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PageViewFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PageViewPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PageViewFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PageViewPayload>
+        }
+        findFirst: {
+          args: Prisma.PageViewFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PageViewPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PageViewFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PageViewPayload>
+        }
+        findMany: {
+          args: Prisma.PageViewFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PageViewPayload>[]
+        }
+        create: {
+          args: Prisma.PageViewCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PageViewPayload>
+        }
+        createMany: {
+          args: Prisma.PageViewCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PageViewCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PageViewPayload>[]
+        }
+        delete: {
+          args: Prisma.PageViewDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PageViewPayload>
+        }
+        update: {
+          args: Prisma.PageViewUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PageViewPayload>
+        }
+        deleteMany: {
+          args: Prisma.PageViewDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PageViewUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PageViewUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PageViewPayload>[]
+        }
+        upsert: {
+          args: Prisma.PageViewUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PageViewPayload>
+        }
+        aggregate: {
+          args: Prisma.PageViewAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePageView>
+        }
+        groupBy: {
+          args: Prisma.PageViewGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PageViewGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PageViewCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PageViewCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1657,6 +1807,54 @@ export const PlatformClickScalarFieldEnum = {
 } as const
 
 export type PlatformClickScalarFieldEnum = (typeof PlatformClickScalarFieldEnum)[keyof typeof PlatformClickScalarFieldEnum]
+
+
+export const VisitorScalarFieldEnum = {
+  id: 'id',
+  visitorId: 'visitorId',
+  userId: 'userId',
+  userName: 'userName',
+  userEmail: 'userEmail',
+  userRole: 'userRole',
+  ipAddress: 'ipAddress',
+  userAgent: 'userAgent',
+  browser: 'browser',
+  browserVersion: 'browserVersion',
+  os: 'os',
+  osVersion: 'osVersion',
+  deviceType: 'deviceType',
+  deviceModel: 'deviceModel',
+  screenResolution: 'screenResolution',
+  viewport: 'viewport',
+  language: 'language',
+  timezone: 'timezone',
+  platform: 'platform',
+  referrer: 'referrer',
+  initialLanding: 'initialLanding',
+  totalVisits: 'totalVisits',
+  totalDuration: 'totalDuration',
+  firstSeenAt: 'firstSeenAt',
+  lastActiveAt: 'lastActiveAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type VisitorScalarFieldEnum = (typeof VisitorScalarFieldEnum)[keyof typeof VisitorScalarFieldEnum]
+
+
+export const PageViewScalarFieldEnum = {
+  id: 'id',
+  visitorId: 'visitorId',
+  path: 'path',
+  title: 'title',
+  referrer: 'referrer',
+  duration: 'duration',
+  startedAt: 'startedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PageViewScalarFieldEnum = (typeof PageViewScalarFieldEnum)[keyof typeof PageViewScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1945,6 +2143,8 @@ export type GlobalOmitConfig = {
   article?: Prisma.ArticleOmit
   inquiry?: Prisma.InquiryOmit
   platformClick?: Prisma.PlatformClickOmit
+  visitor?: Prisma.VisitorOmit
+  pageView?: Prisma.PageViewOmit
 }
 
 /* Types for Logging */

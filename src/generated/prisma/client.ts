@@ -106,3 +106,13 @@ export type Inquiry = Prisma.InquiryModel
  * 
  */
 export type PlatformClick = Prisma.PlatformClickModel
+/**
+ * Model Visitor
+ * 
+ */
+export type Visitor = Prisma.VisitorModel
+/**
+ * Model PageView
+ * 
+ */
+export type PageView = Prisma.PageViewModel
